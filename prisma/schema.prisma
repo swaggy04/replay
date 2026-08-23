@@ -1,0 +1,15 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+model RequestLog {
+  id        String   @id @default(cuid())
+  method    String
+  path      String
+  createdAt DateTime @default(now())
+}
