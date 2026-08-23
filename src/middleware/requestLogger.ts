@@ -11,7 +11,9 @@ export async function requestLogger(req: Request, res: Response, next: NextFunct
     });
     const startTime = Date.now();
     res.on("finish", () => {
-      // We'll fill this in next.
+      const duration = Date.now() - startTime;
+
+      console.log(`${req.method} ${req.path} → ${res.statusCode} (${duration}ms)`);
     });
     console.log(`Recorded ${req.method} ${req.path}`);
     next();
