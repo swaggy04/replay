@@ -16,7 +16,7 @@ export async function requestLogger(req: Request, res: Response, next: NextFunct
 
     res.on("finish", async() => {
       const durationMs = Date.now() - startTime;
-      console.log(`${req.method} ${req.path} → ${res.statusCode} (${duration}ms)`);
+      console.log(`${req.method} ${req.path} → ${res.statusCode} (${durationMs}ms)`);
       await prisma.requestLog.update({
         where: {
           id: requestLog.id
