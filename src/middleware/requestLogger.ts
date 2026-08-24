@@ -7,6 +7,7 @@ export async function requestLogger(req: Request, res: Response, next: NextFunct
       data: {
         method: req.method,
         path: req.path,
+        body:req.body
       },
     });
     const startTime = Date.now();

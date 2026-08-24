@@ -11,5 +11,6 @@ model RequestLog {
   id        String   @id @default(cuid())
   method    String
   path      String
+  body      Json?
   createdAt DateTime @default(now())
 }

@@ -7,5 +7,13 @@ app.use(requestLogger);
 app.get("/", (req, res) => {
   res.send("DevReplay is alive");
 });
+app.post("/users", (req, res) => {
+  console.log("BODY:", req.body);
+
+  res.status(201).json({
+    message: "User created",
+    user: req.body,
+  });
+});
 
 export default app;
