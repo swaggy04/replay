@@ -30,8 +30,15 @@ export async function replayController(req: Request, res: Response) {
     body: replay.body,
   });
 
-  const responseBody = await response.json();
+const contentType = response.headers.get("content-type");
 
+let responseBody;
+
+if (contentType?.includes("application/json")) {
+  responseBody = await response.json();
+} else {
+  responseBody = await response.text();
+}
   return res.status(response.status).json({
     status: response.status,
     body: responseBody,

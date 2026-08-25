@@ -1,6 +1,6 @@
 import prisma from "../lib/prisma.js";
 
-export async function replayService(requestId: string ) {
+export async function replayService(requestId: string) {
   const requestLog = await prisma.requestLog.findUnique({
     where: {
       id: requestId,
@@ -16,11 +16,14 @@ export async function replayService(requestId: string ) {
       url.searchParams.set(key, String(value));
     }
   }
-  const body = requestLog.body ? JSON.stringify(requestLog.body) : undefined;
+  const body =
+    requestLog.method !== "GET" && requestLog.method !== "HEAD" && requestLog.body
+      ? JSON.stringify(requestLog.body)
+      : undefined;
 
   return {
     method: requestLog.method,
-    url:url.toString(),
+    url: url.toString(),
     headers: requestLog.headers,
     body,
   };

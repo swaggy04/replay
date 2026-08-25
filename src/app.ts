@@ -36,6 +36,10 @@ app.post("/users", (req, res) => {
     user: req.body,
     query: req.query,
   });
+  
 });
 
+app.get("/plain", (_req, res) => {
+  res.status(200).send("Hello from plain text");
+});
 export default app;
