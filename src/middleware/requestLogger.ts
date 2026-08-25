@@ -3,7 +3,7 @@ import prisma from "../lib/prisma.js";
 
 export async function requestLogger(req: Request, res: Response, next: NextFunction) {
   const startTime = Date.now();
-  let responseBody:any;
+  let responseBody: any;
 
   try {
     const requestLog = await prisma.requestLog.create({
@@ -11,6 +11,8 @@ export async function requestLogger(req: Request, res: Response, next: NextFunct
         method: req.method,
         path: req.path,
         body: req.body,
+        query: req.query,
+        headers: req.headers,
       },
     });
 

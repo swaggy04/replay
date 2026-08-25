@@ -19,5 +19,11 @@ app.post("/users", (req, res) => {
 app.get("/error", (_req, _res) => {
   throw new Error("Something went wrong");
 });
+app.get("/users",(req,res)=>{
+  res.json({
+    message: "Users fetched",
+    query: req.query,
+  });
+})
 
 export default app;
