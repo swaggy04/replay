@@ -12,6 +12,7 @@ model RequestLog {
   method    String
   path      String
   body      Json?
+  responseBody Json?
   statusCode Int?
   durationMs Int?
   createdAt DateTime @default(now())
