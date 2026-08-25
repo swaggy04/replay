@@ -4,29 +4,30 @@ import prisma from "../lib/prisma.js";
 export async function requestLogger(req: Request, res: Response, next: NextFunction) {
   const startTime = Date.now();
   try {
-   const requestLog =  await prisma.requestLog.create({
+    const requestLog = await prisma.requestLog.create({
       data: {
         method: req.method,
         path: req.path,
         body: req.body,
       },
-      
     });
-   
 
-    res.on("finish", async() => {
-      const durationMs = Date.now() - startTime;
-      console.log(`${req.method} ${req.path} → ${res.statusCode} (${durationMs}ms)`);
-      await prisma.requestLog.update({
-        where: {
-          id: requestLog.id
-        },
-        data: {
-          
-          statusCode: res.statusCode,
-          durationMs: durationMs,
-        }
-      })
+    res.on("finish", async () => {
+      try {
+        const durationMs = Date.now() - startTime;
+        console.log(`${req.method} ${req.path} → ${res.statusCode} (${durationMs}ms)`);
+        await prisma.requestLog.update({
+          where: {
+            id: requestLog.id,
+          },
+          data: {
+            statusCode: res.statusCode,
+            durationMs: durationMs,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to update request log:", error);
+      }
     });
     console.log(`Recorded ${req.method} ${req.path}`);
     next();
