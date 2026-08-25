@@ -14,11 +14,6 @@ export async function replayController(req: Request, res: Response) {
       message: "Request not found",
     });
   }
-  console.log("ABOUT TO REPLAY");
-  console.log("URL:", replay.url);
-  console.log("METHOD:", replay.method);
-  console.log("HEADERS:", replay.headers);
-  console.log("BODY:", replay.body);
 
   const headers = {
     ...((replay.headers ?? {}) as Record<string, string>),
@@ -32,11 +27,10 @@ export async function replayController(req: Request, res: Response) {
   const response = await fetch(replay.url, {
     method: replay.method,
     headers,
-    
     body: replay.body,
   });
 
-  const responseBody = await response.text();
+  const responseBody = await response.json();
 
   return res.status(response.status).json({
     status: response.status,
