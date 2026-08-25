@@ -12,6 +12,8 @@ model RequestLog {
   method    String
   path      String
   body      Json?
+  headers Json?
+  query   Json?
   responseBody Json?
   statusCode Int?
   durationMs Int?
