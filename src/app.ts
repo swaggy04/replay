@@ -1,7 +1,7 @@
 import express from "express";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { replayController } from "./controllers/replayController.js";
-import { requestController } from "./controllers/requestController.js";
+import { requestController, requestIdController } from "./controllers/requestController.js";
 
 const app = express();
 app.use(express.json());
@@ -37,11 +37,11 @@ app.post("/users", (req, res) => {
     user: req.body,
     query: req.query,
   });
-  
 });
 
 app.get("/plain", (_req, res) => {
   res.status(200).send("Hello from plain text");
 });
-app.get("/requests",requestController)
+app.get("/requests", requestController);
+app.get("/requests/:id", requestIdController);
 export default app;
