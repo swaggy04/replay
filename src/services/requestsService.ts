@@ -1,7 +1,7 @@
 import prisma from "../lib/prisma.js";
 
 export async function requestService() {
-  const request = await prisma.requestLog.findMany({
+  const requests = await prisma.requestLog.findMany({
     select: {
       id: true,
       method: true,
@@ -13,5 +13,5 @@ export async function requestService() {
         createdAt:"desc"
     }
   });
-  return request
+  return requests
 }
