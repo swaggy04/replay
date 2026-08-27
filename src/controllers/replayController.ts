@@ -44,3 +44,4 @@ if (contentType?.includes("application/json")) {
     body: responseBody,
   });
 }
+
