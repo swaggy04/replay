@@ -17,7 +17,7 @@ export async function requestService() {
 }
 
 
-export async function requestId( requestId:string){
+export async function requestIdService( requestId:string){
     const individualReq = await prisma.requestLog.findUnique({
         where:{
             id:requestId
