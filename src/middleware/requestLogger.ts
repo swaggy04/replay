@@ -4,7 +4,9 @@ import prisma from "../lib/prisma.js";
 export async function requestLogger(req: Request, res: Response, next: NextFunction) {
   const startTime = Date.now();
   let responseBody: any;
-
+  if (req.path === "/requests" || req.path.startsWith("/replay/")) {
+    return next();
+  }
   try {
     const requestLog = await prisma.requestLog.create({
       data: {
