@@ -15,3 +15,13 @@ export async function requestService() {
   });
   return requests
 }
+
+
+export async function requestId( requestId:string){
+    const individualReq = await prisma.requestLog.findUnique({
+        where:{
+            id:requestId
+        }
+    }) 
+    return individualReq
+}
