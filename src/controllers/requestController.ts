@@ -4,6 +4,12 @@ import { requestIdService, requestService } from "../services/requestsService.js
 export async function requestController(req: Request, res: Response) {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 5);
+  if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1 || limit > 100) {
+    return res.status(400).json({
+      message: "Invalid pagination parameters",
+    });
+  }
+
   const { requests, total } = await requestService(page, limit);
   const totalPages = Math.ceil(total / limit);
 
