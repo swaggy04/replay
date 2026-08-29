@@ -27,6 +27,13 @@ export async function requestIdService(requestId: string) {
     where: {
       id: requestId,
     },
+    include: {
+      replays: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
   });
   return individualReq;
 }
