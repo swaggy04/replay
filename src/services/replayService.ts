@@ -28,3 +28,17 @@ export async function replayService(requestId: string) {
     body,
   };
 }
+
+
+
+export async function replayHistoryService(requestId: string){
+  const replays = await prisma.replayExecution.findMany({
+    where:{
+      requestLogId:requestId
+    },
+    orderBy:{
+      createdAt:"desc"
+    }
+  })
+  return replays
+}
