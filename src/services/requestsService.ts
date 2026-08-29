@@ -49,6 +49,19 @@ export async function compareReplayService(requestId: string, replayId: string) 
       id: replayId,
     },
   });
+  if (!original || !replay) {
+    return {
+      original,
+      replay,
+    };
+  }
+
+  if (replay.requestLogId !== original.id) {
+    return {
+      original,
+      replay: null,
+    };
+  }
   const statusChanged = original?.statusCode !== replay?.statusCode;
   const bodyChanged = JSON.stringify(original?.responseBody) !== JSON.stringify(replay?.responseBody);
   return {
