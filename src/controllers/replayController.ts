@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { replayService } from "../services/replayService.js";
+import prisma from "../lib/prisma.js";
 
 export async function replayController(req: Request, res: Response) {
   const requestId = req.params.id;
@@ -23,6 +24,7 @@ export async function replayController(req: Request, res: Response) {
   delete headers["content-length"];
   delete headers.connection;
   delete headers["accept-encoding"];
+  const startTime = Date.now();
 
   const response = await fetch(replay.url, {
     method: replay.method,
@@ -30,18 +32,26 @@ export async function replayController(req: Request, res: Response) {
     body: replay.body,
   });
 
-const contentType = response.headers.get("content-type");
+  const contentType = response.headers.get("content-type");
 
-let responseBody;
+  let responseBody;
 
-if (contentType?.includes("application/json")) {
-  responseBody = await response.json();
-} else {
-  responseBody = await response.text();
-}
+  if (contentType?.includes("application/json")) {
+    responseBody = await response.json();
+  } else {
+    responseBody = await response.text();
+  }
+  const durationMs = Date.now() - startTime;
+  await prisma.replayExecution.create({
+    data: {
+      requestLogId: requestId,
+      statusCode: response.status,
+      responseBody,
+      durationMs,
+    },
+  });
   return res.status(response.status).json({
     status: response.status,
     body: responseBody,
   });
 }
-
