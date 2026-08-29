@@ -4,9 +4,17 @@ import { requestIdService, requestService } from "../services/requestsService.js
 export async function requestController(req: Request, res: Response) {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 5);
-  const allRequests = await requestService(page,limit);
+  const { requests, total } = await requestService(page, limit);
+  const totalPages = Math.ceil(total / limit);
+
   console.log(page, limit);
-  return res.json(allRequests);
+  return res.json({
+    data: requests,
+    page,
+    limit,
+    total,
+    totalPages,
+  });
 }
 
 export async function requestIdController(req: Request, res: Response) {
