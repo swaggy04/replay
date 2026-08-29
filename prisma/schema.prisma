@@ -8,14 +8,30 @@ datasource db {
   provider = "postgresql"
 }
 model RequestLog {
-  id        String   @id @default(cuid())
-  method    String
-  path      String
-  body      Json?
-  headers Json?
-  query   Json?
+  id           String             @id @default(cuid())
+  method       String
+  path         String
+  body         Json?
+  headers      Json?
+  query        Json?
   responseBody Json?
-  statusCode Int?
-  durationMs Int?
-  createdAt DateTime @default(now())
+  statusCode   Int?
+  durationMs   Int?
+  createdAt    DateTime           @default(now())
+  replays      ReplayExecution[]
+
+
+}
+
+model ReplayExecution {
+  id           String      @id @default(cuid())
+  requestLogId String
+
+  statusCode   Int?
+  responseBody Json?
+  durationMs   Int?
+
+  createdAt    DateTime    @default(now())
+
+  requestLog   RequestLog @relation(fields: [requestLogId], references: [id])
 }
