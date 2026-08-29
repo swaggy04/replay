@@ -37,3 +37,24 @@ export async function requestIdService(requestId: string) {
   });
   return individualReq;
 }
+
+export async function compareReplayService(requestId: string, replayId: string) {
+  const original = await prisma.requestLog.findUnique({
+    where: {
+      id: requestId,
+    },
+  });
+  const replay = await prisma.replayExecution.findUnique({
+    where: {
+      id: replayId,
+    },
+  });
+  const statusChanged = original?.statusCode !== replay?.statusCode;
+  const bodyChanged = JSON.stringify(original?.responseBody) !== JSON.stringify(replay?.responseBody);
+  return {
+    original,
+    replay,
+    statusChanged,
+    bodyChanged,
+  };
+}

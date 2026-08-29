@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { requestIdService, requestService } from "../services/requestsService.js";
+import { compareReplayService, requestIdService, requestService } from "../services/requestsService.js";
 import { replayHistoryService } from "../services/replayService.js";
 
 export async function requestController(req: Request, res: Response) {
@@ -43,7 +43,7 @@ export async function requestIdController(req: Request, res: Response) {
 
 export async function replayHistoryController(req: Request, res: Response) {
   const requestId = req.params.id;
-  
+
   if (typeof requestId !== "string") {
     return res.status(400).json({
       message: "Invalid request ID",
@@ -51,4 +51,21 @@ export async function replayHistoryController(req: Request, res: Response) {
   }
   const replays = await replayHistoryService(requestId);
   return res.json(replays);
+}
+
+export async function compareReplayController(req: Request, res: Response) {
+  const requestId = req.params.id;
+  const replayId = req.params.replayId;
+  if (typeof requestId !== "string" || typeof replayId !== "string") {
+    return res.status(400).json({
+      message: "Invalid request ID or replay ID",
+    });
+  }
+  const result = await compareReplayService(requestId, replayId);
+  if (!result.original || !result.replay) {
+    return res.status(404).json({
+      message: "Request or replay not found",
+    });
+  }
+  return res.json(result);
 }
