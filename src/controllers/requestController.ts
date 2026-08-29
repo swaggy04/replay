@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { requestIdService, requestService } from "../services/requestsService.js";
+import { replayHistoryService } from "../services/replayService.js";
 
 export async function requestController(req: Request, res: Response) {
   const page = Number(req.query.page ?? 1);
@@ -31,11 +32,23 @@ export async function requestIdController(req: Request, res: Response) {
     });
   }
 
-  const request  = await requestIdService(requestId);
-  if (!request ) {
+  const request = await requestIdService(requestId);
+  if (!request) {
     return res.status(404).json({
       message: "Request not found",
     });
   }
-  return res.json(request );
+  return res.json(request);
+}
+
+export async function replayHistoryController(req: Request, res: Response) {
+  const requestId = req.params.id;
+  
+  if (typeof requestId !== "string") {
+    return res.status(400).json({
+      message: "Invalid request ID",
+    });
+  }
+  const replays = await replayHistoryService(requestId);
+  return res.json(replays);
 }
