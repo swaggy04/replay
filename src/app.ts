@@ -1,7 +1,7 @@
 import express from "express";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { replayController } from "./controllers/replayController.js";
-import { requestController, requestIdController } from "./controllers/requestController.js";
+import { replayHistoryController, requestController, requestIdController } from "./controllers/requestController.js";
 
 const app = express();
 app.use(express.json());
@@ -44,4 +44,5 @@ app.get("/plain", (_req, res) => {
 });
 app.get("/requests", requestController);
 app.get("/requests/:id", requestIdController);
+app.get("/requests/:id/replays", replayHistoryController);
 export default app;
