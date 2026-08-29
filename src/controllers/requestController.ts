@@ -13,7 +13,6 @@ export async function requestController(req: Request, res: Response) {
   const { requests, total } = await requestService(page, limit);
   const totalPages = Math.ceil(total / limit);
 
-  console.log(page, limit);
   return res.json({
     data: requests,
     page,
@@ -32,11 +31,11 @@ export async function requestIdController(req: Request, res: Response) {
     });
   }
 
-  const ReqId = await requestIdService(requestId);
-  if (!ReqId) {
+  const request  = await requestIdService(requestId);
+  if (!request ) {
     return res.status(404).json({
       message: "Request not found",
     });
   }
-  return res.json(ReqId);
+  return res.json(request );
 }
