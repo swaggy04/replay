@@ -1,3 +1,6 @@
+import RequestList from "@/components/Reqlist";
+
+
 export default function Home() {
   return (
     <main>
@@ -23,6 +26,8 @@ export default function Home() {
       <section>
         <h2>Requests</h2>
         <p>Captured HTTP traffic</p>
+
+        <RequestList />
       </section>
     </main>
   );
