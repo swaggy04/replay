@@ -2,6 +2,7 @@ import prisma from "../lib/prisma.js";
 
 export async function requestService(page: number, limit: number) {
   const total = await prisma.requestLog.count({});
+  const totalPages = Math.ceil(total / limit);
   const requests = await prisma.requestLog.findMany({
     skip: (page - 1) * limit,
     take: limit,
@@ -19,6 +20,9 @@ export async function requestService(page: number, limit: number) {
   return {
     requests,
     total,
+    page,
+    limit,
+    totalPages,
   };
 }
 
