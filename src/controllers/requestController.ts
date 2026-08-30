@@ -5,6 +5,16 @@ import { replayHistoryService } from "../services/replayService.js";
 export async function requestController(req: Request, res: Response) {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 5);
+  if (page < 1) {
+    return res.status(400).json({
+      message: "Page must be at least 1",
+    });
+  }
+  if (limit < 1 || limit > 100) {
+    return res.status(400).json({
+      message: "Limit must be between 1 and 100",
+    });
+  }
   if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1 || limit > 100) {
     return res.status(400).json({
       message: "Invalid pagination parameters",
