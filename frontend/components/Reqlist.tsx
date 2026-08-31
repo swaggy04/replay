@@ -28,6 +28,29 @@ export default function RequestList() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<RequestLog | null>(null);
+  const [requestDetails, setRequestDetails] = useState<RequestDetails | null>(null);
+
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  async function handleSelectRequest(request: RequestLog) {
+    setSelectedRequest(request);
+    setDetailsLoading(true);
+
+    try {
+      const response = await fetch(`http://localhost:3000/requests/${request.id}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch request details");
+      }
+
+      const data: RequestDetails = await response.json();
+
+      setRequestDetails(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setDetailsLoading(false);
+    }
+  }
   useEffect(() => {
     async function fetchRequests() {
       try {
