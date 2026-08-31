@@ -20,10 +20,15 @@ export default function RequestList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<RequestLog | null>(null);
   useEffect(() => {
     async function fetchRequests() {
       try {
         const response = await fetch(`http://localhost:3000/requests?page=${page}&limit=5`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch requests");
+        }
         const data: RequestsResponse = await response.json();
 
         setRequests(data.data);
@@ -42,13 +47,25 @@ export default function RequestList() {
   return (
     <div>
       {requests.map((request) => (
-        <div key={request.id}>
+        <div key={request.id} onClick={() => setSelectedRequest(request)}>
           <span>{request.method}</span>
           <span>{request.path}</span>
           <span>{request.statusCode}</span>
           <span>{request.durationMs}ms</span>
         </div>
       ))}
+
+      {selectedRequest && (
+        <div>
+          <h3>Selected Request</h3>
+
+          <p>{selectedRequest.method}</p>
+          <p>{selectedRequest.path}</p>
+          <p>{selectedRequest.statusCode}</p>
+          <p>{selectedRequest.id}</p>
+        </div>
+      )}
+
       <div>
         <button disabled={page === 1} onClick={() => setPage((current) => current - 1)}>
           Previous
