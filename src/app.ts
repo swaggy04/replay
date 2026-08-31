@@ -2,8 +2,10 @@ import express, { Router } from "express";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { replayController } from "./controllers/replayController.js";
 import { compareReplayController, replayHistoryController, requestController, requestIdController } from "./controllers/requestController.js";
+import cors from "cors";
 
 const app = express();
+app.use(cors())
 app.use(express.json());
 app.use(requestLogger);
 app.get("/", (req, res) => {
