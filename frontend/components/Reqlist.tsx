@@ -8,6 +8,13 @@ type RequestLog = {
   durationMs: number | null;
   createdAt: string;
 };
+type RequestDetails = RequestLog & {
+  body: unknown;
+  headers: Record<string, unknown>;
+  query: Record<string, unknown>;
+  responseBody: unknown;
+  replays: unknown[];
+};
 type RequestsResponse = {
   data: RequestLog[];
   page: number;
