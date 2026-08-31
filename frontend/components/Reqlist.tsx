@@ -36,5 +36,32 @@ export default function RequestList() {
     }
     fetchRequests();
   }, [page]);
-  return <div>Request List</div>;
+  if (loading) {
+    return <div>Loading requests...</div>;
+  }
+  return (
+    <div>
+      {requests.map((request) => (
+        <div key={request.id}>
+          <span>{request.method}</span>
+          <span>{request.path}</span>
+          <span>{request.statusCode}</span>
+          <span>{request.durationMs}ms</span>
+        </div>
+      ))}
+      <div>
+        <button disabled={page === 1} onClick={() => setPage((current) => current - 1)}>
+          Previous
+        </button>
+
+        <span>
+          Page {page} of {totalPages}
+        </span>
+
+        <button disabled={page === totalPages} onClick={() => setPage((current) => current + 1)}>
+          Next
+        </button>
+      </div>
+    </div>
+  );
 }
