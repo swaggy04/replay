@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 type RequestLog = {
   id: string;
   method: string;
@@ -20,5 +20,21 @@ export default function RequestList() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    async function fetchRequests() {
+      try {
+        const response = await fetch(`http://localhost:3000/requests?page=${page}&limit=5`);
+        const data: RequestsResponse = await response.json();
+
+        setRequests(data.data);
+        setTotalPages(data.totalPages);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchRequests();
+  }, [page]);
   return <div>Request List</div>;
 }
