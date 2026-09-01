@@ -28,8 +28,6 @@ type RequestsResponse = {
   totalPages: number;
 };
 
-type DetailTab = "overview" | "headers" | "body" | "response" | "replay";
-
 export default function RequestList() {
   const [requests, setRequests] = useState<RequestLog[]>([]);
 
@@ -43,8 +41,6 @@ export default function RequestList() {
   const [requestDetails, setRequestDetails] = useState<RequestDetails | null>(null);
 
   const [detailsLoading, setDetailsLoading] = useState(false);
-
-  const [activeTab, setActiveTab] = useState<DetailTab>("overview");
 
   /*
    * Fetch request list
@@ -65,7 +61,7 @@ export default function RequestList() {
         setRequests(data.data);
         setTotalPages(data.totalPages);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to fetch requests:", error);
       } finally {
         setLoading(false);
       }
@@ -81,7 +77,6 @@ export default function RequestList() {
     setSelectedRequest(request);
     setRequestDetails(null);
     setDetailsLoading(true);
-    setActiveTab("overview");
 
     try {
       const response = await fetch(`http://localhost:3000/requests/${request.id}`);
@@ -94,14 +89,14 @@ export default function RequestList() {
 
       setRequestDetails(data);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch request details:", error);
     } finally {
       setDetailsLoading(false);
     }
   }
 
   /*
-   * Status color helper
+   * UI helper
    */
   function getStatusClass(status: number | null) {
     if (!status) {
@@ -124,7 +119,7 @@ export default function RequestList() {
   }
 
   /*
-   * Method color helper
+   * UI helper
    */
   function getMethodClass(method: string) {
     switch (method) {
@@ -156,17 +151,19 @@ export default function RequestList() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0f1115] text-zinc-200">
-      {/* ========================================================= */}
-      {/* LEFT SIDEBAR */}
-      {/* ========================================================= */}
+      {/* =========================================================
+          LEFT SIDEBAR
+      ========================================================= */}
 
       <aside className="w-[250px] shrink-0 border-r border-zinc-800 bg-[#111318]">
         {/* Logo */}
+
         <div className="flex h-14 items-center border-b border-zinc-800 px-5">
           <div className="text-lg font-semibold text-white">DevReplay</div>
         </div>
 
         {/* Navigation */}
+
         <div className="p-3">
           <button
             className="
@@ -213,6 +210,7 @@ export default function RequestList() {
         </div>
 
         {/* Recent requests */}
+
         <div className="mt-5">
           <div className="px-5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">Recent</div>
 
@@ -236,14 +234,12 @@ export default function RequestList() {
         </div>
       </aside>
 
-      {/* ========================================================= */}
-      {/* MAIN AREA */}
-      {/* ========================================================= */}
+      {/* =========================================================
+          MAIN AREA
+      ========================================================= */}
 
       <main className="flex min-w-0 flex-1 flex-col">
-        {/* ======================================================= */}
         {/* TOP BAR */}
-        {/* ======================================================= */}
 
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 px-5">
           <div>
@@ -255,24 +251,26 @@ export default function RequestList() {
           <div className="text-xs text-zinc-500">{requests.length} requests</div>
         </header>
 
-        {/* ======================================================= */}
         {/* REQUEST LIST */}
-        {/* ======================================================= */}
 
         <section className="border-b border-zinc-800">
-          {/* Table header */}
-
-          <div className="grid grid-cols-[80px_1fr_90px_90px] border-b border-zinc-800 bg-[#15171c] px-5 py-2 text-[11px] uppercase tracking-wide text-zinc-600">
+          <div
+            className="
+              grid grid-cols-[80px_1fr_90px_90px]
+              border-b border-zinc-800
+              bg-[#15171c]
+              px-5 py-2
+              text-[11px]
+              uppercase
+              tracking-wide
+              text-zinc-600
+            "
+          >
             <span>Method</span>
-
             <span>Path</span>
-
             <span>Status</span>
-
             <span>Time</span>
           </div>
-
-          {/* Rows */}
 
           <div className="max-h-[320px] overflow-y-auto">
             {requests.length === 0 ? (
@@ -284,28 +282,22 @@ export default function RequestList() {
                   onClick={() => handleSelectRequest(request)}
                   className={`
                     grid w-full grid-cols-[80px_1fr_90px_90px]
-                    items-center border-b border-zinc-800/70
-                    px-5 py-3 text-left transition
+                    items-center
+                    border-b border-zinc-800/70
+                    px-5 py-3
+                    text-left
+                    transition
                     hover:bg-zinc-800/60
-
                     ${selectedRequest?.id === request.id ? "bg-zinc-800/80" : ""}
                   `}
                 >
-                  {/* Method */}
-
                   <span className={`text-xs font-bold ${getMethodClass(request.method)}`}>{request.method}</span>
 
-                  {/* Path */}
-
                   <span className="truncate text-sm text-zinc-300">{request.path}</span>
-
-                  {/* Status */}
 
                   <span className={`text-xs font-medium ${getStatusClass(request.statusCode)}`}>
                     {request.statusCode ?? "—"}
                   </span>
-
-                  {/* Duration */}
 
                   <span className="text-xs text-zinc-500">
                     {request.durationMs !== null ? `${request.durationMs}ms` : "—"}
@@ -316,14 +308,10 @@ export default function RequestList() {
           </div>
         </section>
 
-        {/* ======================================================= */}
         {/* DETAILS PANEL */}
-        {/* ======================================================= */}
 
         <section className="flex min-h-0 flex-1 flex-col">
           {!selectedRequest ? (
-            /* Empty state */
-
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center">
                 <div className="mb-3 text-3xl text-zinc-700">◇</div>
@@ -335,9 +323,7 @@ export default function RequestList() {
             </div>
           ) : (
             <>
-              {/* ================================================= */}
               {/* REQUEST TITLE */}
-              {/* ================================================= */}
 
               <div className="border-b border-zinc-800 px-5 py-4">
                 <div className="flex items-center gap-3">
@@ -359,43 +345,10 @@ export default function RequestList() {
                 </div>
               </div>
 
-              {/* ================================================= */}
-              {/* TABS */}
-              {/* ================================================= */}
+              {/* REQUEST INSPECTOR */}
 
-              <div className="flex shrink-0 border-b border-zinc-800 px-5">
-                {(
-                  [
-                    ["overview", "Overview"],
-                    ["headers", "Headers"],
-                    ["body", "Body"],
-                    ["response", "Response"],
-                    ["replay", "Replay"],
-                  ] as [DetailTab, string][]
-                ).map(([value, label]) => (
-                  <button
-                    key={value}
-                    onClick={() => setActiveTab(value)}
-                    className={`
-                      border-b-2 px-4 py-3 text-xs
-                      ${
-                        activeTab === value
-                          ? "border-white text-white"
-                          : "border-transparent text-zinc-500 hover:text-zinc-300"
-                      }
-                    `}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              {/* ================================================= */}
-              {/* DETAILS CONTENT */}
-              {/* ================================================= */}
-
-              <div className="min-h-0 flex-1 overflow-y-auto p-5">
-                {detailsLoading && <div className="text-sm text-zinc-500">Loading request details...</div>}
+              <div className="min-h-0 flex-1 overflow-hidden">
+                {detailsLoading && <div className="p-5 text-sm text-zinc-500">Loading request details...</div>}
 
                 {requestDetails && !detailsLoading && <RequestInspector request={requestDetails} />}
               </div>
@@ -403,9 +356,7 @@ export default function RequestList() {
           )}
         </section>
 
-        {/* ======================================================= */}
         {/* PAGINATION */}
-        {/* ======================================================= */}
 
         <footer className="flex h-12 shrink-0 items-center justify-between border-t border-zinc-800 px-5">
           <span className="text-xs text-zinc-600">
@@ -417,7 +368,8 @@ export default function RequestList() {
               disabled={page === 1}
               onClick={() => setPage((current) => current - 1)}
               className="
-                rounded border border-zinc-800 px-3 py-1.5
+                rounded border border-zinc-800
+                px-3 py-1.5
                 text-xs text-zinc-400
                 disabled:cursor-not-allowed
                 disabled:opacity-30
@@ -431,7 +383,8 @@ export default function RequestList() {
               disabled={page === totalPages}
               onClick={() => setPage((current) => current + 1)}
               className="
-                rounded border border-zinc-800 px-3 py-1.5
+                rounded border border-zinc-800
+                px-3 py-1.5
                 text-xs text-zinc-400
                 disabled:cursor-not-allowed
                 disabled:opacity-30
@@ -444,23 +397,5 @@ export default function RequestList() {
         </footer>
       </main>
     </div>
-  );
-}
-
-/*
- * Reusable JSON viewer
- */
-
-function JsonBlock({ data }: { data: unknown }) {
-  return (
-    <pre
-      className="
-        overflow-x-auto rounded-md border border-zinc-800
-        bg-[#0b0d10] p-4 font-mono text-xs leading-6
-        text-zinc-300
-      "
-    >
-      {JSON.stringify(data ?? {}, null, 2)}
-    </pre>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 type RequestDetails = {
   id: string;
   method: string;
@@ -18,51 +20,76 @@ type RequestInspectorProps = {
   request: RequestDetails;
 };
 
+type DetailTab = "overview" | "headers" | "query" | "body" | "response";
+
 export default function RequestInspector({ request }: RequestInspectorProps) {
+  const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+
   return (
-    <div className="h-full overflow-y-auto border-t border-zinc-800 bg-[#0f1115] p-6 text-zinc-200">
+    <div className="h-full overflow-y-auto border-t border-zinc-800 bg-[#0f1115] text-zinc-200">
       {/* Header */}
-      <div className="mb-6">
+      <div className="border-b border-zinc-800 p-6">
         <div className="flex items-center gap-3">
           <span className="font-mono text-sm font-bold text-blue-400">{request.method}</span>
 
-          <span className="font-mono text-sm text-zinc-200">{request.path}</span>
+          <span className="font-mono text-sm text-zinc-300">{request.path}</span>
         </div>
 
-        <div className="mt-2 flex gap-4 text-xs">
-          <span className="text-emerald-400">{request.statusCode ?? "Unknown"}</span>
+        <div className="mt-2 flex gap-4 text-xs text-zinc-500">
+          <span>Status: {request.statusCode ?? "—"}</span>
 
-          <span className="text-zinc-500">{request.durationMs ?? "—"}ms</span>
-
-          <span className="text-zinc-500">{new Date(request.createdAt).toLocaleString()}</span>
+          <span>Duration: {request.durationMs ?? "—"}ms</span>
         </div>
       </div>
 
-      {/* Request information */}
-      <div className="space-y-6">
-        <section>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Query</h3>
+      {/* Tabs */}
+      <div className="flex border-b border-zinc-800 px-4">
+        {(
+          [
+            ["overview", "Overview"],
+            ["headers", "Headers"],
+            ["query", "Query"],
+            ["body", "Body"],
+            ["response", "Response"],
+          ] as [DetailTab, string][]
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            onClick={() => setActiveTab(value)}
+            className={`border-b-2 px-4 py-3 text-xs transition ${
+              activeTab === value ? "border-white text-white" : "border-transparent text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-          <JsonBlock data={request.query} />
-        </section>
+      {/* Tab content */}
+      <div className="p-6">
+        {activeTab === "overview" && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs text-zinc-500">Request ID</p>
 
-        <section>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Headers</h3>
+              <p className="mt-1 font-mono text-xs text-zinc-300">{request.id}</p>
+            </div>
 
-          <JsonBlock data={request.headers} />
-        </section>
+            <div>
+              <p className="text-xs text-zinc-500">Created</p>
 
-        <section>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Body</h3>
+              <p className="mt-1 text-sm text-zinc-300">{new Date(request.createdAt).toLocaleString()}</p>
+            </div>
+          </div>
+        )}
 
-          <JsonBlock data={request.body} />
-        </section>
+        {activeTab === "headers" && <JsonBlock data={request.headers} />}
 
-        <section>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Response</h3>
+        {activeTab === "query" && <JsonBlock data={request.query} />}
 
-          <JsonBlock data={request.responseBody} />
-        </section>
+        {activeTab === "body" && <JsonBlock data={request.body} />}
+
+        {activeTab === "response" && <JsonBlock data={request.responseBody} />}
       </div>
     </div>
   );
