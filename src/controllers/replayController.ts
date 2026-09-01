@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 
-import { replayService } from "../services/replayService.js";
+import { replayHistoryService, replayService } from "../services/replayService.js";
 
 import prisma from "../lib/prisma.js";
 
@@ -69,6 +69,26 @@ export async function replayController(req: Request, res: Response) {
 
     return res.status(500).json({
       message: "Replay failed",
+    });
+  }
+}
+export async function replayHistoryController(req: Request, res: Response) {
+  try {
+    const { requestId } = req.params;
+    if (typeof requestId !== "string") {
+      return res.status(400).json({
+        message: "Invalid request ID",
+      });
+    }
+
+    const result = await replayHistoryService(requestId);
+
+    return res.json(result);
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Failed to fetch replay history",
     });
   }
 }

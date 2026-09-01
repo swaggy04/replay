@@ -48,4 +48,5 @@ app.get("/requests", requestController);
 app.get("/requests/:id", requestIdController);
 app.get("/requests/:id/replays", replayHistoryController);
 app.get("/requests/:id/compare/:replayId", compareReplayController);
+app.get("/replay/:id/history",replayHistoryController)
 export default app;
