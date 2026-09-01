@@ -350,7 +350,15 @@ export default function RequestList() {
               <div className="min-h-0 flex-1 overflow-hidden">
                 {detailsLoading && <div className="p-5 text-sm text-zinc-500">Loading request details...</div>}
 
-                {requestDetails && !detailsLoading && <RequestInspector request={requestDetails} />}
+                {requestDetails && !detailsLoading && (
+                  <RequestInspector
+                    request={requestDetails}
+                    onClose={() => {
+                      setSelectedRequest(null);
+                      setRequestDetails(null);
+                    }}
+                  />
+                )}
               </div>
             </>
           )}
