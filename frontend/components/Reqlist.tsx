@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import RequestInspector from "./RequestInspector";
 
 type RequestLog = {
   id: string;
@@ -396,123 +397,7 @@ export default function RequestList() {
               <div className="min-h-0 flex-1 overflow-y-auto p-5">
                 {detailsLoading && <div className="text-sm text-zinc-500">Loading request details...</div>}
 
-                {requestDetails && !detailsLoading && (
-                  <>
-                    {/* OVERVIEW */}
-
-                    {activeTab === "overview" && (
-                      <div className="space-y-6">
-                        <div>
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                            Request
-                          </div>
-
-                          <div className="rounded-md border border-zinc-800 bg-[#111318] p-4">
-                            <div className="grid grid-cols-[120px_1fr] gap-y-3 text-sm">
-                              <span className="text-zinc-600">Method</span>
-
-                              <span className={getMethodClass(requestDetails.method)}>{requestDetails.method}</span>
-
-                              <span className="text-zinc-600">Path</span>
-
-                              <span className="text-zinc-300">{requestDetails.path}</span>
-
-                              <span className="text-zinc-600">Status</span>
-
-                              <span className={getStatusClass(requestDetails.statusCode)}>
-                                {requestDetails.statusCode ?? "—"}
-                              </span>
-
-                              <span className="text-zinc-600">Duration</span>
-
-                              <span className="text-zinc-300">{requestDetails.durationMs ?? "—"}ms</span>
-
-                              <span className="text-zinc-600">Request ID</span>
-
-                              <span className="truncate font-mono text-xs text-zinc-500">{requestDetails.id}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                            Query Parameters
-                          </div>
-
-                          <JsonBlock data={requestDetails.query} />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* HEADERS */}
-
-                    {activeTab === "headers" && (
-                      <div>
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                          Request Headers
-                        </div>
-
-                        <JsonBlock data={requestDetails.headers} />
-                      </div>
-                    )}
-
-                    {/* BODY */}
-
-                    {activeTab === "body" && (
-                      <div>
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                          Request Body
-                        </div>
-
-                        <JsonBlock data={requestDetails.body} />
-                      </div>
-                    )}
-
-                    {/* RESPONSE */}
-
-                    {activeTab === "response" && (
-                      <div>
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                          Response Body
-                        </div>
-
-                        <JsonBlock data={requestDetails.responseBody} />
-                      </div>
-                    )}
-
-                    {/* REPLAY */}
-
-                    {activeTab === "replay" && (
-                      <div className="space-y-5">
-                        <div>
-                          <h3 className="text-sm font-medium text-white">Replay this request</h3>
-
-                          <p className="mt-1 text-xs text-zinc-500">
-                            Send this captured request again using the original request data.
-                          </p>
-                        </div>
-
-                        <button
-                          className="
-                            rounded-md bg-white px-4 py-2
-                            text-xs font-semibold text-black
-                            hover:bg-zinc-200
-                          "
-                        >
-                          ▶ Replay Request
-                        </button>
-
-                        <div>
-                          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                            Previous Replays
-                          </div>
-
-                          <JsonBlock data={requestDetails.replays} />
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
+                {requestDetails && !detailsLoading && <RequestInspector request={requestDetails} />}
               </div>
             </>
           )}
