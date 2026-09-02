@@ -3,7 +3,6 @@
 import { RequestDetails } from "@/types/request";
 import { useState } from "react";
 
-
 type RequestInspectorProps = {
   request: RequestDetails;
   onClose: () => void;

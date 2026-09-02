@@ -2,31 +2,7 @@
 
 import { useEffect, useState } from "react";
 import RequestInspector from "./RequestInspector";
-
-type RequestLog = {
-  id: string;
-  method: string;
-  path: string;
-  statusCode: number | null;
-  durationMs: number | null;
-  createdAt: string;
-};
-
-type RequestDetails = RequestLog & {
-  body: unknown;
-  headers: Record<string, unknown>;
-  query: Record<string, unknown>;
-  responseBody: unknown;
-  replays: unknown[];
-};
-
-type RequestsResponse = {
-  data: RequestLog[];
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-};
+import { RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 
 export default function RequestList() {
   const [requests, setRequests] = useState<RequestLog[]>([]);
