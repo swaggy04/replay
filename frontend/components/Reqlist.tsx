@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import RequestInspector from "./RequestInspector";
-import { RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
+import type { RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 
 export default function RequestList() {
   const [requests, setRequests] = useState<RequestLog[]>([]);
@@ -26,7 +26,7 @@ export default function RequestList() {
       setLoading(true);
 
       try {
-        const response = await fetch(`http://localhost:3000/requests?page=${page}&limit=10`);
+        const response = await fetch(`http://localhost:5000/requests?page=${page}&limit=10`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch requests");
@@ -55,7 +55,7 @@ export default function RequestList() {
     setDetailsLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:3000/requests/${request.id}`);
+      const response = await fetch(`http://localhost:5000/requests/${request.id}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch request details");

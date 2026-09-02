@@ -1,6 +1,6 @@
 "use client";
 
-import { RequestDetails } from "@/types/request";
+import type { RequestDetails } from "@/types/request";
 import { useState } from "react";
 
 type RequestInspectorProps = {
@@ -44,21 +44,32 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
             </div>
           </div>
 
-          {/* Close */}
+          <div className="flex items-center gap-2">
+            <button
+              className="
+      rounded-md border border-zinc-700
+      px-3 py-1.5
+      text-xs font-medium text-zinc-300
+      hover:bg-zinc-800 hover:text-white
+    "
+            >
+              Replay
+            </button>
 
-          <button
-            onClick={onClose}
-            className="
-              flex h-8 w-8 items-center justify-center
-              rounded-md
-              text-zinc-500
-              hover:bg-zinc-800
-              hover:text-white
-            "
-            aria-label="Close request inspector"
-          >
-            ×
-          </button>
+            <button
+              onClick={onClose}
+              className="
+      flex h-8 w-8 items-center justify-center
+      rounded-md
+      text-zinc-500
+      hover:bg-zinc-800
+      hover:text-white
+    "
+              aria-label="Close request inspector"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
