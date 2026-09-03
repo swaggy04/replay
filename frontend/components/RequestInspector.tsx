@@ -1,51 +1,53 @@
 "use client";
 
-import type { ReplayResult, RequestDetails } from "@/types/request";
+import type { ReactNode } from "react";
 import { useState } from "react";
+import type { ReplayResult, RequestDetails } from "@/types/request";
 
 type RequestInspectorProps = {
   request: RequestDetails;
   onClose: () => void;
 };
 
-type DetailTab = "overview" | "headers" | "query" | "body" | "response";
+type DetailTab = "overview" | "headers" | "query" | "body" | "response" | "replay";
 
 export default function RequestInspector({ request, onClose }: RequestInspectorProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+
   const [replaying, setReplaying] = useState(false);
   const [replayResult, setReplayResult] = useState<ReplayResult | null>(null);
   const [replayError, setReplayError] = useState<string | null>(null);
+
   async function handleReplay() {
-  setReplaying(true);
-  setReplayResult(null);
-  setReplayError(null);
+    setReplaying(true);
+    setReplayResult(null);
+    setReplayError(null);
 
-  try {
-    const response = await fetch(
-      `http://localhost:5000/replay/${request.id}`,
-      {
+    try {
+      const response = await fetch(`http://localhost:5000/replay/${request.id}`, {
         method: "POST",
-      }
-    );
+      });
 
-    const data: ReplayResult = await response.json();
+      const data: ReplayResult = await response.json();
 
-    console.log("Replay response:", {
-      httpStatus: response.status,
-      data,
-    });
+      console.log("Replay response:", {
+        httpStatus: response.status,
+        data,
+      });
 
-    setReplayResult(data);
-  } catch (error) {
-    console.error("Replay failed:", error);
-    setReplayError("Failed to replay request");
-  } finally {
-    setReplaying(false);
+      setReplayResult(data);
+      setActiveTab("replay");
+    } catch (error) {
+      console.error("Replay failed:", error);
+      setReplayError("Failed to replay request");
+    } finally {
+      setReplaying(false);
+    }
   }
-}
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6">
-      {/* Popover */}
+      {/* Inspector */}
       <div
         className="
           flex h-[85vh] w-full max-w-4xl
@@ -56,7 +58,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         "
       >
         {/* Header */}
-
         <div className="flex shrink-0 items-start justify-between border-b border-zinc-800 px-6 py-4">
           <div>
             <div className="flex items-center gap-3">
@@ -76,27 +77,31 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
 
           <div className="flex items-center gap-2">
             <button
-              className="
-      rounded-md border border-zinc-700
-      px-3 py-1.5
-      text-xs font-medium text-zinc-300
-      hover:bg-zinc-800 hover:text-white
-    "
+              type="button"
               onClick={handleReplay}
               disabled={replaying}
+              className="
+                rounded-md border border-zinc-700
+                px-3 py-1.5
+                text-xs font-medium text-zinc-300
+                hover:bg-zinc-800 hover:text-white
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
             >
               {replaying ? "Replaying..." : "Replay"}
             </button>
 
             <button
+              type="button"
               onClick={onClose}
               className="
-      flex h-8 w-8 items-center justify-center
-      rounded-md
-      text-zinc-500
-      hover:bg-zinc-800
-      hover:text-white
-    "
+                flex h-8 w-8 items-center justify-center
+                rounded-md
+                text-zinc-500
+                hover:bg-zinc-800
+                hover:text-white
+              "
               aria-label="Close request inspector"
             >
               ×
@@ -105,7 +110,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         </div>
 
         {/* Tabs */}
-
         <div className="flex shrink-0 border-b border-zinc-800 px-4">
           {(
             [
@@ -114,10 +118,12 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
               ["query", "Query"],
               ["body", "Body"],
               ["response", "Response"],
+              ["replay", "Replay"],
             ] as [DetailTab, string][]
           ).map(([value, label]) => (
             <button
               key={value}
+              type="button"
               onClick={() => setActiveTab(value)}
               className={`
                 border-b-2 px-4 py-3 text-xs transition
@@ -134,7 +140,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         </div>
 
         {/* Content */}
-
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
           {activeTab === "overview" && <OverviewTab request={request} />}
 
@@ -161,11 +166,18 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
               <JsonBlock data={request.responseBody} />
             </DetailSection>
           )}
+
+          {activeTab === "replay" && <ReplayTab replayResult={replayResult} replayError={replayError} />}
         </div>
       </div>
     </div>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Overview                                                                    */
+/* -------------------------------------------------------------------------- */
+
 function OverviewTab({ request }: { request: RequestDetails }) {
   return (
     <div className="space-y-6">
@@ -196,7 +208,60 @@ function OverviewTab({ request }: { request: RequestDetails }) {
   );
 }
 
-function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
+/* -------------------------------------------------------------------------- */
+/* Replay                                                                      */
+/* -------------------------------------------------------------------------- */
+
+function ReplayTab({ replayResult, replayError }: { replayResult: ReplayResult | null; replayError: string | null }) {
+  if (!replayResult && !replayError) {
+    return <div className="text-sm text-zinc-500">No replay has been executed yet.</div>;
+  }
+
+  if (replayError) {
+    return (
+      <div className="rounded-md border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">{replayError}</div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Status */}
+      <DetailSection title="Replay Status">
+        <div className="rounded-md border border-zinc-800 bg-[#0b0d10]">
+          <InfoRow label="Status" value={String(replayResult?.status ?? "—")} />
+        </div>
+      </DetailSection>
+
+      {/* Response */}
+      <DetailSection title="Replay Response">
+        <pre
+          className="
+            max-h-[400px]
+            overflow-auto
+            rounded-md
+            border border-zinc-800
+            bg-[#0b0d10]
+            p-4
+            font-mono
+            text-xs
+            leading-6
+            text-zinc-300
+          "
+        >
+          {typeof replayResult?.body === "string"
+            ? replayResult.body
+            : JSON.stringify(replayResult?.body ?? {}, null, 2)}
+        </pre>
+      </DetailSection>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Shared UI                                                                   */
+/* -------------------------------------------------------------------------- */
+
+function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">{title}</h3>
