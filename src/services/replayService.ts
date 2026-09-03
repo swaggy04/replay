@@ -9,7 +9,7 @@ export async function replayService(requestId: string) {
   if (!requestLog) {
     return null;
   }
-  const url = new URL(requestLog.path, "http://localhost:3000");
+  const url = new URL(requestLog.path, "http://localhost:5000");
   ///// to check if the query exists as a n obj
   if (requestLog.query && typeof requestLog.query === "object") {
     for (const [key, value] of Object.entries(requestLog.query)) {
