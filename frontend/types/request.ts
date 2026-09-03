@@ -24,6 +24,10 @@ export type ReplayExecution = {
   durationMs: number;
   createdAt: string;
 };
+export type ReplayResult = {
+  status: number;
+  body: unknown;
+};
 
 export type RequestsResponse = {
   data: RequestLog[];

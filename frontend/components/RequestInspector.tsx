@@ -1,6 +1,6 @@
 "use client";
 
-import type { RequestDetails } from "@/types/request";
+import type { ReplayResult, RequestDetails } from "@/types/request";
 import { useState } from "react";
 
 type RequestInspectorProps = {
@@ -12,6 +12,9 @@ type DetailTab = "overview" | "headers" | "query" | "body" | "response";
 
 export default function RequestInspector({ request, onClose }: RequestInspectorProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+  const [replaying, setReplaying] = useState(false);
+  const [replayResult, setReplayResult] = useState<ReplayResult | null>(null);
+  const [replayError, setReplayError] = useState<string | null>(null);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6">
