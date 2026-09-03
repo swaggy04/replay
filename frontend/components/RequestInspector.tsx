@@ -15,7 +15,33 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
   const [replaying, setReplaying] = useState(false);
   const [replayResult, setReplayResult] = useState<ReplayResult | null>(null);
   const [replayError, setReplayError] = useState<string | null>(null);
+  async function handleReplay() {
+    setReplaying(true);
+    setReplayResult(null);
+    setReplayError(null);
 
+    try {
+      const response = await fetch(
+        `http://localhost:5000/replay/${request.id}`,
+
+        {
+          method: "POST",
+        },
+      );
+      if (!response.ok) {
+        throw new Error("Replay failed");
+      }
+
+      const data: ReplayResult = await response.json();
+
+      setReplayResult(data);
+    } catch (error) {
+      console.error("Replay failed:", error);
+      setReplayError("Failed to replay request");
+    } finally {
+      setReplaying(false);
+    }
+  }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6">
       {/* Popover */}
