@@ -51,7 +51,7 @@ export async function replayController(req: Request, res: Response) {
 
     const durationMs = Date.now() - startTime;
 
-    await prisma.replayExecution.create({
+    const replayExecution = await prisma.replayExecution.create({
       data: {
         requestLogId: requestId,
         statusCode: response.status,
@@ -63,6 +63,7 @@ export async function replayController(req: Request, res: Response) {
     return res.status(response.status).json({
       status: response.status,
       body: responseBody,
+      replay: replayExecution,
     });
   } catch (error) {
     console.error("Replay failed:", error);

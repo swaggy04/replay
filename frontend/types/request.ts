@@ -27,6 +27,7 @@ export type ReplayExecution = {
 export type ReplayResult = {
   status: number;
   body: unknown;
+  replay:ReplayExecution
 };
 
 export type RequestsResponse = {

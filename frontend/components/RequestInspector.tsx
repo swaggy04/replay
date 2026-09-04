@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
-import type { ReplayResult, RequestDetails } from "@/types/request";
+import type { ReplayExecution, ReplayResult, RequestDetails } from "@/types/request";
 
 type RequestInspectorProps = {
   request: RequestDetails;
@@ -15,8 +15,12 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
 
   const [replaying, setReplaying] = useState(false);
+
   const [replayResult, setReplayResult] = useState<ReplayResult | null>(null);
+
   const [replayError, setReplayError] = useState<string | null>(null);
+
+  const [replayHistory, setReplayHistory] = useState<ReplayExecution[]>(request.replays ?? []);
 
   async function handleReplay() {
     setReplaying(true);
@@ -36,6 +40,9 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
       });
 
       setReplayResult(data);
+
+      setReplayHistory((history) => [data.replay, ...history]);
+
       setActiveTab("replay");
     } catch (error) {
       console.error("Replay failed:", error);
@@ -167,17 +174,15 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
             </DetailSection>
           )}
 
-          {activeTab === "replay" && <ReplayTab replayResult={replayResult} replayError={replayError} />}
+          {activeTab === "replay" && (
+            <ReplayTab replayHistory={replayHistory} replayResult={replayResult} replayError={replayError} />
+          )}
         </div>
       </div>
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
 /* Overview                                                                    */
-/* -------------------------------------------------------------------------- */
-
 function OverviewTab({ request }: { request: RequestDetails }) {
   return (
     <div className="space-y-6">
@@ -207,60 +212,84 @@ function OverviewTab({ request }: { request: RequestDetails }) {
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
 /* Replay                                                                      */
-/* -------------------------------------------------------------------------- */
-
-function ReplayTab({ replayResult, replayError }: { replayResult: ReplayResult | null; replayError: string | null }) {
-  if (!replayResult && !replayError) {
-    return <div className="text-sm text-zinc-500">No replay has been executed yet.</div>;
-  }
-
-  if (replayError) {
-    return (
-      <div className="rounded-md border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">{replayError}</div>
-    );
-  }
-
+function ReplayTab({
+  replayHistory,
+  replayResult,
+  replayError,
+}: {
+  replayHistory: ReplayExecution[];
+  replayResult: ReplayResult | null;
+  replayError: string | null;
+}) {
   return (
     <div className="space-y-6">
-      {/* Status */}
-      <DetailSection title="Replay Status">
-        <div className="rounded-md border border-zinc-800 bg-[#0b0d10]">
-          <InfoRow label="Status" value={String(replayResult?.status ?? "—")} />
-        </div>
+      {/* Replay History */}
+      <DetailSection title="Replay History">
+        {replayHistory.length === 0 ? (
+          <div className="rounded-md border border-zinc-800 bg-[#0b0d10] p-4 text-sm text-zinc-500">
+            No replay executions yet.
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-md border border-zinc-800">
+            {replayHistory.map((replay) => (
+              <div
+                key={replay.id}
+                className="
+                  grid grid-cols-[1fr_100px_100px]
+                  items-center
+                  border-b border-zinc-800
+                  bg-[#0b0d10]
+                  px-4 py-3
+                  last:border-b-0
+                "
+              >
+                <div>
+                  <div className="text-xs text-zinc-300">{new Date(replay.createdAt).toLocaleString()}</div>
+
+                  <div className="mt-1 truncate font-mono text-[11px] text-zinc-600">{replay.id}</div>
+                </div>
+
+                <div className="text-sm text-zinc-300">{replay.statusCode}</div>
+
+                <div className="text-right font-mono text-xs text-zinc-500">{replay.durationMs}ms</div>
+              </div>
+            ))}
+          </div>
+        )}
       </DetailSection>
 
-      {/* Response */}
-      <DetailSection title="Replay Response">
-        <pre
-          className="
-            max-h-[400px]
-            overflow-auto
-            rounded-md
-            border border-zinc-800
-            bg-[#0b0d10]
-            p-4
-            font-mono
-            text-xs
-            leading-6
-            text-zinc-300
-          "
-        >
-          {typeof replayResult?.body === "string"
-            ? replayResult.body
-            : JSON.stringify(replayResult?.body ?? {}, null, 2)}
-        </pre>
-      </DetailSection>
+      {/* Latest Replay Result */}
+      {replayError && (
+        <div className="rounded-md border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">{replayError}</div>
+      )}
+
+      {replayResult && (
+        <DetailSection title="Latest Replay Response">
+          <pre
+            className="
+              max-h-[400px]
+              overflow-auto
+              rounded-md
+              border border-zinc-800
+              bg-[#0b0d10]
+              p-4
+              font-mono
+              text-xs
+              leading-6
+              text-zinc-300
+            "
+          >
+            {typeof replayResult.body === "string"
+              ? replayResult.body
+              : JSON.stringify(replayResult.body ?? {}, null, 2)}
+          </pre>
+        </DetailSection>
+      )}
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
 /* Shared UI                                                                   */
-/* -------------------------------------------------------------------------- */
-
 function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
