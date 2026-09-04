@@ -3,8 +3,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f9f9ff;
-  --foreground: #161c27;
+  --background: #0c080a;
+  --foreground: #e2e2e4;
+
+  /* DevReplay colors */
+  --surface: #111011;
+  --surface-raised: #171617;
+  --surface-hover: #1d1a1b;
+
+  --border: #2d292a;
+  --border-subtle: #211e1f;
+
+  --text-primary: #fefefe;
+  --text-secondary: #e2e2e4;
+  --text-muted: #d1d1d3;
+
+  /* Scrollbar */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #3a3436;
+  --scrollbar-thumb-hover: #5a5154;
 }
 
 * {
@@ -32,4 +49,71 @@ code,
 pre,
 .font-mono {
   font-family: "JetBrains Mono", monospace;
+}
+
+
+/* =========================================================
+   DevReplay Scrollbar
+   ========================================================= */
+
+.devreplay-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+.devreplay-scrollbar::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.devreplay-scrollbar::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+.devreplay-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}
+
+.devreplay-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Remove browser's ugly arrow buttons */
+.devreplay-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+
+/* =========================================================
+   Code / JSON Scrollbar
+   ========================================================= */
+
+pre {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3436 transparent;
+}
+
+pre::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+pre::-webkit-scrollbar-thumb {
+  background: #3a3436;
+  border-radius: 9999px;
+}
+
+pre::-webkit-scrollbar-thumb:hover {
+  background: #5a5154;
+}
+
+pre::-webkit-scrollbar-button {
+  display: none;
 }

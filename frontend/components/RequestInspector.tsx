@@ -38,13 +38,10 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         data,
       });
 
-      // Add the new replay to the beginning of history
       setReplayHistory((history) => [data.replay, ...history]);
 
-      // Automatically select the newly-created replay
       setSelectedReplay(data.replay);
 
-      // Open the Replay tab
       setActiveTab("replay");
     } catch (error) {
       console.error("Replay failed:", error);
@@ -56,47 +53,72 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6">
-      {/* Inspector */}
       <div
         className="
           flex h-[85vh] w-full max-w-4xl
           flex-col overflow-hidden
-          rounded-lg border border-zinc-800
-          bg-[#111318]
+          rounded-lg border border-[#e1dbd6]/20
+          bg-[#0c080a]
           shadow-2xl
         "
       >
         {/* Header */}
-        <div className="flex shrink-0 items-start justify-between border-b border-zinc-800 px-6 py-4">
-          <div>
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-[#2d292a] px-6 py-4">
+          <div className="min-w-0">
             <div className="flex items-center gap-3">
-              <span className="font-mono text-sm font-bold text-blue-400">{request.method}</span>
+              {/* HTTP Method */}
+              <span className="rounded-md bg-green-500/10 px-2 py-1 font-mono text-xs font-bold text-green-400">
+                {request.method}
+              </span>
 
-              <span className="font-mono text-sm text-zinc-300">{request.path}</span>
+              {/* Request Path */}
+              <span className="truncate font-mono text-sm font-medium text-[#fefefe]">{request.path}</span>
             </div>
 
-            <div className="mt-2 flex gap-4 text-xs text-zinc-500">
-              <span>Status: {request.statusCode ?? "—"}</span>
+            {/* Metadata */}
+            <div className="mt-2 flex items-center gap-3 text-xs">
+              <span
+                className={
+                  request.statusCode && request.statusCode >= 200 && request.statusCode < 300
+                    ? "font-medium text-emerald-400"
+                    : request.statusCode && request.statusCode >= 400
+                      ? "font-medium text-red-400"
+                      : "text-[#d1d1d3]"
+                }
+              >
+                {request.statusCode ?? "—"}
+              </span>
 
-              <span>Duration: {request.durationMs ?? "—"}ms</span>
+              <span className="text-[#3a3436]">•</span>
 
-              <span>{new Date(request.createdAt).toLocaleString()}</span>
+              <span className="text-[#d1d1d3]">{request.durationMs ?? "—"}ms</span>
+
+              <span className="text-[#3a3436]">•</span>
+
+              <span className="text-[#d1d1d3]">{new Date(request.createdAt).toLocaleString()}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="ml-4 flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={handleReplay}
               disabled={replaying}
               className="
-                rounded-md border border-zinc-700
-                px-3 py-1.5
-                text-xs font-medium text-zinc-300
-                hover:bg-zinc-800 hover:text-white
-                disabled:cursor-not-allowed
-                disabled:opacity-50
-              "
+        rounded-md
+        border border-[#3a3436]
+        bg-[#111011]
+        px-3 py-1.5
+        text-xs font-medium
+        text-[#e2e2e4]
+        transition
+        hover:border-[#5a5154]
+        hover:bg-[#171617]
+        hover:text-[#fefefe]
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+      "
             >
               {replaying ? "Replaying..." : "Replay"}
             </button>
@@ -105,12 +127,14 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
               type="button"
               onClick={onClose}
               className="
-                flex h-8 w-8 items-center justify-center
-                rounded-md
-                text-zinc-500
-                hover:bg-zinc-800
-                hover:text-white
-              "
+        flex h-8 w-8 items-center justify-center
+        rounded-md
+        text-lg
+        text-[#d1d1d3]
+        transition
+        hover:bg-[#171617]
+        hover:text-[#fefefe]
+      "
               aria-label="Close request inspector"
             >
               ×
@@ -119,7 +143,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         </div>
 
         {/* Tabs */}
-        <div className="flex shrink-0 border-b border-zinc-800 px-4">
+        <div className="flex shrink-0 border-b border-[#e1dbd6]/20 px-4">
           {(
             [
               ["overview", "Overview"],
@@ -138,8 +162,8 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
                 border-b-2 px-4 py-3 text-xs transition
                 ${
                   activeTab === value
-                    ? "border-white text-white"
-                    : "border-transparent text-zinc-500 hover:text-zinc-300"
+                    ? "border-[#f9f6f2] text-[#fefefe]"
+                    : "border-transparent text-[#d1d1d3] hover:text-[#e2e2e4]"
                 }
               `}
             >
@@ -149,7 +173,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         </div>
 
         {/* Content */}
-        <div className="min-h-0 flex-1 overflow-y-auto p-6">
+        <div className="devreplay-scrollbar min-h-0 flex-1 overflow-y-auto p-6">
           {activeTab === "overview" && <OverviewTab request={request} />}
 
           {activeTab === "headers" && (
@@ -198,7 +222,7 @@ function OverviewTab({ request }: { request: RequestDetails }) {
   return (
     <div className="space-y-6">
       <DetailSection title="Request">
-        <div className="rounded-md border border-zinc-800 bg-[#0b0d10]">
+        <div className="rounded-md border border-[#e1dbd6]/20 bg-neutral-900">
           <InfoRow label="Request ID" value={request.id} mono />
 
           <InfoRow label="Method" value={request.method} />
@@ -244,11 +268,11 @@ function ReplayTab({
       {/* Replay History */}
       <DetailSection title="Replay History">
         {replayHistory.length === 0 ? (
-          <div className="rounded-md border border-zinc-800 bg-[#0b0d10] p-4 text-sm text-zinc-500">
+          <div className="rounded-md border border-[#e1dbd6]/20 bg-neutral-900 p-4 text-sm text-[#d1d1d3]">
             No replay executions yet.
           </div>
         ) : (
-          <div className="overflow-hidden rounded-md border border-zinc-800">
+          <div className="overflow-hidden rounded-md border border-[#e1dbd6]/20">
             {replayHistory.map((replay) => (
               <button
                 key={replay.id}
@@ -258,22 +282,23 @@ function ReplayTab({
                   grid w-full
                   grid-cols-[1fr_100px_100px]
                   items-center
-                  border-b border-zinc-800
+                  border-b border-[#e1dbd6]/15
                   px-4 py-3
                   text-left
+                  transition
                   last:border-b-0
-                  ${selectedReplay?.id === replay.id ? "bg-zinc-800" : "bg-[#0b0d10] hover:bg-zinc-900"}
+                  ${selectedReplay?.id === replay.id ? "bg-[#f9f6f2]/10" : "bg-neutral-900 hover:bg-[#f9f6f2]/5"}
                 `}
               >
                 <div>
-                  <div className="text-xs text-zinc-300">{new Date(replay.createdAt).toLocaleString()}</div>
+                  <div className="text-xs text-[#e2e2e4]">{new Date(replay.createdAt).toLocaleString()}</div>
 
-                  <div className="mt-1 truncate font-mono text-[11px] text-zinc-600">{replay.id}</div>
+                  <div className="mt-1 truncate font-mono text-[11px] text-[#d1d1d3]/60">{replay.id}</div>
                 </div>
 
-                <div className="text-sm text-zinc-300">{replay.statusCode}</div>
+                <div className="text-sm text-[#e2e2e4]">{replay.statusCode}</div>
 
-                <div className="text-right font-mono text-xs text-zinc-500">{replay.durationMs}ms</div>
+                <div className="text-right font-mono text-xs text-[#d1d1d3]">{replay.durationMs}ms</div>
               </button>
             ))}
           </div>
@@ -282,29 +307,29 @@ function ReplayTab({
 
       {/* Replay Error */}
       {replayError && (
-        <div className="rounded-md border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">{replayError}</div>
+        <div className="rounded-md border border-red-400/20 bg-red-950/20 p-4 text-sm text-red-300">{replayError}</div>
       )}
 
       {/* Selected Replay */}
       {selectedReplay && (
         <DetailSection title="Selected Replay">
           <div className="mb-3 grid grid-cols-3 gap-3">
-            <div className="rounded-md border border-zinc-800 bg-[#0b0d10] p-3">
-              <div className="text-xs text-zinc-600">Status</div>
+            <div className="rounded-md border border-[#e1dbd6]/20 bg-neutral-900 p-3">
+              <div className="text-xs text-[#d1d1d3]">Status</div>
 
-              <div className="mt-1 font-mono text-sm text-zinc-300">{selectedReplay.statusCode}</div>
+              <div className="mt-1 font-mono text-sm text-[#fefefe]">{selectedReplay.statusCode}</div>
             </div>
 
-            <div className="rounded-md border border-zinc-800 bg-[#0b0d10] p-3">
-              <div className="text-xs text-zinc-600">Duration</div>
+            <div className="rounded-md border border-[#e1dbd6]/20 bg-neutral-900 p-3">
+              <div className="text-xs text-[#d1d1d3]">Duration</div>
 
-              <div className="mt-1 font-mono text-sm text-zinc-300">{selectedReplay.durationMs}ms</div>
+              <div className="mt-1 font-mono text-sm text-[#fefefe]">{selectedReplay.durationMs}ms</div>
             </div>
 
-            <div className="rounded-md border border-zinc-800 bg-[#0b0d10] p-3">
-              <div className="text-xs text-zinc-600">Executed</div>
+            <div className="rounded-md border border-[#e1dbd6]/20 bg-neutral-900 p-3">
+              <div className="text-xs text-[#d1d1d3]">Executed</div>
 
-              <div className="mt-1 text-xs text-zinc-300">{new Date(selectedReplay.createdAt).toLocaleString()}</div>
+              <div className="mt-1 text-xs text-[#e2e2e4]">{new Date(selectedReplay.createdAt).toLocaleString()}</div>
             </div>
           </div>
 
@@ -313,13 +338,13 @@ function ReplayTab({
               max-h-[400px]
               overflow-auto
               rounded-md
-              border border-zinc-800
-              bg-[#0b0d10]
+              border border-[#e1dbd6]/20
+              bg-neutral-900
               p-4
               font-mono
               text-xs
               leading-6
-              text-zinc-300
+              text-[#e2e2e4]
             "
           >
             {typeof selectedReplay.responseBody === "string"
@@ -339,7 +364,7 @@ function ReplayTab({
 function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">{title}</h3>
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#d1d1d3]">{title}</h3>
 
       {children}
     </section>
@@ -348,10 +373,10 @@ function DetailSection({ title, children }: { title: string; children: ReactNode
 
 function InfoRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="grid grid-cols-[120px_1fr] border-b border-zinc-800/70 px-4 py-3 last:border-b-0">
-      <span className="text-xs text-zinc-600">{label}</span>
+    <div className="grid grid-cols-[120px_1fr] border-b border-[#e1dbd6]/15 px-4 py-3 last:border-b-0">
+      <span className="text-xs text-[#d1d1d3]">{label}</span>
 
-      <span className={mono ? "truncate font-mono text-xs text-zinc-300" : "text-sm text-zinc-300"}>{value}</span>
+      <span className={mono ? "truncate font-mono text-xs text-[#e2e2e4]" : "text-sm text-[#e2e2e4]"}>{value}</span>
     </div>
   );
 }
@@ -362,13 +387,13 @@ function JsonBlock({ data }: { data: unknown }) {
       className="
         overflow-x-auto
         rounded-md
-        border border-zinc-800
-        bg-[#0b0d10]
+        border border-[#e1dbd6]/20
+        bg-neutral-900
         p-4
         font-mono
         text-xs
         leading-6
-        text-zinc-300
+        text-[#e2e2e4]
       "
     >
       {JSON.stringify(data ?? {}, null, 2)}
