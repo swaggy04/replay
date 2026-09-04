@@ -16,15 +16,14 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
 
   const [replaying, setReplaying] = useState(false);
 
-  const [replayResult, setReplayResult] = useState<ReplayResult | null>(null);
-
   const [replayError, setReplayError] = useState<string | null>(null);
 
   const [replayHistory, setReplayHistory] = useState<ReplayExecution[]>(request.replays ?? []);
 
+  const [selectedReplay, setSelectedReplay] = useState<ReplayExecution | null>(null);
+
   async function handleReplay() {
     setReplaying(true);
-    setReplayResult(null);
     setReplayError(null);
 
     try {
@@ -39,10 +38,13 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         data,
       });
 
-      setReplayResult(data);
-
+      // Add the new replay to the beginning of history
       setReplayHistory((history) => [data.replay, ...history]);
 
+      // Automatically select the newly-created replay
+      setSelectedReplay(data.replay);
+
+      // Open the Replay tab
       setActiveTab("replay");
     } catch (error) {
       console.error("Replay failed:", error);
@@ -175,14 +177,23 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
           )}
 
           {activeTab === "replay" && (
-            <ReplayTab replayHistory={replayHistory} replayResult={replayResult} replayError={replayError} />
+            <ReplayTab
+              replayHistory={replayHistory}
+              selectedReplay={selectedReplay}
+              onSelectReplay={setSelectedReplay}
+              replayError={replayError}
+            />
           )}
         </div>
       </div>
     </div>
   );
 }
-/* Overview                                                                    */
+
+/* -------------------------------------------------------------------------- */
+/* Overview                                                                   */
+/* -------------------------------------------------------------------------- */
+
 function OverviewTab({ request }: { request: RequestDetails }) {
   return (
     <div className="space-y-6">
@@ -212,14 +223,20 @@ function OverviewTab({ request }: { request: RequestDetails }) {
     </div>
   );
 }
-/* Replay                                                                      */
+
+/* -------------------------------------------------------------------------- */
+/* Replay                                                                     */
+/* -------------------------------------------------------------------------- */
+
 function ReplayTab({
   replayHistory,
-  replayResult,
+  selectedReplay,
+  onSelectReplay,
   replayError,
 }: {
   replayHistory: ReplayExecution[];
-  replayResult: ReplayResult | null;
+  selectedReplay: ReplayExecution | null;
+  onSelectReplay: (replay: ReplayExecution) => void;
   replayError: string | null;
 }) {
   return (
@@ -233,16 +250,20 @@ function ReplayTab({
         ) : (
           <div className="overflow-hidden rounded-md border border-zinc-800">
             {replayHistory.map((replay) => (
-              <div
+              <button
                 key={replay.id}
-                className="
-                  grid grid-cols-[1fr_100px_100px]
+                type="button"
+                onClick={() => onSelectReplay(replay)}
+                className={`
+                  grid w-full
+                  grid-cols-[1fr_100px_100px]
                   items-center
                   border-b border-zinc-800
-                  bg-[#0b0d10]
                   px-4 py-3
+                  text-left
                   last:border-b-0
-                "
+                  ${selectedReplay?.id === replay.id ? "bg-zinc-800" : "bg-[#0b0d10] hover:bg-zinc-900"}
+                `}
               >
                 <div>
                   <div className="text-xs text-zinc-300">{new Date(replay.createdAt).toLocaleString()}</div>
@@ -253,19 +274,40 @@ function ReplayTab({
                 <div className="text-sm text-zinc-300">{replay.statusCode}</div>
 
                 <div className="text-right font-mono text-xs text-zinc-500">{replay.durationMs}ms</div>
-              </div>
+              </button>
             ))}
           </div>
         )}
       </DetailSection>
 
-      {/* Latest Replay Result */}
+      {/* Replay Error */}
       {replayError && (
         <div className="rounded-md border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">{replayError}</div>
       )}
 
-      {replayResult && (
-        <DetailSection title="Latest Replay Response">
+      {/* Selected Replay */}
+      {selectedReplay && (
+        <DetailSection title="Selected Replay">
+          <div className="mb-3 grid grid-cols-3 gap-3">
+            <div className="rounded-md border border-zinc-800 bg-[#0b0d10] p-3">
+              <div className="text-xs text-zinc-600">Status</div>
+
+              <div className="mt-1 font-mono text-sm text-zinc-300">{selectedReplay.statusCode}</div>
+            </div>
+
+            <div className="rounded-md border border-zinc-800 bg-[#0b0d10] p-3">
+              <div className="text-xs text-zinc-600">Duration</div>
+
+              <div className="mt-1 font-mono text-sm text-zinc-300">{selectedReplay.durationMs}ms</div>
+            </div>
+
+            <div className="rounded-md border border-zinc-800 bg-[#0b0d10] p-3">
+              <div className="text-xs text-zinc-600">Executed</div>
+
+              <div className="mt-1 text-xs text-zinc-300">{new Date(selectedReplay.createdAt).toLocaleString()}</div>
+            </div>
+          </div>
+
           <pre
             className="
               max-h-[400px]
@@ -280,16 +322,20 @@ function ReplayTab({
               text-zinc-300
             "
           >
-            {typeof replayResult.body === "string"
-              ? replayResult.body
-              : JSON.stringify(replayResult.body ?? {}, null, 2)}
+            {typeof selectedReplay.responseBody === "string"
+              ? selectedReplay.responseBody
+              : JSON.stringify(selectedReplay.responseBody ?? {}, null, 2)}
           </pre>
         </DetailSection>
       )}
     </div>
   );
 }
-/* Shared UI                                                                   */
+
+/* -------------------------------------------------------------------------- */
+/* Shared UI                                                                  */
+/* -------------------------------------------------------------------------- */
+
 function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
