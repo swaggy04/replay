@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import type { ReplayExecution, ReplayResult, RequestDetails } from "@/types/request";
 import { ReplayTab } from "./replaytab";
+import { OverviewTab } from "./OverviewTab";
 
 type RequestInspectorProps = {
   request: RequestDetails;
@@ -225,53 +226,9 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
     </div>
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Overview                                                                   */
-/* -------------------------------------------------------------------------- */
-
-function OverviewTab({ request }: { request: RequestDetails }) {
-  return (
-    <div className="space-y-7">
-      {/* Request metadata */}
-      <DetailSection title="Request">
-        <div className="overflow-hidden rounded-md border border-[#2d292a] bg-[#111011]">
-          <InfoRow label="Request ID" value={request.id} mono />
-
-          <InfoRow label="Method" value={request.method} />
-
-          <InfoRow label="Path" value={request.path} mono />
-
-          <InfoRow label="Status" value={String(request.statusCode ?? "—")} />
-
-          <InfoRow label="Duration" value={request.durationMs !== null ? `${request.durationMs}ms` : "—"} />
-
-          <InfoRow label="Created" value={new Date(request.createdAt).toLocaleString()} />
-        </div>
-      </DetailSection>
-
-      {/* Query */}
-      <DetailSection title="Query Parameters">
-        <JsonBlock data={request.query} />
-      </DetailSection>
-
-      {/* Body */}
-      <DetailSection title="Request Body">
-        <JsonBlock data={request.body} />
-      </DetailSection>
-
-      {/* Response */}
-      <DetailSection title="Response Body">
-        <JsonBlock data={request.responseBody} />
-      </DetailSection>
-    </div>
-  );
-}
-
 /* -------------------------------------------------------------------------- */
 /* Shared UI                                                                  */
 /* -------------------------------------------------------------------------- */
-
 export function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
@@ -293,7 +250,7 @@ export function DetailSection({ title, children }: { title: string; children: Re
   );
 }
 
-function InfoRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
+export function InfoRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div
       className="
