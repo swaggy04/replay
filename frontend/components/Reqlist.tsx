@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import RequestInspector from "./requestinspector/RequestInspector";
 import type { RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
+import { getRequestDetails, getRequests } from "./requestsApi";
 
 export default function RequestList() {
   const [requests, setRequests] = useState<RequestLog[]>([]);
@@ -18,22 +19,12 @@ export default function RequestList() {
 
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  /*
-   * Fetch request list
-   */
+  //Fetch request list
   useEffect(() => {
     async function fetchRequests() {
       setLoading(true);
-
       try {
-        const response = await fetch(`http://localhost:5000/requests?page=${page}&limit=10`);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch requests");
-        }
-
-        const data: RequestsResponse = await response.json();
-
+        const data: RequestsResponse = await getRequests(page);
         setRequests(data.data);
         setTotalPages(data.totalPages);
       } catch (error) {
@@ -46,23 +37,13 @@ export default function RequestList() {
     fetchRequests();
   }, [page]);
 
-  /*
-   * Fetch details of selected request
-   */
+  // Fetch details of selected request
   async function handleSelectRequest(request: RequestLog) {
     setSelectedRequest(request);
     setRequestDetails(null);
     setDetailsLoading(true);
-
     try {
-      const response = await fetch(`http://localhost:5000/requests/${request.id}`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch request details");
-      }
-
-      const data: RequestDetails = await response.json();
-
+      const data: RequestDetails = await getRequestDetails(request.id);
       setRequestDetails(data);
     } catch (error) {
       console.error("Failed to fetch request details:", error);
