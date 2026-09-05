@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import RequestInspector from "./RequestInspector";
+import RequestInspector from "./requestinspector/RequestInspector";
 import type { RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 
 export default function RequestList() {

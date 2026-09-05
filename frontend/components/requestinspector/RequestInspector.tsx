@@ -2,52 +2,34 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
-import type {
-  ReplayExecution,
-  ReplayResult,
-  RequestDetails,
-} from "@/types/request";
+import type { ReplayExecution, ReplayResult, RequestDetails } from "@/types/request";
+import { ReplayTab } from "./replaytab";
 
 type RequestInspectorProps = {
   request: RequestDetails;
   onClose: () => void;
 };
 
-type DetailTab =
-  | "overview"
-  | "headers"
-  | "query"
-  | "body"
-  | "response"
-  | "replay";
+type DetailTab = "overview" | "headers" | "query" | "body" | "response" | "replay";
 
-export default function RequestInspector({
-  request,
-  onClose,
-}: RequestInspectorProps) {
+export default function RequestInspector({ request, onClose }: RequestInspectorProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
 
   const [replaying, setReplaying] = useState(false);
   const [replayError, setReplayError] = useState<string | null>(null);
 
-  const [replayHistory, setReplayHistory] = useState<ReplayExecution[]>(
-    request.replays ?? [],
-  );
+  const [replayHistory, setReplayHistory] = useState<ReplayExecution[]>(request.replays ?? []);
 
-  const [selectedReplay, setSelectedReplay] =
-    useState<ReplayExecution | null>(null);
+  const [selectedReplay, setSelectedReplay] = useState<ReplayExecution | null>(null);
 
   async function handleReplay() {
     setReplaying(true);
     setReplayError(null);
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/replay/${request.id}`,
-        {
-          method: "POST",
-        },
-      );
+      const response = await fetch(`http://localhost:5000/replay/${request.id}`, {
+        method: "POST",
+      });
 
       const data: ReplayResult = await response.json();
 
@@ -98,9 +80,7 @@ export default function RequestInspector({
               <MethodBadge method={request.method} />
 
               <div className="min-w-0">
-                <div className="truncate font-mono text-sm font-medium text-[#fefefe]">
-                  {request.path}
-                </div>
+                <div className="truncate font-mono text-sm font-medium text-[#fefefe]">{request.path}</div>
               </div>
             </div>
 
@@ -111,16 +91,12 @@ export default function RequestInspector({
               <span className="text-[#3a3436]">•</span>
 
               <span className="font-mono text-[#d1d1d3]">
-                {request.durationMs !== null
-                  ? `${request.durationMs}ms`
-                  : "—"}
+                {request.durationMs !== null ? `${request.durationMs}ms` : "—"}
               </span>
 
               <span className="text-[#3a3436]">•</span>
 
-              <span className="text-[#d1d1d3]">
-                {new Date(request.createdAt).toLocaleString()}
-              </span>
+              <span className="text-[#d1d1d3]">{new Date(request.createdAt).toLocaleString()}</span>
             </div>
           </div>
 
@@ -185,11 +161,7 @@ export default function RequestInspector({
                   px-4 py-3
                   text-xs font-medium
                   transition-colors
-                  ${
-                    isActive
-                      ? "text-[#fefefe]"
-                      : "text-[#d1d1d3] hover:text-[#e2e2e4]"
-                  }
+                  ${isActive ? "text-[#fefefe]" : "text-[#d1d1d3] hover:text-[#e2e2e4]"}
                 `}
               >
                 {label}
@@ -270,24 +242,11 @@ function OverviewTab({ request }: { request: RequestDetails }) {
 
           <InfoRow label="Path" value={request.path} mono />
 
-          <InfoRow
-            label="Status"
-            value={String(request.statusCode ?? "—")}
-          />
+          <InfoRow label="Status" value={String(request.statusCode ?? "—")} />
 
-          <InfoRow
-            label="Duration"
-            value={
-              request.durationMs !== null
-                ? `${request.durationMs}ms`
-                : "—"
-            }
-          />
+          <InfoRow label="Duration" value={request.durationMs !== null ? `${request.durationMs}ms` : "—"} />
 
-          <InfoRow
-            label="Created"
-            value={new Date(request.createdAt).toLocaleString()}
-          />
+          <InfoRow label="Created" value={new Date(request.createdAt).toLocaleString()} />
         </div>
       </DetailSection>
 
@@ -310,138 +269,10 @@ function OverviewTab({ request }: { request: RequestDetails }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Replay                                                                     */
-/* -------------------------------------------------------------------------- */
-
-function ReplayTab({
-  replayHistory,
-  selectedReplay,
-  onSelectReplay,
-  replayError,
-}: {
-  replayHistory: ReplayExecution[];
-  selectedReplay: ReplayExecution | null;
-  onSelectReplay: (replay: ReplayExecution) => void;
-  replayError: string | null;
-}) {
-  return (
-    <div className="space-y-7">
-      {/* Replay History */}
-      <DetailSection title="Replay History">
-        {replayHistory.length === 0 ? (
-          <EmptyState message="No replay executions yet." />
-        ) : (
-          <div className="overflow-hidden rounded-md border border-[#2d292a] bg-[#111011]">
-            {replayHistory.map((replay) => {
-              const isSelected = selectedReplay?.id === replay.id;
-
-              return (
-                <button
-                  key={replay.id}
-                  type="button"
-                  onClick={() => onSelectReplay(replay)}
-                  className={`
-                    grid w-full
-                    grid-cols-[minmax(0,1fr)_70px_80px]
-                    items-center
-                    gap-4
-                    border-b border-[#211e1f]
-                    px-4 py-3
-                    text-left
-                    transition-colors
-                    last:border-b-0
-                    ${
-                      isSelected
-                        ? "bg-[#171617]"
-                        : "bg-[#111011] hover:bg-[#171617]"
-                    }
-                  `}
-                >
-                  {/* Replay identity */}
-                  <div className="min-w-0">
-                    <div className="truncate text-xs text-[#e2e2e4]">
-                      {new Date(replay.createdAt).toLocaleString()}
-                    </div>
-
-                    <div className="mt-1 truncate font-mono text-[10px] text-[#d1d1d3]/60">
-                      {replay.id}
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <StatusText status={replay.statusCode} />
-
-                  {/* Duration */}
-                  <div className="text-right font-mono text-[11px] text-[#d1d1d3]">
-                    {replay.durationMs}ms
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </DetailSection>
-
-      {/* Replay error */}
-      {replayError && (
-        <div
-          className="
-            rounded-md
-            border border-red-500/20
-            bg-red-950/20
-            px-4 py-3
-            text-xs
-            text-red-300
-          "
-        >
-          {replayError}
-        </div>
-      )}
-
-      {/* Selected replay */}
-      {selectedReplay && (
-        <DetailSection title="Selected Replay">
-          {/* Replay stats */}
-          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatCard
-              label="Status"
-              value={String(selectedReplay.statusCode)}
-              mono
-            />
-
-            <StatCard
-              label="Duration"
-              value={`${selectedReplay.durationMs}ms`}
-              mono
-            />
-
-            <StatCard
-              label="Executed"
-              value={new Date(
-                selectedReplay.createdAt,
-              ).toLocaleString()}
-            />
-          </div>
-
-          {/* Replay response */}
-          <JsonBlock data={selectedReplay.responseBody} />
-        </DetailSection>
-      )}
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /* Shared UI                                                                  */
 /* -------------------------------------------------------------------------- */
 
-function DetailSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+export function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
       <h3
@@ -462,15 +293,7 @@ function DetailSection({
   );
 }
 
-function InfoRow({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
+function InfoRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div
       className="
@@ -483,30 +306,19 @@ function InfoRow({
         last:border-b-0
       "
     >
-      <span className="text-xs font-medium text-[#d1d1d3]">
-        {label}
-      </span>
+      <span className="text-xs font-medium text-[#d1d1d3]">{label}</span>
 
-      <span
-        className={
-          mono
-            ? "truncate font-mono text-xs text-[#e2e2e4]"
-            : "truncate text-sm text-[#e2e2e4]"
-        }
-      >
+      <span className={mono ? "truncate font-mono text-xs text-[#e2e2e4]" : "truncate text-sm text-[#e2e2e4]"}>
         {value}
       </span>
     </div>
   );
 }
 
-function JsonBlock({ data }: { data: unknown }) {
+export function JsonBlock({ data }: { data: unknown }) {
   const [copied, setCopied] = useState(false);
 
-  const content =
-    typeof data === "string"
-      ? data
-      : JSON.stringify(data ?? {}, null, 2);
+  const content = typeof data === "string" ? data : JSON.stringify(data ?? {}, null, 2);
 
   async function handleCopy() {
     try {
@@ -535,9 +347,7 @@ function JsonBlock({ data }: { data: unknown }) {
           px-3 py-2
         "
       >
-        <span className="font-mono text-[10px] uppercase tracking-wide text-[#d1d1d3]/60">
-          JSON
-        </span>
+        <span className="font-mono text-[10px] uppercase tracking-wide text-[#d1d1d3]/60">JSON</span>
 
         <button
           type="button"
@@ -603,13 +413,9 @@ function MethodBadge({ method }: { method: string }) {
   );
 }
 
-function StatusText({ status }: { status: number | null }) {
+export function StatusText({ status }: { status: number | null }) {
   if (status === null) {
-    return (
-      <span className="font-medium text-[#d1d1d3]">
-        —
-      </span>
-    );
+    return <span className="font-medium text-[#d1d1d3]">—</span>;
   }
 
   let className = "font-medium text-[#d1d1d3]";
@@ -627,15 +433,7 @@ function StatusText({ status }: { status: number | null }) {
   return <span className={className}>{status}</span>;
 }
 
-function StatCard({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
+export function StatCard({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div
       className="
@@ -645,24 +443,16 @@ function StatCard({
         px-4 py-3
       "
     >
-      <div className="text-[10px] font-medium uppercase tracking-wide text-[#d1d1d3]">
-        {label}
-      </div>
+      <div className="text-[10px] font-medium uppercase tracking-wide text-[#d1d1d3]">{label}</div>
 
-      <div
-        className={
-          mono
-            ? "mt-1 truncate font-mono text-sm text-[#fefefe]"
-            : "mt-1 truncate text-xs text-[#e2e2e4]"
-        }
-      >
+      <div className={mono ? "mt-1 truncate font-mono text-sm text-[#fefefe]" : "mt-1 truncate text-xs text-[#e2e2e4]"}>
         {value}
       </div>
     </div>
   );
 }
 
-function EmptyState({ message }: { message: string }) {
+export function EmptyState({ message }: { message: string }) {
   return (
     <div
       className="
