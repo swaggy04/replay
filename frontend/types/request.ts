@@ -6,6 +6,11 @@ export type RequestLog = {
   createdAt: string;
   durationMs: number;
 };
+export type RequestSidebarProps = {
+  requests: RequestLog[];
+  selectedRequests: RequestLog | null;
+  onSelectRequest: (request: RequestLog) => void;
+};
 
 export type RequestDetails = RequestLog & {
   durationMs: number | null;
