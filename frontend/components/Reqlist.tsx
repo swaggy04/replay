@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import RequestInspector from "./requestinspector/RequestInspector";
 import type { RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 import { getRequestDetails, getRequests } from "./requestsApi";
-import { getMethodClass } from "./requests/RequestSidebar";
+import { getMethodClass, RequestSidebar } from "./requests/RequestSidebar";
 
 export default function RequestList() {
   const [requests, setRequests] = useState<RequestLog[]>([]);
@@ -80,6 +80,7 @@ export default function RequestList() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0c080a] text-[#e2e2e4]">
+      <RequestSidebar requests={requests} selectedRequests={selectedRequest} onSelectRequest={handleSelectRequest} />
       {/* =========================================================
           MAIN AREA
       ========================================================= */}
