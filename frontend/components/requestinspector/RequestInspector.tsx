@@ -2,22 +2,25 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
+
 import type { ReplayExecution, ReplayResult, RequestDetails } from "@/types/request";
+
+import { replayRequest } from "../requestsApi";
+
 import { ReplayTab } from "./replaytab";
 import { OverviewTab } from "./OverviewTab";
-import { replayRequest } from "../requestsApi";
+import { DetailTab, InspectorTabs } from "./InspectorTabs";
 
 type RequestInspectorProps = {
   request: RequestDetails;
   onClose: () => void;
 };
 
-type DetailTab = "overview" | "headers" | "query" | "body" | "response" | "replay";
-
 export default function RequestInspector({ request, onClose }: RequestInspectorProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
 
   const [replaying, setReplaying] = useState(false);
+
   const [replayError, setReplayError] = useState<string | null>(null);
 
   const [replayHistory, setReplayHistory] = useState<ReplayExecution[]>(request.replays ?? []);
@@ -32,6 +35,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
       const data: ReplayResult = await replayRequest(request.id);
 
       setReplayHistory((history) => [data.replay, ...history]);
+
       setSelectedReplay(data.replay);
       setActiveTab("replay");
     } catch (error) {
@@ -41,15 +45,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
       setReplaying(false);
     }
   }
-
-  const tabs: [DetailTab, string][] = [
-    ["overview", "Overview"],
-    ["headers", "Headers"],
-    ["query", "Query"],
-    ["body", "Body"],
-    ["response", "Response"],
-    ["replay", "Replay"],
-  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 sm:p-6">
@@ -63,13 +58,12 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
           shadow-2xl
         "
       >
-        {/* ------------------------------------------------------------------ */}
-        {/* Header                                                             */}
-        {/* ------------------------------------------------------------------ */}
+        {/* HEADER */}
 
         <div className="flex shrink-0 items-center justify-between border-b border-[#2d292a] px-5 py-4">
           <div className="min-w-0">
             {/* Request identity */}
+
             <div className="flex min-w-0 items-center gap-3">
               <MethodBadge method={request.method} />
 
@@ -79,6 +73,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
             </div>
 
             {/* Request metadata */}
+
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
               <StatusText status={request.statusCode} />
 
@@ -95,6 +90,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
           </div>
 
           {/* Header actions */}
+
           <div className="ml-4 flex shrink-0 items-center gap-2">
             <button
               type="button"
@@ -137,47 +133,11 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
           </div>
         </div>
 
-        {/* ------------------------------------------------------------------ */}
-        {/* Tabs                                                               */}
-        {/* ------------------------------------------------------------------ */}
+        {/* TABS */}
 
-        <div className="flex shrink-0 overflow-x-auto border-b border-[#2d292a] px-3">
-          {tabs.map(([value, label]) => {
-            const isActive = activeTab === value;
+        <InspectorTabs activeTab={activeTab} onChange={setActiveTab} />
 
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setActiveTab(value)}
-                className={`
-                  relative shrink-0
-                  px-4 py-3
-                  text-xs font-medium
-                  transition-colors
-                  ${isActive ? "text-[#fefefe]" : "text-[#d1d1d3] hover:text-[#e2e2e4]"}
-                `}
-              >
-                {label}
-
-                {isActive && (
-                  <span
-                    className="
-                      absolute inset-x-2 bottom-0
-                      h-0.5
-                      rounded-full
-                      bg-[#fefefe]
-                    "
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ------------------------------------------------------------------ */}
-        {/* Content                                                            */}
-        {/* ------------------------------------------------------------------ */}
+        {/* CONTENT */}
 
         <div className="devreplay-scrollbar min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
           {activeTab === "overview" && <OverviewTab request={request} />}
@@ -219,9 +179,11 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
     </div>
   );
 }
+
 /* -------------------------------------------------------------------------- */
 /* Shared UI                                                                  */
 /* -------------------------------------------------------------------------- */
+
 export function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
@@ -287,6 +249,7 @@ export function JsonBlock({ data }: { data: unknown }) {
   return (
     <div className="relative overflow-hidden rounded-md border border-[#2d292a] bg-[#111011]">
       {/* Code toolbar */}
+
       <div
         className="
           flex
@@ -318,6 +281,7 @@ export function JsonBlock({ data }: { data: unknown }) {
       </div>
 
       {/* Code */}
+
       <pre
         className="
           devreplay-scrollbar
