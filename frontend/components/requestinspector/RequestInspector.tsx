@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { ReplayExecution, ReplayResult, RequestDetails } from "@/types/request";
 import { ReplayTab } from "./replaytab";
 import { OverviewTab } from "./OverviewTab";
+import { replayRequest } from "../requestsApi";
 
 type RequestInspectorProps = {
   request: RequestDetails;
@@ -28,15 +29,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
     setReplayError(null);
 
     try {
-      const response = await fetch(`http://localhost:5000/replay/${request.id}`, {
-        method: "POST",
-      });
-
-      const data: ReplayResult = await response.json();
-
-      if (!response.ok) {
-        throw new Error("Replay request failed");
-      }
+      const data: ReplayResult = await replayRequest(request.id);
 
       setReplayHistory((history) => [data.replay, ...history]);
       setSelectedReplay(data.replay);
