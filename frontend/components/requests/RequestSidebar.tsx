@@ -21,7 +21,7 @@ export function getMethodClass(method: string) {
       return "text-[#e2e2e4]";
   }
 }
-export function RequestSidebar({ requests, selectedRequests, onSelectRequest }: RequestSidebarProps) {
+export function RequestSidebar({ requests, selectedRequest, onSelectRequest }: RequestSidebarProps) {
   return (
     <aside className="w-[250px] shrink-0 border-r border-[#e1dbd6]/20 bg-neutral-900">
       {/* Logo */}
@@ -100,7 +100,7 @@ export function RequestSidebar({ requests, selectedRequests, onSelectRequest }: 
                 text-left
                 transition
                 hover:bg-[#f9f6f2]/5
-                ${selectedRequests?.id === request.id ? "bg-[#f9f6f2]/10" : ""}
+                ${selectedRequest?.id === request.id ? "bg-[#f9f6f2]/10" : ""}
               `}
           >
             <span className={`w-12 text-[11px] font-semibold ${getMethodClass(request.method)}`}>{request.method}</span>

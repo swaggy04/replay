@@ -8,7 +8,7 @@ export type RequestLog = {
 };
 export type RequestSidebarProps = {
   requests: RequestLog[];
-  selectedRequests: RequestLog | null;
+  selectedRequest: RequestLog | null;
   onSelectRequest: (request: RequestLog) => void;
 };
 

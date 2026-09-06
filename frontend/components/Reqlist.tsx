@@ -5,6 +5,7 @@ import RequestInspector from "./requestinspector/RequestInspector";
 import type { RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 import { getRequestDetails, getRequests } from "./requestsApi";
 import { getMethodClass, RequestSidebar } from "./requests/RequestSidebar";
+import { RequestTable } from "./requests/RequestTable";
 
 export default function RequestList() {
   const [requests, setRequests] = useState<RequestLog[]>([]);
@@ -80,7 +81,7 @@ export default function RequestList() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0c080a] text-[#e2e2e4]">
-      <RequestSidebar requests={requests} selectedRequests={selectedRequest} onSelectRequest={handleSelectRequest} />
+      <RequestSidebar requests={requests} selectedRequest={selectedRequest} onSelectRequest={handleSelectRequest} />
       {/* =========================================================
           MAIN AREA
       ========================================================= */}
@@ -100,62 +101,7 @@ export default function RequestList() {
 
         {/* REQUEST LIST */}
 
-        <section className="border-b border-[#e1dbd6]/20">
-          <div
-            className="
-              grid grid-cols-[80px_1fr_90px_90px]
-              border-b border-[#e1dbd6]/20
-              bg-neutral-900
-              px-5 py-2
-              text-[11px]
-              uppercase
-              tracking-wide
-              text-[#d1d1d3]
-            "
-          >
-            <span>Method</span>
-            <span>Path</span>
-            <span>Status</span>
-            <span>Time</span>
-          </div>
-
-          <div className="max-h-[320px] overflow-y-auto">
-            {requests.length === 0 ? (
-              <div className="px-5 py-10 text-center text-sm text-[#d1d1d3]">No requests captured yet.</div>
-            ) : (
-              requests.map((request) => (
-                <button
-                  key={request.id}
-                  onClick={() => handleSelectRequest(request)}
-                  className={`
-                    grid w-full
-                    grid-cols-[80px_1fr_90px_90px]
-                    items-center
-                    border-b border-[#e1dbd6]/15
-                    px-5 py-3
-                    text-left
-                    transition
-                    hover:bg-[#f9f6f2]/5
-                    ${selectedRequest?.id === request.id ? "bg-[#f9f6f2]/10" : ""}
-                  `}
-                >
-                  <span className={`text-xs font-bold ${getMethodClass(request.method)}`}>{request.method}</span>
-
-                  <span className="truncate text-sm text-[#e2e2e4]">{request.path}</span>
-
-                  <span className={`text-xs font-medium ${getStatusClass(request.statusCode)}`}>
-                    {request.statusCode ?? "—"}
-                  </span>
-
-                  <span className="text-xs text-[#d1d1d3]">
-                    {request.durationMs !== null ? `${request.durationMs}ms` : "—"}
-                  </span>
-                </button>
-              ))
-            )}
-          </div>
-        </section>
-
+        <RequestTable requests={requests} selectedRequest={selectedRequest} onSelectRequest={handleSelectRequest} />
         {/* DETAILS PANEL */}
 
         <section className="flex min-h-0 flex-1 flex-col">
