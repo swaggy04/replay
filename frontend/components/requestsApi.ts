@@ -30,3 +30,13 @@ export async function replayRequest(id: string) {
 
   return data;
 }
+
+export async function requestComparison(requestId: string, replayId: string) {
+  const response = await fetch(`http://localhost:5000/requests/${requestId}/compare/${replayId}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to compare replay");
+  }
+
+  return response.json();
+}
