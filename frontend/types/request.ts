@@ -32,7 +32,7 @@ export type ReplayExecution = {
 export type ReplayResult = {
   status: number;
   body: unknown;
-  replay:ReplayExecution
+  replay: ReplayExecution;
 };
 
 export type RequestsResponse = {
@@ -41,4 +41,11 @@ export type RequestsResponse = {
   limit: number;
   total: number;
   totalPages: number;
+};
+
+export type ReplayComparison = {
+  original: RequestDetails;
+  replay: ReplayExecution;
+  statusChanged: boolean;
+  bodyChanged: boolean;
 };
