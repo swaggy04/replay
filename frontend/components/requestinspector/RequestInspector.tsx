@@ -172,6 +172,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
               selectedReplay={selectedReplay}
               onSelectReplay={setSelectedReplay}
               replayError={replayError}
+              requestId={request.id}
             />
           )}
         </div>
