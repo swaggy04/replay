@@ -1,6 +1,7 @@
 import { ReplayExecution, ReplayComparison } from "@/types/request";
 import { DetailSection, EmptyState, JsonBlock, StatCard, StatusText } from "./RequestInspector";
 import { useState } from "react";
+import { requestComparison } from "../requestsApi";
 
 export function ReplayTab({
   replayHistory,
@@ -20,6 +21,20 @@ export function ReplayTab({
   const [comparisonLoading, setComparisonLoading] = useState(false);
 
   const [comparisonError, setComparisonError] = useState<string | null>(null);
+  const handleCompare = async (replay: ReplayExecution) => {
+    try {
+      setComparisonLoading(true);
+      setComparisonError(null);
+
+      const result = await requestComparison(requestId, replay.id);
+
+      setComparison(result);
+    } catch (error) {
+      setComparisonError(error instanceof Error ? error.message : "Failed to compare replay");
+    } finally {
+      setComparisonLoading(false);
+    }
+  };
   return (
     <div className="space-y-7">
       {/* Replay History */}
