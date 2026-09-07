@@ -1,17 +1,25 @@
-import { ReplayExecution } from "@/types/request";
+import { ReplayExecution, ReplayComparison } from "@/types/request";
 import { DetailSection, EmptyState, JsonBlock, StatCard, StatusText } from "./RequestInspector";
+import { useState } from "react";
 
 export function ReplayTab({
   replayHistory,
   selectedReplay,
   onSelectReplay,
   replayError,
+  requestId,
 }: {
   replayHistory: ReplayExecution[];
   selectedReplay: ReplayExecution | null;
   onSelectReplay: (replay: ReplayExecution) => void;
   replayError: string | null;
+  requestId: string;
 }) {
+  const [comparison, setComparison] = useState<ReplayComparison | null>(null);
+
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+
+  const [comparisonError, setComparisonError] = useState<string | null>(null);
   return (
     <div className="space-y-7">
       {/* Replay History */}
