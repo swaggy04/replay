@@ -173,6 +173,8 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
               onSelectReplay={setSelectedReplay}
               replayError={replayError}
               requestId={request.id}
+              method={request.method}
+              path={request.path}
             />
           )}
         </div>
@@ -249,8 +251,6 @@ export function JsonBlock({ data }: { data: unknown }) {
 
   return (
     <div className="relative overflow-hidden rounded-md border border-[#2d292a] bg-[#111011]">
-      {/* Code toolbar */}
-
       <div
         className="
           flex
@@ -280,8 +280,6 @@ export function JsonBlock({ data }: { data: unknown }) {
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-
-      {/* Code */}
 
       <pre
         className="

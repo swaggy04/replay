@@ -15,12 +15,16 @@ export function ReplayTab({
   onSelectReplay,
   replayError,
   requestId,
+  method,
+  path,
 }: {
   replayHistory: ReplayExecution[];
   selectedReplay: ReplayExecution | null;
   onSelectReplay: (replay: ReplayExecution) => void;
   replayError: string | null;
   requestId: string;
+  method: string;
+  path: string;
 }) {
   const [comparison, setComparison] = useState<ReplayComparison | null>(null);
 
@@ -154,7 +158,6 @@ export function ReplayTab({
       {/* Selected replay */}
       {selectedReplay && (
         <DetailSection title="Selected Replay">
-          {/* Replay stats */}
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <StatCard label="Status" value={String(selectedReplay.statusCode)} mono />
 
@@ -163,13 +166,12 @@ export function ReplayTab({
             <StatCard label="Executed" value={new Date(selectedReplay.createdAt).toLocaleString()} />
           </div>
 
-          {/* Replay response */}
           <JsonBlock data={selectedReplay.responseBody} />
         </DetailSection>
       )}
 
       {/* Replay comparison */}
-      {comparison && <RequestComparison comparison={comparison} />}
+      {comparison && <RequestComparison comparison={comparison} method={method} path={path} />}
     </div>
   );
 }
