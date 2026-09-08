@@ -31,6 +31,7 @@ export default function RequestList() {
       try {
         const data: RequestsResponse = await getRequests(page);
 
+        console.log("REQUESTS STATE DATA:", data.data);
         setRequests(data.data);
         setTotalPages(data.totalPages);
       } catch (error) {

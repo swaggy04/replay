@@ -12,6 +12,7 @@ export async function requestService(page: number, limit: number) {
       path: true,
       statusCode: true,
       createdAt: true,
+      durationMs:true
     },
     orderBy: {
       createdAt: "desc",
