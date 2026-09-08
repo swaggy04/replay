@@ -100,7 +100,7 @@ export function RequestTable({ requests, selectedRequest, onSelectRequest }: Req
               </span>
 
               <span className="text-xs text-[#d1d1d3]">
-                {request.durationMs !== null ? `${request.durationMs}ms` : "—"}
+                {typeof request.durationMs === "number" ? `${request.durationMs}ms` : "—"}
               </span>
             </button>
           ))

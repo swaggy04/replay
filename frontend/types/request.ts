@@ -4,7 +4,7 @@ export type RequestLog = {
   path: string;
   statusCode: number | null;
   createdAt: string;
-  durationMs: number;
+  durationMs: number | null;
 };
 export type RequestSidebarProps = {
   requests: RequestLog[];
