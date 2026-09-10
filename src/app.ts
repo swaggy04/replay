@@ -1,6 +1,7 @@
-import express, { Router } from "express";
+import express from "express";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { replayController } from "./controllers/replayController.js";
+import { captureController } from "./controllers/captureController.js";
 import { compareReplayController, replayHistoryController, requestController, requestIdController } from "./controllers/requestController.js";
 import cors from "cors";
 
@@ -11,14 +12,6 @@ app.use(requestLogger);
 app.get("/", (req, res) => {
   res.send("DevReplay is alive");
 });
-// app.post("/users", (req, res) => {
-//   console.log("BODY:", req.body);
-
-//   res.status(201).json({
-//     message: "User created",
-//     user: req.body,
-//   });
-// });
 app.get("/error", (_req, _res) => {
   throw new Error("Something went wrong");
 });
@@ -49,4 +42,5 @@ app.get("/requests/:id", requestIdController);
 app.get("/requests/:id/replays", replayHistoryController);
 app.get("/requests/:id/compare/:replayId", compareReplayController);
 app.get("/replay/:id/history",replayHistoryController)
+app.post("/ingest", captureController);
 export default app;
