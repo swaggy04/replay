@@ -2,7 +2,7 @@ import prisma from "../lib/prisma.js";
 import type { CaptureRequestInput } from "../types/capture.js";
 
 
-export async function captureRequsts(input: CaptureRequestInput) {
+export async function captureRequests(input: CaptureRequestInput) {
   const requestLog = await prisma.requestLog.create({
     data: {
       method: input.method,

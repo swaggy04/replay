@@ -1,9 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
+import { captureRequests } from "../services/captureService.js";
 
 export async function requestLogger(req: Request, res: Response, next: NextFunction) {
   const startTime = Date.now();
   let responseBody: any;
+
   if (
     req.path === "/requests" ||
     req.path.startsWith("/requests/") ||
@@ -13,15 +15,14 @@ export async function requestLogger(req: Request, res: Response, next: NextFunct
   ) {
     return next();
   }
+
   try {
-    const requestLog = await prisma.requestLog.create({
-      data: {
-        method: req.method,
-        path: req.path,
-        body: req.body,
-        query: req.query,
-        headers: req.headers,
-      },
+    const requestLog = await captureRequests({
+      method: req.method,
+      path: req.path,
+      body: req.body,
+      query: req.query,
+      headers: req.headers,
     });
 
     const originalJson = res.json.bind(res);

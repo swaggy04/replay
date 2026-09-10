@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { captureRequsts } from "../services/captureService.js";
+import { captureRequests } from "../services/captureService.js";
 
 export async function captureController(req: Request, res: Response) {
   try {
@@ -11,7 +11,7 @@ export async function captureController(req: Request, res: Response) {
       });
     }
 
-    const requestLog = await captureRequsts({
+    const requestLog = await captureRequests({
       method,
       path,
       body,
