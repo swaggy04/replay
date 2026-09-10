@@ -1,6 +1,7 @@
 import type { Prisma } from "../generated/prisma/client.js";
 
 export type CaptureRequestInput = {
+  projectId: string;
   method: string;
   path: string;
   body?: Prisma.InputJsonValue;

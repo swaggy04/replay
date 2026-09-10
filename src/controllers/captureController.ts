@@ -3,7 +3,7 @@ import { captureRequest } from "../services/captureService.js";
 
 export async function captureController(req: Request, res: Response) {
   try {
-    const { method, path, body, headers, query, statusCode, responseBody, durationMs } = req.body;
+    const { projectId, method, path, body, headers, query, statusCode, responseBody, durationMs } = req.body;
 
     if (!method || !path) {
       return res.status(400).json({
@@ -12,6 +12,7 @@ export async function captureController(req: Request, res: Response) {
     }
 
     const requestLog = await captureRequest({
+      projectId,
       method,
       path,
       body,
