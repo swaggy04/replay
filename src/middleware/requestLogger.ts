@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
-import { captureRequests } from "../services/captureService.js";
+import { captureRequest} from "../services/captureService.js";
 
 export async function requestLogger(req: Request, res: Response, next: NextFunction) {
   const startTime = Date.now();
@@ -18,7 +18,7 @@ export async function requestLogger(req: Request, res: Response, next: NextFunct
   }
 
   try {
-    const requestLog = await captureRequests({
+    const requestLog = await captureRequest({
       method: req.method,
       path: req.path,
       body: req.body,
