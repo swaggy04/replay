@@ -1,0 +1,33 @@
+import type { Request, Response } from "express";
+import { captureRequsts } from "../services/captureService.js";
+
+export async function captureController(req: Request, res: Response) {
+  try {
+    const { method, path, body, headers, query, statusCode, responseBody, durationMs } = req.body;
+
+    if (!method || !path) {
+      return res.status(400).json({
+        message: "method and path are required",
+      });
+    }
+
+    const requestLog = await captureRequsts({
+      method,
+      path,
+      body,
+      headers,
+      query,
+      statusCode,
+      responseBody,
+      durationMs,
+    });
+
+    return res.status(201).json(requestLog);
+  } catch (error) {
+    console.error("Failed to capture request:", error);
+
+    return res.status(500).json({
+      message: "Failed to capture request",
+    });
+  }
+}
