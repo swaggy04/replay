@@ -11,7 +11,8 @@ export async function requestLogger(req: Request, res: Response, next: NextFunct
     req.path.startsWith("/requests/") ||
     req.path.startsWith("/replay/") ||
     req.path.startsWith("/_next/") ||
-    req.path === "/favicon.ico"
+    req.path === "/favicon.ico" ||
+    req.path === "/ingest"
   ) {
     return next();
   }
