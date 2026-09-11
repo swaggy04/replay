@@ -1,23 +1,38 @@
 import prisma from "../lib/prisma.js";
 
-export async function requestService(page: number, limit: number) {
-  const total = await prisma.requestLog.count({});
+export async function requestService(page: number, limit: number, projectId?: string) {
+  const where = projectId
+    ? {
+        projectId,
+      }
+    : undefined;
+
+  const total = await prisma.requestLog.count({
+    where,
+  });
+
   const totalPages = Math.ceil(total / limit);
+
   const requests = await prisma.requestLog.findMany({
+    where,
+
     skip: (page - 1) * limit,
     take: limit,
+
     select: {
       id: true,
       method: true,
       path: true,
       statusCode: true,
       createdAt: true,
-      durationMs:true
+      durationMs: true,
     },
+
     orderBy: {
       createdAt: "desc",
     },
   });
+
   return {
     requests,
     total,
@@ -32,6 +47,7 @@ export async function requestIdService(requestId: string) {
     where: {
       id: requestId,
     },
+
     include: {
       replays: {
         orderBy: {
@@ -40,6 +56,7 @@ export async function requestIdService(requestId: string) {
       },
     },
   });
+
   return individualReq;
 }
 
@@ -49,11 +66,13 @@ export async function compareReplayService(requestId: string, replayId: string) 
       id: requestId,
     },
   });
+
   const replay = await prisma.replayExecution.findUnique({
     where: {
       id: replayId,
     },
   });
+
   if (!original || !replay) {
     return {
       original,
@@ -67,8 +86,11 @@ export async function compareReplayService(requestId: string, replayId: string) 
       replay: null,
     };
   }
-  const statusChanged = original?.statusCode !== replay?.statusCode;
-  const bodyChanged = JSON.stringify(original?.responseBody) !== JSON.stringify(replay?.responseBody);
+
+  const statusChanged = original.statusCode !== replay.statusCode;
+
+  const bodyChanged = JSON.stringify(original.responseBody) !== JSON.stringify(replay.responseBody);
+
   return {
     original,
     replay,

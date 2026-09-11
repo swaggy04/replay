@@ -4,6 +4,7 @@ import { replayController } from "./controllers/replayController.js";
 import { captureController } from "./controllers/captureController.js";
 import { compareReplayController, replayHistoryController, requestController, requestIdController } from "./controllers/requestController.js";
 import cors from "cors";
+import { projectController } from "./controllers/projectController.js";
 
 const app = express();
 app.use(cors())
@@ -43,4 +44,5 @@ app.get("/requests/:id/replays", replayHistoryController);
 app.get("/requests/:id/compare/:replayId", compareReplayController);
 app.get("/replay/:id/history",replayHistoryController)
 app.post("/ingest", captureController);
+app.post("/projects", projectController);
 export default app;
