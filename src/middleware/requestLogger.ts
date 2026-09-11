@@ -19,7 +19,7 @@ export async function requestLogger(req: Request, res: Response, next: NextFunct
 
   try {
     const requestLog = await captureRequest({
-      projectId: req.method,
+      projectId: process.env.DEVREPLAY_PROJECT_ID!,
       method: req.method,
       path: req.path,
       body: req.body,
