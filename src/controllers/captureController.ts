@@ -5,7 +5,7 @@ export async function captureController(req: Request, res: Response) {
   try {
     const { projectId, method, path, body, headers, query, statusCode, responseBody, durationMs } = req.body;
 
-    if (!method || !path) {
+    if (!projectId || !method || !path) {
       return res.status(400).json({
         message: "method and path are required",
       });
