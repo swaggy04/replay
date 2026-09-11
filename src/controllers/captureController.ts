@@ -7,7 +7,7 @@ export async function captureController(req: Request, res: Response) {
 
     if (!projectId || !method || !path) {
       return res.status(400).json({
-        message: "method and path are required",
+        message: "projectId, method and path are required",
       });
     }
 
@@ -29,6 +29,7 @@ export async function captureController(req: Request, res: Response) {
 
     return res.status(500).json({
       message: "Failed to capture request",
+      error: error instanceof Error ? error.message : error,
     });
   }
 }
