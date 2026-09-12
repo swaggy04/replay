@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import type { Project, RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 
+
+
 import { getProjects, getRequestDetails, getRequests } from "./requestsApi";
 
 import { RequestSidebar } from "./requests/RequestSidebar";
@@ -134,15 +136,55 @@ export default function RequestList() {
     }
   }
 
+  // Loading projects
   if (!selectedProject && !projects.length) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0c080a] text-[#d1d1d3]">Loading projects...</div>
+      <div className="flex h-screen items-center justify-center bg-[#0c080a]">
+        <div className="flex flex-col items-center">
+          <div
+            className="
+              mb-4
+              h-5
+              w-5
+              animate-spin
+              rounded-full
+              border-2
+              border-[#302b2d]
+              border-t-[#d8d4d5]
+            "
+          />
+
+          <p className="text-sm font-medium text-[#c9c5c6]">Loading projects</p>
+
+          <p className="mt-1 text-xs text-[#716b6e]">Getting your DevReplay projects...</p>
+        </div>
+      </div>
     );
   }
 
+  // Loading requests
   if (loading && requests.length === 0) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0c080a] text-[#d1d1d3]">Loading requests...</div>
+      <div className="flex h-screen items-center justify-center bg-[#0c080a]">
+        <div className="flex flex-col items-center">
+          <div
+            className="
+              mb-4
+              h-5
+              w-5
+              animate-spin
+              rounded-full
+              border-2
+              border-[#302b2d]
+              border-t-[#d8d4d5]
+            "
+          />
+
+          <p className="text-sm font-medium text-[#c9c5c6]">Loading requests</p>
+
+          <p className="mt-1 text-xs text-[#716b6e]">Fetching captured HTTP traffic...</p>
+        </div>
+      </div>
     );
   }
 
@@ -166,25 +208,25 @@ export default function RequestList() {
 
         <header
           className="
-    flex
-    h-14
-    shrink-0
-    items-center
-    justify-between
-    border-b border-[#242022]
-    bg-[#0c080a]
-    px-5
-  "
+            flex
+            h-14
+            shrink-0
+            items-center
+            justify-between
+            border-b border-[#242022]
+            bg-[#0c080a]
+            px-5
+          "
         >
           <div className="min-w-0">
             <div className="flex items-center gap-2.5">
               <h1
                 className="
-          text-sm
-          font-semibold
-          tracking-tight
-          text-[#f1eeee]
-        "
+                  text-sm
+                  font-semibold
+                  tracking-tight
+                  text-[#f1eeee]
+                "
               >
                 Requests
               </h1>
@@ -193,11 +235,11 @@ export default function RequestList() {
 
               <span
                 className="
-          max-w-[240px]
-          truncate
-          text-xs
-          text-[#8f898c]
-        "
+                  max-w-[240px]
+                  truncate
+                  text-xs
+                  text-[#8f898c]
+                "
               >
                 {selectedProject?.name}
               </span>
@@ -205,10 +247,10 @@ export default function RequestList() {
 
             <p
               className="
-        mt-0.5
-        text-[10px]
-        text-[#716b6e]
-      "
+                mt-0.5
+                text-[10px]
+                text-[#716b6e]
+              "
             >
               Captured HTTP traffic
             </p>
@@ -216,11 +258,11 @@ export default function RequestList() {
 
           <div
             className="
-      shrink-0
-      text-[11px]
-      font-medium
-      text-[#777174]
-    "
+              shrink-0
+              text-[11px]
+              font-medium
+              text-[#777174]
+            "
           >
             {total} {total === 1 ? "request" : "requests"}
           </div>
@@ -245,8 +287,18 @@ export default function RequestList() {
 
         {/* PAGINATION */}
 
-        <footer className="flex h-12 shrink-0 items-center justify-between border-t border-[#e1dbd6]/20 px-5">
-          <span className="text-xs text-[#d1d1d3]">
+        <footer
+          className="
+            flex
+            h-12
+            shrink-0
+            items-center
+            justify-between
+            border-t border-[#242022]
+            px-5
+          "
+        >
+          <span className="text-xs text-[#716b6e]">
             Page {page} of {totalPages}
           </span>
 
@@ -255,14 +307,18 @@ export default function RequestList() {
               disabled={page === 1}
               onClick={() => setPage((current) => current - 1)}
               className="
-                rounded
-                border border-[#e1dbd6]/20
-                px-3 py-1.5
-                text-xs text-[#d1d1d3]
+                rounded-md
+                border border-[#302b2d]
+                px-3
+                py-1.5
+                text-xs
+                text-[#a9a4a6]
                 transition
+                hover:border-[#403a3d]
+                hover:bg-[#141012]
+                hover:text-[#e5e1e2]
                 disabled:cursor-not-allowed
                 disabled:opacity-30
-                hover:bg-[#f9f6f2]/5
               "
             >
               ← Previous
@@ -272,14 +328,18 @@ export default function RequestList() {
               disabled={page === totalPages}
               onClick={() => setPage((current) => current + 1)}
               className="
-                rounded
-                border border-[#e1dbd6]/20
-                px-3 py-1.5
-                text-xs text-[#d1d1d3]
+                rounded-md
+                border border-[#302b2d]
+                px-3
+                py-1.5
+                text-xs
+                text-[#a9a4a6]
                 transition
+                hover:border-[#403a3d]
+                hover:bg-[#141012]
+                hover:text-[#e5e1e2]
                 disabled:cursor-not-allowed
                 disabled:opacity-30
-                hover:bg-[#f9f6f2]/5
               "
             >
               Next →
