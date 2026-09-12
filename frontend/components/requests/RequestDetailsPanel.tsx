@@ -16,88 +16,74 @@ export function RequestDetailsPanel({
   detailsLoading,
   onClose,
 }: RequestDetailsPanelProps) {
-  function getMethodClass(method: string) {
-    switch (method) {
-      case "GET":
-        return "text-blue-400";
-      case "POST":
-        return "text-green-400";
-      case "PUT":
-        return "text-yellow-400";
-      case "PATCH":
-        return "text-orange-400";
-      case "DELETE":
-        return "text-red-400";
-      default:
-        return "text-[#e2e2e4]";
-    }
-  }
-
-  function getStatusClass(status: number | null) {
-    if (!status) {
-      return "text-[#d1d1d3]";
-    }
-
-    if (status >= 200 && status < 300) {
-      return "text-emerald-400";
-    }
-
-    if (status >= 400 && status < 500) {
-      return "text-yellow-400";
-    }
-
-    if (status >= 500) {
-      return "text-red-400";
-    }
-
-    return "text-[#e2e2e4]";
-  }
-
   if (!selectedRequest) {
-    return (
-      <section className="flex min-h-0 flex-1 flex-col">
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <div className="mb-3 text-3xl text-[#d1d1d3]/30">◇</div>
-
-            <h2 className="text-sm font-medium text-[#e2e2e4]">Select a request</h2>
-
-            <p className="mt-1 text-xs text-[#d1d1d3]/60">Choose a captured request to inspect it.</p>
-          </div>
-        </div>
-      </section>
-    );
+    return null;
   }
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col">
-      {/* REQUEST TITLE */}
+    <div className="absolute inset-0 z-40">
+      {/* Overlay */}
 
-      <div className="border-b border-[#e1dbd6]/20 px-5 py-4">
-        <div className="flex items-center gap-3">
-          <span className={`text-sm font-bold ${getMethodClass(selectedRequest.method)}`}>
-            {selectedRequest.method}
-          </span>
+      <div
+        className="
+          absolute
+          inset-0
+          bg-black/65
+          backdrop-blur-[2px]
+        "
+        onClick={onClose}
+      />
 
-          <span className="text-sm text-[#e2e2e4]">{selectedRequest.path}</span>
-        </div>
+      {/* Inspector container */}
 
-        <div className="mt-2 flex gap-4 text-xs text-[#d1d1d3]">
-          <span className={getStatusClass(selectedRequest.statusCode)}>{selectedRequest.statusCode ?? "Unknown"}</span>
+      <div
+        className="
+          absolute
+          inset-0
+          flex
+          items-center
+          justify-center
+          p-5
+        "
+      >
+        {detailsLoading && (
+          <div
+            className="
+              flex
+              h-40
+              w-full
+              max-w-md
+              flex-col
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-[#302b2d]
+              bg-[#0c080a]
+              shadow-[0_24px_80px_rgba(0,0,0,0.55)]
+            "
+          >
+            <div
+              className="
+                mb-4
+                h-5
+                w-5
+                animate-spin
+                rounded-full
+                border-2
+                border-[#302b2d]
+                border-t-[#d8d4d5]
+              "
+            />
 
-          <span>{selectedRequest.durationMs ?? "—"}ms</span>
+            <p className="text-sm font-medium text-[#c9c5c6]">Loading request details</p>
 
-          <span>{new Date(selectedRequest.createdAt).toLocaleString()}</span>
-        </div>
-      </div>
-
-      {/* REQUEST INSPECTOR */}
-
-      <div className="min-h-0 flex-1 overflow-hidden">
-        {detailsLoading && <div className="p-5 text-sm text-[#d1d1d3]">Loading request details...</div>}
+            <p className="mt-1 text-xs text-[#716b6e]">Fetching captured request data...</p>
+          </div>
+        )}
 
         {requestDetails && !detailsLoading && <RequestInspector request={requestDetails} onClose={onClose} />}
       </div>
-    </section>
+    </div>
   );
 }

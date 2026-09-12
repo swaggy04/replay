@@ -62,12 +62,21 @@ export function RequestTable({ requests, selectedRequest, onSelectRequest }: Req
   }
 
   return (
-    <section className="min-h-0 flex-1 border-b border-[#242022]">
+    <section
+      className="
+        flex
+        min-h-0
+        flex-1
+        flex-col
+        border-b border-[#242022]
+      "
+    >
       {/* TABLE HEADER */}
 
       <div
         className="
           grid
+          shrink-0
           grid-cols-[90px_minmax(0,1fr)_90px_90px]
           items-center
           border-b border-[#242022]
@@ -82,14 +91,24 @@ export function RequestTable({ requests, selectedRequest, onSelectRequest }: Req
         "
       >
         <span>Method</span>
+
         <span>Path</span>
+
         <span>Status</span>
+
         <span className="text-right">Time</span>
       </div>
 
       {/* TABLE BODY */}
 
-      <div className="devreplay-scrollbar max-h-[420px] overflow-y-auto">
+      <div
+        className="
+          devreplay-scrollbar
+          min-h-0
+          flex-1
+          overflow-y-auto
+        "
+      >
         {requests.length === 0 ? (
           <div
             className="

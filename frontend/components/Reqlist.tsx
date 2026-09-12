@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 
 import type { Project, RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 
-
-
 import { getProjects, getRequestDetails, getRequests } from "./requestsApi";
 
 import { RequestSidebar } from "./requests/RequestSidebar";
@@ -203,7 +201,7 @@ export default function RequestList() {
 
       {/* MAIN AREA */}
 
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="relative flex min-w-0 flex-1 flex-col">
         {/* TOP BAR */}
 
         <header
@@ -281,6 +279,7 @@ export default function RequestList() {
           onClose={() => {
             setSelectedRequest(null);
             setRequestDetails(null);
+
             localStorage.removeItem(SELECTED_REQUEST_KEY);
           }}
         />
