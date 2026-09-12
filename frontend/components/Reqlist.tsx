@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 
 import type { Project, RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 
-
 import { getProjects, getRequestDetails, getRequests } from "./requestsApi";
 
 import { RequestSidebar } from "./requests/RequestSidebar";
 import { RequestTable } from "./requests/RequestTable";
 import { RequestDetailsPanel } from "./requests/RequestDetailsPanel";
+
+const SELECTED_PROJECT_KEY = "devreplay:selectedProject";
+const SELECTED_REQUEST_KEY = "devreplay:selectedRequest";
 
 export default function RequestList() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -37,9 +39,15 @@ export default function RequestList() {
 
         setProjects(data);
 
-        if (data.length > 0) {
-          setSelectedProject(data[0]);
+        if (data.length === 0) {
+          return;
         }
+
+        const savedProjectId = localStorage.getItem(SELECTED_PROJECT_KEY);
+
+        const savedProject = data.find((project) => project.id === savedProjectId);
+
+        setSelectedProject(savedProject ?? data[0]);
       } catch (error) {
         console.error("Failed to fetch projects:", error);
       }
@@ -67,6 +75,18 @@ export default function RequestList() {
         setRequests(data.data);
         setTotalPages(data.totalPages);
         setTotal(data.total);
+
+        const savedRequestId = localStorage.getItem(SELECTED_REQUEST_KEY);
+
+        if (savedRequestId) {
+          const savedRequest = data.data.find((request) => request.id === savedRequestId);
+
+          if (savedRequest) {
+            await handleSelectRequest(savedRequest);
+          } else {
+            localStorage.removeItem(SELECTED_REQUEST_KEY);
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch requests:", error);
       } finally {
@@ -80,7 +100,17 @@ export default function RequestList() {
   // Handle project change
   function handleSelectProject(project: Project) {
     setSelectedProject(project);
+
+    localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
+
+    localStorage.removeItem(SELECTED_REQUEST_KEY);
+
     setPage(1);
+
+    setRequests([]);
+    setTotal(0);
+    setTotalPages(1);
+
     setSelectedRequest(null);
     setRequestDetails(null);
   }
@@ -90,6 +120,8 @@ export default function RequestList() {
     setSelectedRequest(request);
     setRequestDetails(null);
     setDetailsLoading(true);
+
+    localStorage.setItem(SELECTED_REQUEST_KEY, request.id);
 
     try {
       const data: RequestDetails = await getRequestDetails(request.id);
@@ -155,6 +187,7 @@ export default function RequestList() {
           onClose={() => {
             setSelectedRequest(null);
             setRequestDetails(null);
+            localStorage.removeItem(SELECTED_REQUEST_KEY);
           }}
         />
 
