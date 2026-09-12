@@ -22,10 +22,10 @@ export async function projectController(req: Request, res: Response) {
     });
   }
 }
-0
+0;
 
-export async function getProjectsController(req: Request, res: Response){
-   try {
+export async function getProjectsController(req: Request, res: Response) {
+  try {
     const projects = await getProjects();
 
     return res.status(200).json(projects);

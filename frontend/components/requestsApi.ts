@@ -1,5 +1,15 @@
-export async function getRequests(page: number) {
-  const response = await fetch(`http://localhost:5000/requests?page=${page}&limit=10`);
+export async function getProjects() {
+  const response = await fetch("http://localhost:5000/projects");
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch projects");
+  }
+
+  return response.json();
+}
+
+export async function getRequests(page: number, projectId: string) {
+  const response = await fetch(`http://localhost:5000/requests?page=${page}&limit=10&projectId=${projectId}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch requests");
@@ -10,6 +20,7 @@ export async function getRequests(page: number) {
 
 export async function getRequestDetails(id: string) {
   const response = await fetch(`http://localhost:5000/requests/${id}`);
+
   if (!response.ok) {
     throw new Error("Failed to fetch requests");
   }
