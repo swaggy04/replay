@@ -1,5 +1,7 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export async function getProjects() {
-  const response = await fetch("http://localhost:5000/projects");
+  const response = await fetch(`${API_URL}/projects`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch projects");
@@ -9,7 +11,7 @@ export async function getProjects() {
 }
 
 export async function getRequests(page: number, projectId: string) {
-  const response = await fetch(`http://localhost:5000/requests?page=${page}&limit=10&projectId=${projectId}`);
+  const response = await fetch(`${API_URL}/requests?page=${page}&limit=10&projectId=${projectId}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch requests");
@@ -19,7 +21,7 @@ export async function getRequests(page: number, projectId: string) {
 }
 
 export async function getRequestDetails(id: string) {
-  const response = await fetch(`http://localhost:5000/requests/${id}`);
+  const response = await fetch(`${API_URL}/requests/${id}`);
 
   if (!response.ok) {
     throw new Error("Failed to fetch requests");
@@ -29,7 +31,7 @@ export async function getRequestDetails(id: string) {
 }
 
 export async function replayRequest(id: string) {
-  const response = await fetch(`http://localhost:5000/replay/${id}`, {
+  const response = await fetch(`${API_URL}/replay/${id}`, {
     method: "POST",
   });
 
@@ -43,7 +45,7 @@ export async function replayRequest(id: string) {
 }
 
 export async function requestComparison(requestId: string, replayId: string) {
-  const response = await fetch(`http://localhost:5000/requests/${requestId}/compare/${replayId}`);
+  const response = await fetch(`${API_URL}/requests/${requestId}/compare/${replayId}`);
 
   if (!response.ok) {
     throw new Error("Failed to compare replay");
