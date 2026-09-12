@@ -9,7 +9,7 @@ export async function createproject(name: string) {
   return project;
 }
 
-export async function getProjects(name: string) {
+export async function getProjects() {
   const projects = await prisma.project.findMany({
     orderBy: {
       createdAt: "desc",

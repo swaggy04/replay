@@ -24,7 +24,7 @@ export async function projectController(req: Request, res: Response) {
 }
 0
 
-export async function getProjectController(req: Request, res: Response){
+export async function getProjectsController(req: Request, res: Response){
    try {
     const projects = await getProjects();
 
