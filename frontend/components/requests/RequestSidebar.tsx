@@ -20,18 +20,90 @@ export function RequestSidebar({
   selectedRequest,
   onSelectRequest,
 }: RequestSidebarProps) {
+  function getMethodClass(method: string) {
+    switch (method.toUpperCase()) {
+      case "GET":
+        return "text-emerald-400";
+
+      case "POST":
+        return "text-[#F4D77E]";
+
+      case "PUT":
+        return "text-blue-400";
+
+      case "PATCH":
+        return "text-purple-400";
+
+      case "DELETE":
+        return "text-red-400";
+
+      case "HEAD":
+        return "text-emerald-300";
+
+      case "OPTIONS":
+        return "text-pink-400";
+
+      default:
+        return "text-[#d8d4d5]";
+    }
+  }
+
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-r border-[#e1dbd6]/20 bg-[#141112]">
+    <aside
+      className="
+        flex
+        w-64
+        shrink-0
+        flex-col
+        border-r border-[#242022]
+        bg-[#100d0f]
+      "
+    >
       {/* BRAND */}
 
-      <div className="flex h-14 shrink-0 items-center border-b border-[#e1dbd6]/20 px-5">
-        <h1 className="text-lg font-semibold text-[#fefefe]">DevReplay</h1>
+      <div
+        className="
+          flex
+          h-14
+          shrink-0
+          items-center
+          border-b border-[#242022]
+          px-5
+        "
+      >
+        <h1
+          className="
+            text-[17px]
+            font-semibold
+            tracking-tight
+            text-[#f5f3f3]
+          "
+        >
+          DevReplay
+        </h1>
       </div>
 
       {/* PROJECT */}
 
-      <div className="border-b border-[#e1dbd6]/20 p-4">
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[#888589]">Project</p>
+      <div
+        className="
+          border-b border-[#242022]
+          px-4
+          py-4
+        "
+      >
+        <p
+          className="
+            mb-2
+            text-[9px]
+            font-semibold
+            uppercase
+            tracking-[0.12em]
+            text-[#716b6e]
+          "
+        >
+          Project
+        </p>
 
         <select
           value={selectedProject?.id ?? ""}
@@ -43,19 +115,27 @@ export function RequestSidebar({
             }
           }}
           className="
+            h-9
             w-full
+            cursor-pointer
+            appearance-none
             rounded-md
-            border border-[#e1dbd6]/20
+            border border-[#302b2d]
             bg-[#0c080a]
-            px-3 py-2
-            text-sm text-[#e2e2e4]
+            px-3
+            text-xs
+            font-medium
+            text-[#ddd9da]
             outline-none
             transition
-            focus:border-[#e1dbd6]/40
+            hover:border-[#3b3538]
+            focus:border-[#4a4245]
+            focus:ring-1
+            focus:ring-[#4a4245]/30
           "
         >
           {projects.map((project) => (
-            <option key={project.id} value={project.id} className="bg-[#141112] text-[#e2e2e4]">
+            <option key={project.id} value={project.id} className="bg-[#141012] text-[#e2dfe0]">
               {project.name}
             </option>
           ))}
@@ -64,105 +144,262 @@ export function RequestSidebar({
 
       {/* NAVIGATION */}
 
-      <nav className="border-b border-[#e1dbd6]/20 p-3">
+      <nav
+        className="
+          border-b border-[#242022]
+          px-3
+          py-3
+        "
+      >
+        {/* Requests */}
+
         <button
+          type="button"
           className="
-            flex w-full items-center gap-3
+            flex
+            h-9
+            w-full
+            items-center
+            gap-3
             rounded-md
-            bg-[#f9f6f2]/10
-            px-3 py-2
-            text-sm text-[#fefefe]
+            bg-[#1a1618]
+            px-3
+            text-xs
+            font-medium
+            text-[#f1eeee]
           "
         >
-          <span className="text-xs">▣</span>
+          <span
+            className="
+              flex
+              w-4
+              justify-center
+              text-[11px]
+              text-[#c9c5c6]
+            "
+          >
+            ▣
+          </span>
           Requests
         </button>
 
+        {/* Replays */}
+
         <button
+          type="button"
           className="
-            mt-1 flex w-full items-center gap-3
+            mt-1
+            flex
+            h-9
+            w-full
+            items-center
+            gap-3
             rounded-md
-            px-3 py-2
-            text-sm text-[#a9a5a8]
+            px-3
+            text-xs
+            font-medium
+            text-[#918b8e]
             transition
-            hover:bg-[#f9f6f2]/5
-            hover:text-[#e2e2e4]
+            hover:bg-[#161214]
+            hover:text-[#d9d5d6]
           "
         >
-          <span className="text-xs">↻</span>
+          <span
+            className="
+              flex
+              w-4
+              justify-center
+              text-[11px]
+            "
+          >
+            ↻
+          </span>
           Replays
         </button>
 
+        {/* Collections */}
+
         <button
+          type="button"
           className="
-            mt-1 flex w-full items-center gap-3
+            mt-1
+            flex
+            h-9
+            w-full
+            items-center
+            gap-3
             rounded-md
-            px-3 py-2
-            text-sm text-[#a9a5a8]
+            px-3
+            text-xs
+            font-medium
+            text-[#918b8e]
             transition
-            hover:bg-[#f9f6f2]/5
-            hover:text-[#e2e2e4]
+            hover:bg-[#161214]
+            hover:text-[#d9d5d6]
           "
         >
-          <span className="text-xs">▱</span>
+          <span
+            className="
+              flex
+              w-4
+              justify-center
+              text-[11px]
+            "
+          >
+            ▱
+          </span>
           Collections
         </button>
 
+        {/* Settings */}
+
         <button
+          type="button"
           className="
-            mt-1 flex w-full items-center gap-3
+            mt-1
+            flex
+            h-9
+            w-full
+            items-center
+            gap-3
             rounded-md
-            px-3 py-2
-            text-sm text-[#a9a5a8]
+            px-3
+            text-xs
+            font-medium
+            text-[#918b8e]
             transition
-            hover:bg-[#f9f6f2]/5
-            hover:text-[#e2e2e4]
+            hover:bg-[#161214]
+            hover:text-[#d9d5d6]
           "
         >
-          <span className="text-xs">⚙</span>
+          <span
+            className="
+              flex
+              w-4
+              justify-center
+              text-[11px]
+            "
+          >
+            ⚙
+          </span>
           Settings
         </button>
       </nav>
 
       {/* RECENT REQUESTS */}
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-[#888589]">Recent</p>
+      <div
+        className="
+          devreplay-scrollbar
+          min-h-0
+          flex-1
+          overflow-y-auto
+          px-3
+          py-4
+        "
+      >
+        <p
+          className="
+            mb-2
+            px-2
+            text-[9px]
+            font-semibold
+            uppercase
+            tracking-[0.12em]
+            text-[#716b6e]
+          "
+        >
+          Recent
+        </p>
 
-        <div className="space-y-1">
-          {requests.map((request) => (
-            <button
-              key={request.id}
-              onClick={() => onSelectRequest(request)}
-              className={`
-                flex w-full items-center gap-3
-                rounded-md
-                px-2 py-2
-                text-left
-                transition
-                ${selectedRequest?.id === request.id ? "bg-[#f9f6f2]/10" : "hover:bg-[#f9f6f2]/5"}
-              `}
-            >
-              <span
+        <div className="space-y-0.5">
+          {requests.map((request) => {
+            const isSelected = selectedRequest?.id === request.id;
+
+            return (
+              <button
+                key={request.id}
+                type="button"
+                onClick={() => onSelectRequest(request)}
                 className={`
-                  w-12 text-[10px] font-semibold
-                  ${
-                    request.method === "GET"
-                      ? "text-sky-400"
-                      : request.method === "POST"
-                        ? "text-emerald-400"
-                        : request.method === "DELETE"
-                          ? "text-red-400"
-                          : "text-amber-400"
-                  }
+                  group
+                  flex
+                  w-full
+                  items-center
+                  gap-3
+                  rounded-md
+                  px-2
+                  py-2
+                  text-left
+                  transition-colors
+                  ${isSelected ? "bg-[#1a1618]" : "hover:bg-[#161214]"}
                 `}
               >
-                {request.method}
-              </span>
+                {/* METHOD */}
 
-              <span className="min-w-0 flex-1 truncate text-xs text-[#c4c0c3]">{request.path}</span>
-            </button>
-          ))}
+                <span
+                  className={`
+                    w-12
+                    shrink-0
+                    font-mono
+                    text-[10px]
+                    font-semibold
+                    tracking-wide
+                    ${getMethodClass(request.method)}
+                  `}
+                >
+                  {request.method.toUpperCase()}
+                </span>
+
+                {/* PATH */}
+
+                <span
+                  className={`
+                    min-w-0
+                    flex-1
+                    truncate
+                    font-mono
+                    text-[11px]
+                    transition-colors
+                    ${isSelected ? "text-[#eee9ea]" : "text-[#9d979a] group-hover:text-[#d0cbcc]"}
+                  `}
+                >
+                  {request.path}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* BOTTOM */}
+
+      <div
+        className="
+          flex
+          h-14
+          shrink-0
+          items-center
+          border-t border-[#242022]
+          px-5
+        "
+      >
+        <div
+          className="
+            flex
+            h-8
+            w-8
+            items-center
+            justify-center
+            rounded-full
+            border border-[#302b2d]
+            bg-[#0c080a]
+            text-xs
+            font-medium
+            text-[#d8d4d5]
+          "
+        >
+          N
         </div>
       </div>
     </aside>

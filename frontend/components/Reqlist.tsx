@@ -164,14 +164,66 @@ export default function RequestList() {
       <main className="flex min-w-0 flex-1 flex-col">
         {/* TOP BAR */}
 
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e1dbd6]/20 px-5">
-          <div>
-            <h1 className="text-sm font-semibold text-[#fefefe]">Requests</h1>
+        <header
+          className="
+    flex
+    h-14
+    shrink-0
+    items-center
+    justify-between
+    border-b border-[#242022]
+    bg-[#0c080a]
+    px-5
+  "
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              <h1
+                className="
+          text-sm
+          font-semibold
+          tracking-tight
+          text-[#f1eeee]
+        "
+              >
+                Requests
+              </h1>
 
-            <p className="text-xs text-[#d1d1d3]">Captured HTTP traffic</p>
+              <span className="text-[#403a3d]">/</span>
+
+              <span
+                className="
+          max-w-[240px]
+          truncate
+          text-xs
+          text-[#8f898c]
+        "
+              >
+                {selectedProject?.name}
+              </span>
+            </div>
+
+            <p
+              className="
+        mt-0.5
+        text-[10px]
+        text-[#716b6e]
+      "
+            >
+              Captured HTTP traffic
+            </p>
           </div>
 
-          <div className="text-xs text-[#d1d1d3]">{total} requests</div>
+          <div
+            className="
+      shrink-0
+      text-[11px]
+      font-medium
+      text-[#777174]
+    "
+          >
+            {total} {total === 1 ? "request" : "requests"}
+          </div>
         </header>
 
         {/* REQUEST TABLE */}
