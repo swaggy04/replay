@@ -17,9 +17,15 @@ export async function requestLogger(req: Request, res: Response, next: NextFunct
     return next();
   }
 
+  const projectId = req.headers["x-devreplay-project-id"];
+
+  if (typeof projectId !== "string") {
+    return next();
+  }
+
   try {
     const requestLog = await captureRequest({
-      projectId: process.env.DEVREPLAY_PROJECT_ID!,
+      projectId,
       method: req.method,
       path: req.path,
       body: req.body,
