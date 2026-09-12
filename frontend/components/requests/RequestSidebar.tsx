@@ -71,16 +71,36 @@ export function RequestSidebar({
           px-5
         "
       >
-        <h1
-          className="
-            text-[17px]
-            font-semibold
-            tracking-tight
-            text-[#f5f3f3]
-          "
-        >
-          DevReplay
-        </h1>
+        <div className="flex items-center gap-2.5">
+          <div
+            className="
+              flex
+              h-6
+              w-6
+              items-center
+              justify-center
+              rounded-md
+              border border-[#342e31]
+              bg-[#171315]
+              text-[11px]
+              font-semibold
+              text-[#d8d4d5]
+            "
+          >
+            D
+          </div>
+
+          <span
+            className="
+              text-[15px]
+              font-semibold
+              tracking-tight
+              text-[#f5f3f3]
+            "
+          >
+            DevReplay
+          </span>
+        </div>
       </div>
 
       {/* PROJECT */}
@@ -105,41 +125,65 @@ export function RequestSidebar({
           Project
         </p>
 
-        <select
-          value={selectedProject?.id ?? ""}
-          onChange={(event) => {
-            const project = projects.find((project) => project.id === event.target.value);
+        <div className="relative">
+          <select
+            value={selectedProject?.id ?? ""}
+            onChange={(event) => {
+              const project = projects.find((project) => project.id === event.target.value);
 
-            if (project) {
-              onSelectProject(project);
-            }
-          }}
-          className="
-            h-9
-            w-full
-            cursor-pointer
-            appearance-none
-            rounded-md
-            border border-[#302b2d]
-            bg-[#0c080a]
-            px-3
-            text-xs
-            font-medium
-            text-[#ddd9da]
-            outline-none
-            transition
-            hover:border-[#3b3538]
-            focus:border-[#4a4245]
-            focus:ring-1
-            focus:ring-[#4a4245]/30
-          "
-        >
-          {projects.map((project) => (
-            <option key={project.id} value={project.id} className="bg-[#141012] text-[#e2dfe0]">
-              {project.name}
-            </option>
-          ))}
-        </select>
+              if (project) {
+                onSelectProject(project);
+              }
+            }}
+            className="
+              h-9
+              w-full
+              cursor-pointer
+              appearance-none
+              rounded-md
+              border border-[#302b2d]
+              bg-[#0c080a]
+              px-3
+              pr-8
+              text-xs
+              font-medium
+              text-[#ddd9da]
+              outline-none
+              transition
+              hover:border-[#3b3538]
+              focus:border-[#4a4245]
+              focus:ring-1
+              focus:ring-[#4a4245]/30
+            "
+          >
+            {projects.map((project) => (
+              <option
+                key={project.id}
+                value={project.id}
+                className="
+                  bg-[#141012]
+                  text-[#e2dfe0]
+                "
+              >
+                {project.name}
+              </option>
+            ))}
+          </select>
+
+          <span
+            className="
+              pointer-events-none
+              absolute
+              right-3
+              top-1/2
+              -translate-y-1/2
+              text-[10px]
+              text-[#716b6e]
+            "
+          >
+            ▾
+          </span>
+        </div>
       </div>
 
       {/* NAVIGATION */}
@@ -180,7 +224,8 @@ export function RequestSidebar({
           >
             ▣
           </span>
-          Requests
+
+          <span>Requests</span>
         </button>
 
         {/* Replays */}
@@ -199,7 +244,7 @@ export function RequestSidebar({
             text-xs
             font-medium
             text-[#918b8e]
-            transition
+            transition-colors
             hover:bg-[#161214]
             hover:text-[#d9d5d6]
           "
@@ -214,7 +259,8 @@ export function RequestSidebar({
           >
             ↻
           </span>
-          Replays
+
+          <span>Replays</span>
         </button>
 
         {/* Collections */}
@@ -233,7 +279,7 @@ export function RequestSidebar({
             text-xs
             font-medium
             text-[#918b8e]
-            transition
+            transition-colors
             hover:bg-[#161214]
             hover:text-[#d9d5d6]
           "
@@ -248,7 +294,8 @@ export function RequestSidebar({
           >
             ▱
           </span>
-          Collections
+
+          <span>Collections</span>
         </button>
 
         {/* Settings */}
@@ -267,7 +314,7 @@ export function RequestSidebar({
             text-xs
             font-medium
             text-[#918b8e]
-            transition
+            transition-colors
             hover:bg-[#161214]
             hover:text-[#d9d5d6]
           "
@@ -282,7 +329,8 @@ export function RequestSidebar({
           >
             ⚙
           </span>
-          Settings
+
+          <span>Settings</span>
         </button>
       </nav>
 
@@ -298,19 +346,21 @@ export function RequestSidebar({
           py-4
         "
       >
-        <p
-          className="
-            mb-2
-            px-2
-            text-[9px]
-            font-semibold
-            uppercase
-            tracking-[0.12em]
-            text-[#716b6e]
-          "
-        >
-          Recent
-        </p>
+        <div className="mb-2 flex items-center justify-between px-2">
+          <p
+            className="
+              text-[9px]
+              font-semibold
+              uppercase
+              tracking-[0.12em]
+              text-[#716b6e]
+            "
+          >
+            Recent
+          </p>
+
+          {requests.length > 0 && <span className="font-mono text-[9px] text-[#514b4e]">{requests.length}</span>}
+        </div>
 
         <div className="space-y-0.5">
           {requests.map((request) => {
@@ -323,6 +373,7 @@ export function RequestSidebar({
                 onClick={() => onSelectRequest(request)}
                 className={`
                   group
+                  relative
                   flex
                   w-full
                   items-center
@@ -335,6 +386,23 @@ export function RequestSidebar({
                   ${isSelected ? "bg-[#1a1618]" : "hover:bg-[#161214]"}
                 `}
               >
+                {/* Selected indicator */}
+
+                {isSelected && (
+                  <span
+                    className="
+                      absolute
+                      left-0
+                      top-1/2
+                      h-4
+                      w-0.5
+                      -translate-y-1/2
+                      rounded-full
+                      bg-[#d8d4d5]
+                    "
+                  />
+                )}
+
                 {/* METHOD */}
 
                 <span
@@ -380,26 +448,35 @@ export function RequestSidebar({
           h-14
           shrink-0
           items-center
+          justify-between
           border-t border-[#242022]
-          px-5
+          px-4
         "
       >
-        <div
-          className="
-            flex
-            h-8
-            w-8
-            items-center
-            justify-center
-            rounded-full
-            border border-[#302b2d]
-            bg-[#0c080a]
-            text-xs
-            font-medium
-            text-[#d8d4d5]
-          "
-        >
-          N
+        <div className="flex items-center gap-2.5">
+          <div
+            className="
+              flex
+              h-8
+              w-8
+              items-center
+              justify-center
+              rounded-full
+              border border-[#302b2d]
+              bg-[#0c080a]
+              text-xs
+              font-medium
+              text-[#d8d4d5]
+            "
+          >
+            N
+          </div>
+
+          <div>
+            <p className="text-[11px] font-medium text-[#bdb8ba]">Developer</p>
+
+            <p className="text-[9px] text-[#615b5e]">Local workspace</p>
+          </div>
         </div>
       </div>
     </aside>
