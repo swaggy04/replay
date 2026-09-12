@@ -1,113 +1,169 @@
-import { RequestSidebarProps } from "@/types/request";
-import React from "react";
-export function getMethodClass(method: string) {
-  switch (method) {
-    case "GET":
-      return "text-blue-400";
+"use client";
 
-    case "POST":
-      return "text-green-400";
+import type { Project, RequestLog } from "@/types/request";
 
-    case "PUT":
-      return "text-yellow-400";
+type RequestSidebarProps = {
+  projects: Project[];
+  selectedProject: Project | null;
+  onSelectProject: (project: Project) => void;
 
-    case "PATCH":
-      return "text-orange-400";
+  requests: RequestLog[];
+  selectedRequest: RequestLog | null;
+  onSelectRequest: (request: RequestLog) => void;
+};
 
-    case "DELETE":
-      return "text-red-400";
-
-    default:
-      return "text-[#e2e2e4]";
-  }
-}
-export function RequestSidebar({ requests, selectedRequest, onSelectRequest }: RequestSidebarProps) {
+export function RequestSidebar({
+  projects,
+  selectedProject,
+  onSelectProject,
+  requests,
+  selectedRequest,
+  onSelectRequest,
+}: RequestSidebarProps) {
   return (
-    <aside className="w-[250px] shrink-0 border-r border-[#e1dbd6]/20 bg-neutral-900">
-      {/* Logo */}
-      <div className="flex h-14 items-center border-b border-[#e1dbd6]/20 px-5">
-        <div className="text-lg font-semibold text-[#fefefe]">DevReplay</div>
+    <aside className="flex w-72 shrink-0 flex-col border-r border-[#e1dbd6]/20 bg-[#141112]">
+      {/* BRAND */}
+
+      <div className="flex h-14 shrink-0 items-center border-b border-[#e1dbd6]/20 px-5">
+        <h1 className="text-lg font-semibold text-[#fefefe]">DevReplay</h1>
       </div>
 
-      {/* Navigation */}
-      <div className="p-3">
+      {/* PROJECT */}
+
+      <div className="border-b border-[#e1dbd6]/20 p-4">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-[#888589]">Project</p>
+
+        <select
+          value={selectedProject?.id ?? ""}
+          onChange={(event) => {
+            const project = projects.find((project) => project.id === event.target.value);
+
+            if (project) {
+              onSelectProject(project);
+            }
+          }}
+          className="
+            w-full
+            rounded-md
+            border border-[#e1dbd6]/20
+            bg-[#0c080a]
+            px-3 py-2
+            text-sm text-[#e2e2e4]
+            outline-none
+            transition
+            focus:border-[#e1dbd6]/40
+          "
+        >
+          {projects.map((project) => (
+            <option key={project.id} value={project.id} className="bg-[#141112] text-[#e2e2e4]">
+              {project.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* NAVIGATION */}
+
+      <nav className="border-b border-[#e1dbd6]/20 p-3">
         <button
           className="
-              mb-1 flex w-full items-center gap-3 rounded-md
-              bg-[#f9f6f2]/10
-              px-3 py-2.5
-              text-sm text-[#fefefe]
-            "
+            flex w-full items-center gap-3
+            rounded-md
+            bg-[#f9f6f2]/10
+            px-3 py-2
+            text-sm text-[#fefefe]
+          "
         >
-          <span>▣</span>
+          <span className="text-xs">▣</span>
           Requests
         </button>
 
         <button
           className="
-              mb-1 flex w-full items-center gap-3 rounded-md
-              px-3 py-2.5
-              text-sm text-[#d1d1d3]
-              transition
-              hover:bg-[#f9f6f2]/5
-              hover:text-[#fefefe]
-            "
+            mt-1 flex w-full items-center gap-3
+            rounded-md
+            px-3 py-2
+            text-sm text-[#a9a5a8]
+            transition
+            hover:bg-[#f9f6f2]/5
+            hover:text-[#e2e2e4]
+          "
         >
-          <span>↻</span>
+          <span className="text-xs">↻</span>
           Replays
         </button>
 
         <button
           className="
-              mb-1 flex w-full items-center gap-3 rounded-md
-              px-3 py-2.5
-              text-sm text-[#d1d1d3]
-              transition
-              hover:bg-[#f9f6f2]/5
-              hover:text-[#fefefe]
-            "
+            mt-1 flex w-full items-center gap-3
+            rounded-md
+            px-3 py-2
+            text-sm text-[#a9a5a8]
+            transition
+            hover:bg-[#f9f6f2]/5
+            hover:text-[#e2e2e4]
+          "
         >
-          <span>▱</span>
+          <span className="text-xs">▱</span>
           Collections
         </button>
 
         <button
           className="
-              flex w-full items-center gap-3 rounded-md
-              px-3 py-2.5
-              text-sm text-[#d1d1d3]
-              transition
-              hover:bg-[#f9f6f2]/5
-              hover:text-[#fefefe]
-            "
+            mt-1 flex w-full items-center gap-3
+            rounded-md
+            px-3 py-2
+            text-sm text-[#a9a5a8]
+            transition
+            hover:bg-[#f9f6f2]/5
+            hover:text-[#e2e2e4]
+          "
         >
-          <span>⚙</span>
+          <span className="text-xs">⚙</span>
           Settings
         </button>
-      </div>
+      </nav>
 
-      {/* Recent requests */}
-      <div className="mt-5">
-        <div className="px-5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-[#d1d1d3]/60">Recent</div>
+      {/* RECENT REQUESTS */}
 
-        {requests.slice(0, 8).map((request) => (
-          <button
-            key={request.id}
-            onClick={() => onSelectRequest(request)}
-            className={`
-                flex w-full items-center gap-2
-                px-5 py-2
+      <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-[#888589]">Recent</p>
+
+        <div className="space-y-1">
+          {requests.map((request) => (
+            <button
+              key={request.id}
+              onClick={() => onSelectRequest(request)}
+              className={`
+                flex w-full items-center gap-3
+                rounded-md
+                px-2 py-2
                 text-left
                 transition
-                hover:bg-[#f9f6f2]/5
-                ${selectedRequest?.id === request.id ? "bg-[#f9f6f2]/10" : ""}
+                ${selectedRequest?.id === request.id ? "bg-[#f9f6f2]/10" : "hover:bg-[#f9f6f2]/5"}
               `}
-          >
-            <span className={`w-12 text-[11px] font-semibold ${getMethodClass(request.method)}`}>{request.method}</span>
+            >
+              <span
+                className={`
+                  w-12 text-[10px] font-semibold
+                  ${
+                    request.method === "GET"
+                      ? "text-sky-400"
+                      : request.method === "POST"
+                        ? "text-emerald-400"
+                        : request.method === "DELETE"
+                          ? "text-red-400"
+                          : "text-amber-400"
+                  }
+                `}
+              >
+                {request.method}
+              </span>
 
-            <span className="truncate text-xs text-[#d1d1d3]">{request.path}</span>
-          </button>
-        ))}
+              <span className="min-w-0 flex-1 truncate text-xs text-[#c4c0c3]">{request.path}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </aside>
   );

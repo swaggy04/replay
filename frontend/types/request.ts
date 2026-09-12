@@ -49,3 +49,9 @@ export type ReplayComparison = {
   statusChanged: boolean;
   bodyChanged: boolean;
 };
+
+export type Project = {
+  id: string;
+  name: string;
+  createdAt: string;
+};

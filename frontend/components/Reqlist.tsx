@@ -1,19 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 
-import { getRequestDetails, getRequests } from "./requestsApi";
+import type { Project, RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
+
+
+import { getProjects, getRequestDetails, getRequests } from "./requestsApi";
 
 import { RequestSidebar } from "./requests/RequestSidebar";
 import { RequestTable } from "./requests/RequestTable";
 import { RequestDetailsPanel } from "./requests/RequestDetailsPanel";
 
 export default function RequestList() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
   const [requests, setRequests] = useState<RequestLog[]>([]);
 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [loading, setLoading] = useState(true);
 
@@ -23,17 +29,44 @@ export default function RequestList() {
 
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  // Fetch request list
+  // Fetch projects
   useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const data: Project[] = await getProjects();
+
+        setProjects(data);
+
+        if (data.length > 0) {
+          setSelectedProject(data[0]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch projects:", error);
+      }
+    }
+
+    fetchProjects();
+  }, []);
+
+  // Fetch requests for selected project
+  useEffect(() => {
+    if (!selectedProject) {
+      return;
+    }
+
+    const projectId = selectedProject.id;
+
     async function fetchRequests() {
       setLoading(true);
 
       try {
-        const data: RequestsResponse = await getRequests(page);
+        const data: RequestsResponse = await getRequests(page, projectId);
 
         console.log("REQUESTS STATE DATA:", data.data);
+
         setRequests(data.data);
         setTotalPages(data.totalPages);
+        setTotal(data.total);
       } catch (error) {
         console.error("Failed to fetch requests:", error);
       } finally {
@@ -42,7 +75,15 @@ export default function RequestList() {
     }
 
     fetchRequests();
-  }, [page]);
+  }, [page, selectedProject]);
+
+  // Handle project change
+  function handleSelectProject(project: Project) {
+    setSelectedProject(project);
+    setPage(1);
+    setSelectedRequest(null);
+    setRequestDetails(null);
+  }
 
   // Fetch details of selected request
   async function handleSelectRequest(request: RequestLog) {
@@ -61,7 +102,13 @@ export default function RequestList() {
     }
   }
 
-  if (loading) {
+  if (!selectedProject && !projects.length) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#0c080a] text-[#d1d1d3]">Loading projects...</div>
+    );
+  }
+
+  if (loading && requests.length === 0) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#0c080a] text-[#d1d1d3]">Loading requests...</div>
     );
@@ -71,7 +118,14 @@ export default function RequestList() {
     <div className="flex h-screen overflow-hidden bg-[#0c080a] text-[#e2e2e4]">
       {/* SIDEBAR */}
 
-      <RequestSidebar requests={requests} selectedRequest={selectedRequest} onSelectRequest={handleSelectRequest} />
+      <RequestSidebar
+        projects={projects}
+        selectedProject={selectedProject}
+        onSelectProject={handleSelectProject}
+        requests={requests}
+        selectedRequest={selectedRequest}
+        onSelectRequest={handleSelectRequest}
+      />
 
       {/* MAIN AREA */}
 
@@ -85,7 +139,7 @@ export default function RequestList() {
             <p className="text-xs text-[#d1d1d3]">Captured HTTP traffic</p>
           </div>
 
-          <div className="text-xs text-[#d1d1d3]">{requests.length} requests</div>
+          <div className="text-xs text-[#d1d1d3]">{total} requests</div>
         </header>
 
         {/* REQUEST TABLE */}
