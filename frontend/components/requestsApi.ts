@@ -41,8 +41,11 @@ export async function replayRequest(id: string) {
 
   const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error("Replay request failed");
+  // A replay can legitimately return a non-2xx status (e.g. the original
+  // request was a 404). Only treat it as a failure if the backend itself
+  // couldn't execute the replay (500 with an error message).
+  if (response.status === 500 && data?.message) {
+    throw new Error(data.message);
   }
 
   return data;
