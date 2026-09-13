@@ -9,17 +9,21 @@ export async function getProjects() {
 
   return response.json();
 }
-
 export async function getRequests(page: number, projectId: string) {
-  const response = await fetch(`${API_URL}/requests?page=${page}&limit=10&projectId=${projectId}`);
+  const response = await fetch(
+    `${API_URL}/requests?page=${page}&limit=10&projectId=${projectId}`
+  );
 
   if (!response.ok) {
     throw new Error("Failed to fetch requests");
   }
 
-  return response.json();
-}
+  const data = await response.json();
 
+  console.log("GET REQUESTS RESPONSE:", data);
+
+  return data;
+}
 export async function getRequestDetails(id: string) {
   const response = await fetch(`${API_URL}/requests/${id}`);
 
