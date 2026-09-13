@@ -1,422 +1,401 @@
-# DevReplay
+﻿# DevReplay
 
-> Inspect, understand, and replay API requests while learning how backend systems actually work.
+> Capture, inspect, and replay API requests — built to understand how backend systems actually work.
 
-DevReplay is an API debugging and replay tool built around a simple idea:
+DevReplay is a developer tool and learning project built around one core idea:
 
-**See what actually happens to an API request, understand it, and replay it.**
+**An API request should not disappear after the response is sent.**
 
-The project is currently being developed around **DevReplay's own backend**. The long-term goal is to make DevReplay backend-agnostic, allowing developers to connect and work with **other backends and APIs** as well.
+It captures HTTP requests flowing through its own backend, stores them, lets you inspect every detail, and replay them at any time — then compare the replayed result against the original.
 
 ---
 
-## 🚧 Current Status
+## Table of Contents
 
-DevReplay is actively under development.
+- [What It Does](#what-it-does)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Running the App](#running-the-app)
+- [How Capture Works](#how-capture-works)
+- [API Reference](#api-reference)
+- [Testing](#testing)
+- [Database Schema](#database-schema)
+- [Architecture](#architecture)
+- [Roadmap](#roadmap)
 
-### Current phase
+---
 
-DevReplay currently works with its **own backend**.
+## What It Does
 
-The current backend acts as the first environment for building and validating the core request-capture, inspection, storage, and replay architecture.
+| Feature | Description |
+|---|---|
+| **Capture** | Store HTTP requests with method, path, headers, query, body, status, response, and timing |
+| **Auto-capture middleware** | Automatically records requests that include the `x-devreplay-project-id` header |
+| **Inspect** | Browse captured requests per project with full detail view |
+| **Replay** | Re-fire a stored request against the live backend and record the result |
+| **Compare** | Diff the original response vs the replayed response — status, body, timing |
+| **Projects** | Organise requests into named projects |
+| **Pagination** | Paginated request list with per-project filtering |
 
-```text
-Frontend
-   ↓
-DevReplay Backend
-   ↓
-Request Processing
-   ↓
-Storage / Replay
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS v4 |
+| **Backend** | Node.js, Express 5, TypeScript |
+| **Database** | PostgreSQL (Neon serverless) |
+| **ORM** | Prisma 7 |
+| **Runtime** | tsx (dev), compiled JS (prod) |
+
+---
+
+## Project Structure
+
 ```
-
-This is intentional.
-
-Instead of immediately trying to support every possible backend, the project is first establishing a solid internal architecture using its own backend as the controlled environment.
-
-### Future direction
-
-The architecture is being designed to eventually support:
-
-```text
-                 ┌──────────────────┐
-                 │    DevReplay     │
-                 └────────┬─────────┘
-                          │
-             ┌────────────┼────────────┐
-             ↓            ↓            ↓
-       DevReplay API   Backend A    Backend B
-                                     
-                         ↓
-                    Other APIs
-```
-
-The goal is for DevReplay to become a tool that can sit alongside an existing backend rather than requiring developers to use DevReplay's backend.
-
----
-
-# Why DevReplay?
-
-When debugging an API, developers often end up jumping between:
-
-* frontend requests
-* browser DevTools
-* API clients
-* backend logs
-* database records
-* terminal output
-* authentication configuration
-
-It can become difficult to answer simple questions:
-
-> What exactly was sent?
-
-> What did the backend receive?
-
-> What did it return?
-
-> How long did it take?
-
-> Can I reproduce the exact request?
-
-> What changed between two requests?
-
-DevReplay is being built around these problems.
-
----
-
-# Core Idea
-
-A request should not just disappear after the response is returned.
-
-DevReplay aims to turn the request into something developers can **inspect, understand, persist, and replay**.
-
-Conceptually:
-
-```text
-Request
-   │
-   ├── Method
-   ├── URL
-   ├── Headers
-   ├── Query Parameters
-   ├── Body
-   │
-   ↓
-Processing
-   │
-   ├── Status
-   ├── Response
-   ├── Timing
-   └── Errors
-   │
-   ↓
-Stored Request
-   │
-   └── Replay
-```
-
----
-
-# What DevReplay Is Being Built To Do
-
-### Request Inspection
-
-Inspect the important parts of an API request:
-
-* HTTP method
-* URL
-* headers
-* query parameters
-* request body
-* response status
-* response body
-* response timing
-* errors
-
-### Request History
-
-Keep requests available so developers can understand what happened previously instead of reproducing everything manually.
-
-### Request Replay
-
-Take a previous request and send it again.
-
-This makes it possible to reproduce API behavior without manually reconstructing the request every time.
-
-### Debugging
-
-Use captured request/response information to understand where things went wrong.
-
-### Backend Visibility
-
-The long-term vision is to make DevReplay useful across backend architectures rather than tying it permanently to one implementation.
-
----
-
-# Architecture Direction
-
-The project is intentionally evolving in stages.
-
-## Phase 1 — DevReplay's Own Backend
-
-Current stage.
-
-The frontend communicates with DevReplay's backend, allowing us to build the core system in a controlled environment.
-
-```text
-┌─────────────┐
-│  DevReplay  │
-│   Frontend  │
-└──────┬──────┘
-       │
-       │ HTTP
-       ↓
-┌─────────────┐
-│  DevReplay  │
-│   Backend   │
-└──────┬──────┘
-       │
-       ↓
- Request Data
-       │
-       ↓
-   Persistence
-```
-
-This stage is primarily about getting the fundamentals right.
-
----
-
-## Phase 2 — Backend Integration
-
-The next major step is separating DevReplay's core functionality from its own backend.
-
-The objective is to allow DevReplay to work with another backend:
-
-```text
-┌──────────────┐
-│   DevReplay  │
-└───────┬──────┘
-        │
-        │ Integration
-        ↓
-┌──────────────────┐
-│ Existing Backend │
-└──────────────────┘
-```
-
-This introduces problems that are much more interesting than simply sending HTTP requests.
-
-For example:
-
-* How should DevReplay integrate with an existing API?
-* Where should requests be intercepted?
-* How should authentication be handled?
-* How should request metadata be normalized?
-* How do we preserve the original request?
-* How should different backend architectures be supported?
-* How do we avoid tightly coupling DevReplay to one framework?
-* What should the integration boundary look like?
-
-These are part of the architecture being explored.
-
----
-
-# Engineering Focus
-
-DevReplay is also a learning project focused on understanding backend engineering through implementation.
-
-Some of the concepts being explored include:
-
-* REST APIs
-* HTTP
-* request/response lifecycle
-* middleware
-* controllers
-* services
-* database persistence
-* API contracts
-* authentication
-* request interception
-* error handling
-* asynchronous operations
-* backend architecture
-* frontend/backend communication
-* system boundaries
-* abstractions
-* extensibility
-
-The objective isn't only to make the application work.
-
-It's to understand **why the architecture works**.
-
----
-
-# Tech Stack
-
-The stack is evolving as the project develops.
-
-Current technologies include:
-
-* **Next.js / React** — frontend
-* **TypeScript** — application language
-* **Node.js** — backend/runtime
-* **HTTP APIs** — communication layer
-* **Tailwind CSS** — UI styling
-
-More components may be introduced as the architecture evolves.
-
----
-
-# Project Structure
-
-The repository is organized around separating the frontend and backend responsibilities.
-
-```text
-DevReplay/
+replay/
+├── src/                        # Backend source
+│   ├── server.ts               # Entry point — starts Express on port 5000
+│   ├── app.ts                  # Route definitions
+│   ├── controllers/
+│   │   ├── captureController.ts
+│   │   ├── projectController.ts
+│   │   ├── requestController.ts
+│   │   └── replayController.ts
+│   ├── services/
+│   │   ├── captureService.ts
+│   │   ├── projectService.ts
+│   │   ├── replayService.ts
+│   │   └── requestsService.ts
+│   ├── middleware/
+│   │   └── requestLogger.ts    # Auto-captures requests with x-devreplay-project-id header
+│   └── lib/
+│       └── prisma.ts
 │
-├── frontend/
+├── prisma/
+│   └── schema.prisma           # DB schema: Project, ApiKey, RequestLog, ReplayExecution
+│
+├── frontend/                   # Next.js frontend (port 3001)
 │   ├── app/
+│   │   └── page.tsx
 │   ├── components/
-│   └── ...
+│   │   ├── Reqlist.tsx
+│   │   ├── requestsApi.ts      # All frontend API calls
+│   │   ├── requests/
+│   │   │   ├── RequestSidebar.tsx
+│   │   │   ├── RequestTable.tsx
+│   │   │   └── RequestDetailsPanel.tsx
+│   │   └── requestinspector/
+│   │       ├── RequestInspector.tsx
+│   │       ├── OverviewTab.tsx
+│   │       ├── replaytab.tsx
+│   │       └── RequestCompariosn.tsx
+│   └── types/
+│       └── request.ts
 │
-├── backend/
-│   ├── ...
-│   └── ...
-│
-└── README.md
+├── demo.ts                     # Seed script — creates a project and captures 6 requests
+├── .env                        # DATABASE_URL
+└── frontend/.env.local         # NEXT_PUBLIC_API_URL
 ```
 
-The structure will continue to evolve as DevReplay moves toward supporting external backends.
-
 ---
 
-# Development Philosophy
+## Getting Started
 
-DevReplay is being developed incrementally.
+### Prerequisites
 
-Rather than building a large abstraction layer upfront, the project follows a simpler approach:
+- Node.js 18+
+- A PostgreSQL database (the project uses [Neon](https://neon.tech))
 
-```text
-Build
-  ↓
-Understand
-  ↓
-Identify the boundary
-  ↓
-Refactor
-  ↓
-Generalize
-  ↓
-Support more backends
+### Install dependencies
+
+```bash
+# Backend
+cd replay
+npm install
+
+# Frontend
+cd frontend
+npm install
 ```
 
-The current implementation is therefore **not the final architecture**.
+### Environment variables
 
-Some parts of the codebase will change as the requirements become clearer.
-
-That's part of the project.
-
----
-
-# Roadmap
-
-## ✅ Current
-
-* [x] DevReplay frontend
-* [x] DevReplay backend
-* [x] Frontend ↔ backend communication
-* [x] API request handling
-* [x] Request data representation
-* [x] Initial request/replay architecture
-
-## 🔨 In Progress
-
-* [ ] Improve request persistence
-* [ ] Improve replay behavior
-* [ ] Better request/response inspection
-* [ ] Error handling
-* [ ] Cleaner backend architecture
-* [ ] Better separation of responsibilities
-
-## 🔮 Planned
-
-* [ ] External backend integration
-* [ ] Backend-agnostic request interception
-* [ ] Integration layer / adapters
-* [ ] Support for multiple backend architectures
-* [ ] Authentication handling
-* [ ] Better debugging workflows
-* [ ] More powerful request comparison
-* [ ] Production-ready architecture
-
----
-
-# The Bigger Goal
-
-The end goal is not simply:
-
-> "A tool that sends API requests."
-
-There are already plenty of tools that do that.
-
-The goal is to build something that helps developers **understand the lifecycle of an API request**.
-
-From:
-
-```text
-Client
-  ↓
-Request
-  ↓
-Middleware
-  ↓
-Controller
-  ↓
-Service
-  ↓
-Database
-  ↓
-Response
-  ↓
-Client
+**Backend** — `.env`:
+```env
+DATABASE_URL="your-postgres-connection-string"
 ```
 
-DevReplay should eventually provide visibility into that journey while making the request reproducible.
+**Frontend** — `frontend/.env.local`:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+### Generate Prisma client and run migrations
+
+```bash
+npm run prisma:generate
+npm run prisma:migrate
+```
 
 ---
 
-# Current Limitation
+## Running the App
 
-At this stage, DevReplay should be considered a **development/experimental project**.
+Open two terminals:
 
-It currently operates around its own backend and **does not yet provide a generic drop-in solution for arbitrary existing backends**.
+**Terminal 1 — Backend (port 5000):**
+```bash
+npm run dev
+# DevReplay running at http://localhost:5000
+```
 
-External backend support is part of the planned architecture and development roadmap.
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+npm run dev
+# http://localhost:3001
+```
 
----
-
-# Contributing
-
-DevReplay is currently evolving rapidly.
-
-If you want to explore the project, understand the architecture, or experiment with the implementation, feel free to fork the repository and build on it.
-
-Issues, discussions, and ideas around backend integration and architecture are especially welcome.
-
----
-
-# License
-
-License information will be added as the project moves toward its public release.
+Open **http://localhost:3001** to see the dashboard.
 
 ---
 
-## Built While Learning
+## How Capture Works
 
-DevReplay is being built as much to **understand backend engineering** as to create a useful developer tool.
+There are two ways to get requests into DevReplay:
 
-Every architectural decision is an opportunity to understand the underlying system better.
+### 1. Manual — POST /ingest
 
-**Build the tool. Understand the system. Then generalize it.**
+Send a request payload directly:
+
+```json
+POST /ingest
+{
+  "projectId": "your-project-id",
+  "method": "POST",
+  "path": "/users",
+  "headers": { "content-type": "application/json" },
+  "query": { "role": "admin" },
+  "body": { "name": "Alice" },
+  "statusCode": 201,
+  "responseBody": { "message": "User created" },
+  "durationMs": 18
+}
+```
+
+### 2. Automatic — Middleware
+
+Any request that includes the `x-devreplay-project-id` header is automatically captured.
+
+```
+GET /users
+x-devreplay-project-id: your-project-id
+```
+
+The middleware skips: `/requests`, `/replay`, `/ingest`, `/_next`, `/favicon.ico`.
+
+---
+
+## API Reference
+
+### Projects
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/projects` | Create a project — body: `{ "name": "..." }` |
+| `GET` | `/projects` | List all projects |
+
+### Requests
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/ingest` | Manually capture a request |
+| `GET` | `/requests` | List requests — query: `page`, `limit`, `projectId` |
+| `GET` | `/requests/:id` | Get a single request with replay history |
+| `GET` | `/requests/:id/replays` | Get all replays for a request |
+| `GET` | `/requests/:id/compare/:replayId` | Compare original vs replay |
+
+### Replay
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/replay/:id` | Replay a captured request |
+
+### Built-in Test Routes
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Health check — `"DevReplay is alive"` |
+| `GET` | `/users` | Returns `{ message, query }` |
+| `POST` | `/users` | Echoes body back as `201` |
+| `GET` | `/plain` | Returns plain text |
+| `GET` | `/error` | Throws an error (tests error handling) |
+
+---
+
+## Testing
+
+### Demo Script
+
+The fastest way to populate the dashboard with real data:
+
+```bash
+# Make sure the backend is running first
+npx tsx demo.ts
+```
+
+This will:
+1. Create a **Demo Project**
+2. Hit all built-in routes and capture 6 requests
+3. Replay the first one
+4. Print a summary with all IDs and a link to the UI
+
+Then open **http://localhost:3001** to see them in the dashboard.
+
+---
+
+### PowerShell
+
+```powershell
+# Create a project
+Invoke-RestMethod -Method POST -Uri "http://localhost:5000/projects" `
+  -ContentType "application/json" `
+  -Body '{ "name": "My Project" }'
+
+# Capture a request
+Invoke-RestMethod -Method POST -Uri "http://localhost:5000/ingest" `
+  -ContentType "application/json" `
+  -Body '{
+    "projectId": "YOUR_PROJECT_ID",
+    "method": "GET",
+    "path": "/users",
+    "statusCode": 200,
+    "durationMs": 10
+  }'
+
+# Replay a request
+Invoke-RestMethod -Method POST -Uri "http://localhost:5000/replay/YOUR_REQUEST_ID"
+
+# List requests
+Invoke-RestMethod -Uri "http://localhost:5000/requests?projectId=YOUR_PROJECT_ID"
+```
+
+---
+
+### Postman
+
+1. Create a collection called **DevReplay**
+2. Add collection variable: `baseUrl` = `http://localhost:5000`
+3. Use the **Tests** tab to auto-save IDs:
+
+```js
+// After "Create Project"
+pm.environment.set("projectId", pm.response.json().id);
+
+// After "Ingest"
+pm.environment.set("requestId", pm.response.json().id);
+
+// After "Replay"
+pm.environment.set("replayId", pm.response.json().replay.id);
+```
+
+**Suggested request order:**
+```
+POST  {{baseUrl}}/projects
+POST  {{baseUrl}}/ingest
+GET   {{baseUrl}}/requests?projectId={{projectId}}
+GET   {{baseUrl}}/requests/{{requestId}}
+POST  {{baseUrl}}/replay/{{requestId}}
+GET   {{baseUrl}}/requests/{{requestId}}/replays
+GET   {{baseUrl}}/requests/{{requestId}}/compare/{{replayId}}
+```
+
+---
+
+## Database Schema
+
+```
+Project
+  id, name, createdAt
+  → has many RequestLog
+  → has many ApiKey
+
+RequestLog
+  id, method, path, body, headers, query
+  statusCode, responseBody, durationMs
+  createdAt, projectId
+  → has many ReplayExecution
+
+ReplayExecution
+  id, requestLogId
+  statusCode, responseBody, durationMs
+  createdAt
+```
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────┐
+│     Next.js Frontend         │  http://localhost:3001
+│  RequestList / Inspector /   │
+│  Replay / Compare views      │
+└──────────────┬──────────────┘
+               │ fetch()
+               ▼
+┌─────────────────────────────┐
+│     Express Backend          │  http://localhost:5000
+│                              │
+│  requestLogger middleware    │  auto-captures flagged requests
+│  Controllers                 │  route handlers
+│  Services                    │  business logic
+│  Prisma ORM                  │  database queries
+└──────────────┬──────────────┘
+               │
+               ▼
+┌─────────────────────────────┐
+│  PostgreSQL (Neon)           │
+│  Project / RequestLog /      │
+│  ReplayExecution             │
+└─────────────────────────────┘
+```
+
+---
+
+## Roadmap
+
+### Done
+
+- [x] Express backend with full request lifecycle
+- [x] Prisma + PostgreSQL persistence
+- [x] Manual request capture via `/ingest`
+- [x] Auto-capture middleware via `x-devreplay-project-id` header
+- [x] Request replay with result storage
+- [x] Original vs replay diff (status + body)
+- [x] Paginated request list with project filtering
+- [x] Next.js frontend — sidebar, table, inspector, replay tab, compare view
+- [x] Demo seed script
+
+### In Progress
+
+- [ ] Better error handling across all layers
+- [ ] Improved replay behaviour for edge cases
+- [ ] Cleaner backend architecture
+
+### Planned
+
+- [ ] External backend integration (connect DevReplay to other APIs)
+- [ ] Backend-agnostic request interception
+- [ ] Authentication handling in replay
+- [ ] API key auth for the DevReplay API itself
+- [ ] Production-ready architecture
+
+---
+
+## License
+
+License to be added on public release.
