@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -7,10 +8,22 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id          String    @id @default(cuid())
+  clerkUserId String    @unique
+  createdAt   DateTime  @default(now())
+
+  projects    Project[]
+}
+
 model Project {
-  id        String        @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  createdAt DateTime      @default(now())
+  createdAt DateTime @default(now())
+
+  // Temporarily nullable for safe migration
+  ownerId   String?
+  owner     User?    @relation(fields: [ownerId], references: [id], onDelete: Restrict)
 
   requests  RequestLog[]
   apiKeys   ApiKey[]
@@ -38,7 +51,7 @@ model RequestLog {
   createdAt    DateTime           @default(now())
 
   projectId    String?
-  project      Project?          @relation(fields: [projectId], references: [id])
+  project      Project?           @relation(fields: [projectId], references: [id])
 
   replays      ReplayExecution[]
 }
