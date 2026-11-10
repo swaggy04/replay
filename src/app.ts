@@ -17,9 +17,7 @@ import { getProjectsController, projectController } from "./controllers/projectC
 
 const app = express();
 
-// Clerk must run before the route handlers.
-app.use(clerkMiddleware());
-
+// 1. Handle browser preflight requests before authentication.
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -28,7 +26,11 @@ app.use(
   }),
 );
 
+// 2. Parse JSON request bodies.
 app.use(express.json());
+
+// 3. Initialize Clerk authentication.
+app.use(clerkMiddleware());
 
 app.get("/", (_req, res) => {
   res.send("DevReplay is alive");
@@ -57,17 +59,35 @@ app.get("/plain", (_req, res) => {
   res.status(200).send("Hello from plain text");
 });
 
-// Project routes now require a valid Clerk session.
+// Authenticated project routes.
+// Authenticated dashboard routes.
 app.post("/projects", requireUser, projectController);
 app.get("/projects", requireUser, getProjectsController);
 
-// Existing routes — not yet migrated to ownership checks.
-app.post("/replay/:id", replayController);
-app.get("/requests", requestController);
-app.get("/requests/:id", requestIdController);
-app.get("/requests/:id/replays", replayHistoryController);
-app.get("/requests/:id/compare/:replayId", compareReplayController);
-app.get("/replay/:id/history", replayHistoryController);
+app.get("/requests", requireUser, requestController);
+app.get("/requests/:id", requireUser, requestIdController);
+
+app.get(
+  "/requests/:id/replays",
+  requireUser,
+  replayHistoryController
+);
+
+app.get(
+  "/requests/:id/compare/:replayId",
+  requireUser,
+  compareReplayController
+);
+
+app.post("/replay/:id", requireUser, replayController);
+
+app.get(
+  "/replay/:id/history",
+  requireUser,
+  replayHistoryController
+);
+
+// SDK ingestion is separate and needs API-key authentication.
 app.post("/ingest", captureController);
 
 export default app;

@@ -1,11 +1,20 @@
+
 import prisma from "../lib/prisma.js";
 
-export async function requestService(page: number, limit: number, projectId?: string) {
-  const where = projectId
-    ? {
-        projectId,
-      }
-    : undefined;
+export async function requestService(
+  page: number,
+  limit: number,
+  ownerId: string,
+  projectId?: string
+) {
+  const where = {
+    project: {
+      is: {
+        ownerId,
+        ...(projectId ? { id: projectId } : {}),
+      },
+    },
+  };
 
   const total = await prisma.requestLog.count({
     where,
@@ -15,10 +24,8 @@ export async function requestService(page: number, limit: number, projectId?: st
 
   const requests = await prisma.requestLog.findMany({
     where,
-
     skip: (page - 1) * limit,
     take: limit,
-
     select: {
       id: true,
       method: true,
@@ -27,7 +34,6 @@ export async function requestService(page: number, limit: number, projectId?: st
       createdAt: true,
       durationMs: true,
     },
-
     orderBy: {
       createdAt: "desc",
     },
@@ -42,12 +48,19 @@ export async function requestService(page: number, limit: number, projectId?: st
   };
 }
 
-export async function requestIdService(requestId: string) {
-  const individualReq = await prisma.requestLog.findUnique({
+export async function requestIdService(
+  requestId: string,
+  ownerId: string
+) {
+  return prisma.requestLog.findFirst({
     where: {
       id: requestId,
+      project: {
+        is: {
+          ownerId,
+        },
+      },
     },
-
     include: {
       replays: {
         orderBy: {
@@ -56,31 +69,41 @@ export async function requestIdService(requestId: string) {
       },
     },
   });
-
-  return individualReq;
 }
 
-export async function compareReplayService(requestId: string, replayId: string) {
-  const original = await prisma.requestLog.findUnique({
+export async function compareReplayService(
+  requestId: string,
+  replayId: string,
+  ownerId: string
+) {
+  // First establish that the original request belongs to this user.
+  const original = await prisma.requestLog.findFirst({
     where: {
       id: requestId,
+      project: {
+        is: {
+          ownerId,
+        },
+      },
     },
   });
 
-  const replay = await prisma.replayExecution.findUnique({
-    where: {
-      id: replayId,
-    },
-  });
-
-  if (!original || !replay) {
+  if (!original) {
     return {
-      original,
-      replay,
+      original: null,
+      replay: null,
     };
   }
 
-  if (replay.requestLogId !== original.id) {
+  // Then ensure the replay belongs to that exact original request.
+  const replay = await prisma.replayExecution.findFirst({
+    where: {
+      id: replayId,
+      requestLogId: original.id,
+    },
+  });
+
+  if (!replay) {
     return {
       original,
       replay: null,
@@ -89,7 +112,9 @@ export async function compareReplayService(requestId: string, replayId: string) 
 
   const statusChanged = original.statusCode !== replay.statusCode;
 
-  const bodyChanged = JSON.stringify(original.responseBody) !== JSON.stringify(replay.responseBody);
+  const bodyChanged =
+    JSON.stringify(original.responseBody) !==
+    JSON.stringify(replay.responseBody);
 
   return {
     original,

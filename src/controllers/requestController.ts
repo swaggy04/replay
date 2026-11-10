@@ -1,87 +1,164 @@
+
 import type { Request, Response } from "express";
 
-import { compareReplayService, requestIdService, requestService } from "../services/requestsService.js";
+import {
+  compareReplayService,
+  requestIdService,
+  requestService,
+} from "../services/requestsService.js";
 
 import { replayHistoryService } from "../services/replayService.js";
 
 export async function requestController(req: Request, res: Response) {
-  const page = Number(req.query.page ?? 1);
+  try {
+    const ownerId = res.locals.userId as string;
 
-  const limit = Number(req.query.limit ?? 5);
+    const page = Number(req.query.page ?? 1);
+    const limit = Number(req.query.limit ?? 10);
 
-  if (!Number.isInteger(page) || !Number.isInteger(limit) || page < 1 || limit < 1 || limit > 100) {
-    return res.status(400).json({
-      message: "Invalid pagination parameters",
+    if (
+      !Number.isInteger(page) ||
+      !Number.isInteger(limit) ||
+      page < 1 ||
+      limit < 1 ||
+      limit > 100
+    ) {
+      return res.status(400).json({
+        message: "Invalid pagination parameters",
+      });
+    }
+
+    const projectId =
+      typeof req.query.projectId === "string"
+        ? req.query.projectId
+        : undefined;
+
+    const result = await requestService(
+      page,
+      limit,
+      ownerId,
+      projectId
+    );
+
+    return res.status(200).json({
+      data: result.requests,
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages,
+    });
+  } catch (error) {
+    console.error("Failed to fetch requests:", error);
+
+    return res.status(500).json({
+      message: "Failed to fetch requests",
     });
   }
-
-  const projectId = typeof req.query.projectId === "string" ? req.query.projectId : undefined;
-
-  const { requests, total } = await requestService(page, limit, projectId);
-
-  const totalPages = Math.ceil(total / limit);
-
-  return res.json({
-    data: requests,
-    page,
-    limit,
-    total,
-    totalPages,
-  });
 }
 
 export async function requestIdController(req: Request, res: Response) {
-  const requestId = req.params.id;
+  try {
+    const ownerId = res.locals.userId as string;
+    const requestId = req.params.id;
 
-  if (typeof requestId !== "string") {
-    return res.status(400).json({
-      message: "Invalid request ID",
+    if (typeof requestId !== "string") {
+      return res.status(400).json({
+        message: "Invalid request ID",
+      });
+    }
+
+    const request = await requestIdService(requestId, ownerId);
+
+    if (!request) {
+      return res.status(404).json({
+        message: "Request not found",
+      });
+    }
+
+    return res.status(200).json(request);
+  } catch (error) {
+    console.error("Failed to fetch request:", error);
+
+    return res.status(500).json({
+      message: "Failed to fetch request",
     });
   }
-
-  const request = await requestIdService(requestId);
-
-  if (!request) {
-    return res.status(404).json({
-      message: "Request not found",
-    });
-  }
-
-  return res.json(request);
 }
 
-export async function replayHistoryController(req: Request, res: Response) {
-  const requestId = req.params.id;
+export async function replayHistoryController(
+  req: Request,
+  res: Response
+) {
+  try {
+    const ownerId = res.locals.userId as string;
 
-  if (typeof requestId !== "string") {
-    return res.status(400).json({
-      message: "Invalid request ID",
+    // Both history routes use :id in app.ts.
+    const requestId = req.params.id;
+
+    if (typeof requestId !== "string") {
+      return res.status(400).json({
+        message: "Invalid request ID",
+      });
+    }
+
+    const replays = await replayHistoryService(
+      requestId,
+      ownerId
+    );
+
+    if (replays === null) {
+      return res.status(404).json({
+        message: "Request not found",
+      });
+    }
+
+    return res.status(200).json(replays);
+  } catch (error) {
+    console.error("Failed to fetch replay history:", error);
+
+    return res.status(500).json({
+      message: "Failed to fetch replay history",
     });
   }
-
-  const replays = await replayHistoryService(requestId);
-
-  return res.json(replays);
 }
 
-export async function compareReplayController(req: Request, res: Response) {
-  const requestId = req.params.id;
+export async function compareReplayController(
+  req: Request,
+  res: Response
+) {
+  try {
+    const ownerId = res.locals.userId as string;
 
-  const replayId = req.params.replayId;
+    const requestId = req.params.id;
+    const replayId = req.params.replayId;
 
-  if (typeof requestId !== "string" || typeof replayId !== "string") {
-    return res.status(400).json({
-      message: "Invalid request ID or replay ID",
+    if (
+      typeof requestId !== "string" ||
+      typeof replayId !== "string"
+    ) {
+      return res.status(400).json({
+        message: "Invalid request ID or replay ID",
+      });
+    }
+
+    const result = await compareReplayService(
+      requestId,
+      replayId,
+      ownerId
+    );
+
+    if (!result.original || !result.replay) {
+      return res.status(404).json({
+        message: "Request or replay not found",
+      });
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Failed to compare replay:", error);
+
+    return res.status(500).json({
+      message: "Failed to compare replay",
     });
   }
-
-  const result = await compareReplayService(requestId, replayId);
-
-  if (!result.original || !result.replay) {
-    return res.status(404).json({
-      message: "Request or replay not found",
-    });
-  }
-
-  return res.json(result);
 }
