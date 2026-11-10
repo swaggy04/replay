@@ -27,14 +27,16 @@ const app = express();
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    allowedHeaders: ["Content-Type", "Authorization"],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-devreplay-api-key",
+    ], methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   }),
 );
 
 // 2. Parse JSON request bodies.
-app.use(express.json());
-
+app.use(express.json({ limit: "256kb" }));
 // 3. Initialize Clerk authentication.
 app.use(clerkMiddleware());
 

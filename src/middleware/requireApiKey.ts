@@ -1,5 +1,7 @@
+
 import type { Request, Response, NextFunction } from "express";
 import { createHash } from "node:crypto";
+
 import prisma from "../lib/prisma.js";
 
 function hashApiKey(key: string): string {
@@ -14,8 +16,11 @@ export async function requireApiKey(
     try {
         const apiKey = req.header("x-devreplay-api-key");
 
-        if (!apiKey || !apiKey.startsWith("dr_live_")) {
-            return res.status(401).json({ message: "Invalid API key" });
+        // dr_live_ + 64 hexadecimal characters.
+        if (!apiKey || !/^dr_live_[a-f0-9]{64}$/.test(apiKey)) {
+            return res.status(401).json({
+                message: "Invalid API key",
+            });
         }
 
         const hashedKey = hashApiKey(apiKey);
@@ -31,15 +36,20 @@ export async function requireApiKey(
         });
 
         if (!storedApiKey) {
-            return res.status(401).json({ message: "Invalid API key" });
+            return res.status(401).json({
+                message: "Invalid or revoked API key",
+            });
         }
 
-        // The project ID is trusted only because it came from the verified key.
+        // Only the verified database record determines project ownership.
         res.locals.projectId = storedApiKey.projectId;
 
         return next();
     } catch (error) {
         console.error("API key authentication failed:", error);
-        return res.status(500).json({ message: "API key authentication failed" });
+
+        return res.status(500).json({
+            message: "API key authentication failed",
+        });
     }
 }
