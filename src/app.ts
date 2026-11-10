@@ -3,6 +3,7 @@ import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 
 import { requireUser } from "./middleware/requireUser.js";
+import { requireApiKey } from "./middleware/requireApiKey.js";
 
 import { replayController } from "./controllers/replayController.js";
 import { captureController } from "./controllers/captureController.js";
@@ -12,6 +13,11 @@ import {
   requestController,
   requestIdController,
 } from "./controllers/requestController.js";
+import {
+  createApiKeyController,
+  getProjectApiKeysController,
+  revokeApiKeyController,
+} from "./controllers/apiKeyController.js";
 
 import { getProjectsController, projectController } from "./controllers/projectController.js";
 
@@ -88,6 +94,23 @@ app.get(
 );
 
 // SDK ingestion is separate and needs API-key authentication.
-app.post("/ingest", captureController);
+app.post("/ingest", requireApiKey, captureController);
+app.post(
+  "/projects/:projectId/api-keys",
+  requireUser,
+  createApiKeyController
+);
+
+app.get(
+  "/projects/:projectId/api-keys",
+  requireUser,
+  getProjectApiKeysController
+);
+
+app.delete(
+  "/projects/:projectId/api-keys/:keyId",
+  requireUser,
+  revokeApiKeyController
+);
 
 export default app;

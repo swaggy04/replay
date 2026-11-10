@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 
 import type { ReplayExecution, ReplayResult, RequestDetails } from "@/types/request";
 
@@ -17,10 +18,10 @@ type RequestInspectorProps = {
 };
 
 export default function RequestInspector({ request, onClose }: RequestInspectorProps) {
+  const { getToken } = useAuth();
+
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
-
   const [replaying, setReplaying] = useState(false);
-
   const [replayError, setReplayError] = useState<string | null>(null);
 
   const [replayHistory, setReplayHistory] = useState<ReplayExecution[]>(request.replays ?? []);
@@ -32,15 +33,21 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
     setReplayError(null);
 
     try {
-      const data: ReplayResult = await replayRequest(request.id);
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error("Unable to obtain Clerk session token.");
+      }
+
+      const data: ReplayResult = await replayRequest(request.id, token);
 
       setReplayHistory((history) => [data.replay, ...history]);
-
       setSelectedReplay(data.replay);
       setActiveTab("replay");
     } catch (error) {
       console.error("Replay failed:", error);
-      setReplayError("Failed to replay request");
+
+      setReplayError(error instanceof Error ? error.message : "Failed to replay request");
     } finally {
       setReplaying(false);
     }
@@ -72,7 +79,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         "
       >
         {/* HEADER */}
-
         <div
           className="
             flex
@@ -87,7 +93,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
           "
         >
           {/* Request identity */}
-
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-3">
               <MethodBadge method={request.method} />
@@ -110,7 +115,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
             </div>
 
             {/* Metadata */}
-
             <div
               className="
                 mt-2
@@ -127,12 +131,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
 
               <span className="text-[#403a3d]">•</span>
 
-              <span
-                className="
-                  font-mono
-                  text-[#b7b2b5]
-                "
-              >
+              <span className="font-mono text-[#b7b2b5]">
                 {request.durationMs !== null ? `${request.durationMs}ms` : "—"}
               </span>
 
@@ -143,7 +142,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
           </div>
 
           {/* HEADER ACTIONS */}
-
           <div className="ml-3 flex shrink-0 items-center gap-2">
             <button
               type="button"
@@ -214,7 +212,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         </div>
 
         {/* TABS */}
-
         <div
           className="
             shrink-0
@@ -226,7 +223,6 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         </div>
 
         {/* CONTENT */}
-
         <div
           className="
             devreplay-scrollbar
@@ -329,32 +325,9 @@ export function InfoRow({ label, value, mono = false }: { label: string; value: 
         sm:grid-cols-[120px_minmax(0,1fr)]
       "
     >
-      <span
-        className="
-          text-[11px]
-          font-medium
-          text-[#777174]
-        "
-      >
-        {label}
-      </span>
+      <span className="text-[11px] font-medium text-[#777174]">{label}</span>
 
-      <span
-        className={
-          mono
-            ? `
-              truncate
-              font-mono
-              text-xs
-              text-[#e5e1e2]
-            `
-            : `
-              truncate
-              text-xs
-              text-[#d7d3d4]
-            `
-        }
-      >
+      <span className={mono ? "truncate font-mono text-xs text-[#e5e1e2]" : "truncate text-xs text-[#d7d3d4]"}>
         {value}
       </span>
     </div>
@@ -373,10 +346,9 @@ export function JsonBlock({ data }: { data: unknown }) {
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(content);
-
       setCopied(true);
 
-      setTimeout(() => {
+      window.setTimeout(() => {
         setCopied(false);
       }, 1500);
     } catch (error) {
@@ -395,7 +367,6 @@ export function JsonBlock({ data }: { data: unknown }) {
       "
     >
       {/* CODE TOOLBAR */}
-
       <div
         className="
           flex
@@ -423,14 +394,7 @@ export function JsonBlock({ data }: { data: unknown }) {
 
           <span className="h-1 w-1 rounded-full bg-[#393335]" />
 
-          <span
-            className="
-              text-[9px]
-              text-[#5e585b]
-            "
-          >
-            Read only
-          </span>
+          <span className="text-[9px] text-[#5e585b]">Read only</span>
         </div>
 
         <button
@@ -453,7 +417,6 @@ export function JsonBlock({ data }: { data: unknown }) {
       </div>
 
       {/* CODE */}
-
       <pre
         className="
           devreplay-scrollbar
@@ -481,31 +444,11 @@ function MethodBadge({ method }: { method: string }) {
   const normalizedMethod = method.toUpperCase();
 
   const styles: Record<string, string> = {
-    GET: `
-      border-emerald-500/20
-      bg-emerald-500/10
-      text-emerald-400
-    `,
-    POST: `
-      border-blue-500/20
-      bg-blue-500/10
-      text-blue-400
-    `,
-    PUT: `
-      border-amber-500/20
-      bg-amber-500/10
-      text-amber-400
-    `,
-    PATCH: `
-      border-orange-500/20
-      bg-orange-500/10
-      text-orange-400
-    `,
-    DELETE: `
-      border-red-500/20
-      bg-red-500/10
-      text-red-400
-    `,
+    GET: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
+    POST: "border-blue-500/20 bg-blue-500/10 text-blue-400",
+    PUT: "border-amber-500/20 bg-amber-500/10 text-amber-400",
+    PATCH: "border-orange-500/20 bg-orange-500/10 text-orange-400",
+    DELETE: "border-red-500/20 bg-red-500/10 text-red-400",
   };
 
   return (
@@ -522,14 +465,7 @@ function MethodBadge({ method }: { method: string }) {
         text-[10px]
         font-bold
         tracking-wide
-        ${
-          styles[normalizedMethod] ??
-          `
-          border-[#393335]
-          bg-[#171315]
-          text-[#d8d4d5]
-        `
-        }
+        ${styles[normalizedMethod] ?? "border-[#393335] bg-[#171315] text-[#d8d4d5]"}
       `}
     >
       {normalizedMethod}
@@ -630,22 +566,7 @@ export function StatCard({ label, value, mono = false }: { label: string; value:
       </div>
 
       <div
-        className={
-          mono
-            ? `
-              mt-1.5
-              truncate
-              font-mono
-              text-sm
-              text-[#f0edee]
-            `
-            : `
-              mt-1.5
-              truncate
-              text-xs
-              text-[#d5d1d2]
-            `
-        }
+        className={mono ? "mt-1.5 truncate font-mono text-sm text-[#f0edee]" : "mt-1.5 truncate text-xs text-[#d5d1d2]"}
       >
         {value}
       </div>

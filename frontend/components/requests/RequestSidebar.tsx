@@ -7,6 +7,7 @@ type RequestSidebarProps = {
   selectedProject: Project | null;
   onSelectProject: (project: Project) => void;
   onCreateProject: () => void;
+  onOpenSettings: () => void;
   requests: RequestLog[];
   selectedRequest: RequestLog | null;
   onSelectRequest: (request: RequestLog) => void;
@@ -17,6 +18,7 @@ export function RequestSidebar({
   selectedProject,
   onSelectProject,
   onCreateProject,
+  onOpenSettings,
   requests,
   selectedRequest,
   onSelectRequest,
@@ -45,19 +47,16 @@ export function RequestSidebar({
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-[#242022] bg-[#100d0f]">
       {/* BRAND */}
-
       <div className="flex h-14 shrink-0 items-center border-b border-[#242022] px-5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-6 w-6 items-center justify-center rounded-md border border-[#342e31] bg-[#171315] text-[11px] font-semibold text-[#d8d4d5]">
             D
           </div>
-
           <span className="text-[15px] font-semibold tracking-tight text-[#f5f3f3]">DevReplay</span>
         </div>
       </div>
 
       {/* PROJECT */}
-
       <div className="border-b border-[#242022] px-4 py-4">
         <div className="mb-2 flex items-center justify-between">
           <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#716b6e]">Project</p>
@@ -79,9 +78,7 @@ export function RequestSidebar({
             onChange={(event) => {
               const project = projects.find((project) => project.id === event.target.value);
 
-              if (project) {
-                onSelectProject(project);
-              }
+              if (project) onSelectProject(project);
             }}
             disabled={projects.length === 0}
             className="h-9 w-full cursor-pointer appearance-none rounded-md border border-[#302b2d] bg-[#0c080a] px-3 pr-8 text-xs font-medium text-[#ddd9da] outline-none transition hover:border-[#3b3538] focus:border-[#4a4245] focus:ring-1 focus:ring-[#4a4245]/30 disabled:cursor-not-allowed disabled:opacity-50"
@@ -104,7 +101,6 @@ export function RequestSidebar({
       </div>
 
       {/* NAVIGATION */}
-
       <nav className="border-b border-[#242022] px-3 py-3">
         <button
           type="button"
@@ -132,6 +128,7 @@ export function RequestSidebar({
 
         <button
           type="button"
+          onClick={onOpenSettings}
           className="mt-1 flex h-9 w-full items-center gap-3 rounded-md px-3 text-xs font-medium text-[#918b8e] transition-colors hover:bg-[#161214] hover:text-[#d9d5d6]"
         >
           <span className="flex w-4 justify-center text-[11px]">⚙</span>
@@ -140,7 +137,6 @@ export function RequestSidebar({
       </nav>
 
       {/* RECENT REQUESTS */}
-
       <div className="devreplay-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-4">
         <div className="mb-2 flex items-center justify-between px-2">
           <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#716b6e]">Recent</p>
@@ -187,7 +183,6 @@ export function RequestSidebar({
       </div>
 
       {/* BOTTOM */}
-
       <div className="flex h-14 shrink-0 items-center justify-between border-t border-[#242022] px-4">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#302b2d] bg-[#0c080a] text-xs font-medium text-[#d8d4d5]">

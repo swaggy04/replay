@@ -10,6 +10,7 @@ import { createProject, getProjects, getRequestDetails, getRequests } from "./re
 import { RequestSidebar } from "./requests/RequestSidebar";
 import { RequestTable } from "./requests/RequestTable";
 import { RequestDetailsPanel } from "./requests/RequestDetailsPanel";
+import { ProjectSettings } from "./requests/ProjectSettings";
 
 const SELECTED_PROJECT_KEY = "devreplay:selectedProject";
 const SELECTED_REQUEST_KEY = "devreplay:selectedRequest";
@@ -31,9 +32,7 @@ export default function RequestList() {
   const [projectsError, setProjectsError] = useState<string | null>(null);
 
   const [selectedRequest, setSelectedRequest] = useState<RequestLog | null>(null);
-
   const [requestDetails, setRequestDetails] = useState<RequestDetails | null>(null);
-
   const [detailsLoading, setDetailsLoading] = useState(false);
 
   // Create project dialog state.
@@ -42,7 +41,10 @@ export default function RequestList() {
   const [creatingProject, setCreatingProject] = useState(false);
   const [createProjectError, setCreateProjectError] = useState<string | null>(null);
 
-  // Fetch projects using the authenticated Clerk session.
+  // Project settings state.
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Fetch projects.
   useEffect(() => {
     if (!isLoaded) return;
 
@@ -72,7 +74,6 @@ export default function RequestList() {
         }
 
         const savedProjectId = localStorage.getItem(SELECTED_PROJECT_KEY);
-
         const savedProject = data.find((project) => project.id === savedProjectId);
 
         setSelectedProject(savedProject ?? data[0]);
@@ -89,7 +90,7 @@ export default function RequestList() {
       }
     }
 
-    fetchProjects();
+    void fetchProjects();
 
     return () => {
       cancelled = true;
@@ -100,10 +101,7 @@ export default function RequestList() {
   useEffect(() => {
     if (!selectedProject) return;
 
-    // Capture the ID after the null check.
-    // This gives TypeScript a guaranteed string inside the async function.
     const projectId = selectedProject.id;
-
     let cancelled = false;
 
     async function fetchRequests() {
@@ -146,7 +144,7 @@ export default function RequestList() {
       }
     }
 
-    fetchRequests();
+    void fetchRequests();
 
     return () => {
       cancelled = true;
@@ -156,6 +154,7 @@ export default function RequestList() {
   // Handle project change.
   function handleSelectProject(project: Project) {
     setSelectedProject(project);
+    setSettingsOpen(false);
 
     localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
     localStorage.removeItem(SELECTED_REQUEST_KEY);
@@ -169,14 +168,14 @@ export default function RequestList() {
     setRequestDetails(null);
   }
 
-  // Open the create-project dialog.
+  // Open create-project dialog.
   function handleOpenCreateDialog() {
     setProjectName("");
     setCreateProjectError(null);
     setCreateDialogOpen(true);
   }
 
-  // Create a project for the authenticated user.
+  // Create project.
   async function handleCreateProject(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -199,7 +198,6 @@ export default function RequestList() {
 
       const project: Project = await createProject(name, token);
 
-      // Add the newly created project and select it.
       setProjects((current) => [project, ...current.filter((item) => item.id !== project.id)]);
 
       setSelectedProject(project);
@@ -211,6 +209,8 @@ export default function RequestList() {
       setPage(1);
       setTotal(0);
       setTotalPages(1);
+
+      setSettingsOpen(false);
 
       localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
       localStorage.removeItem(SELECTED_REQUEST_KEY);
@@ -226,7 +226,7 @@ export default function RequestList() {
     }
   }
 
-  // Fetch details of a selected request.
+  // Fetch selected request details.
   async function handleSelectRequest(request: RequestLog) {
     setSelectedRequest(request);
     setRequestDetails(null);
@@ -251,7 +251,7 @@ export default function RequestList() {
     }
   }
 
-  // Shared project creation dialog.
+  // Project creation dialog.
   const projectDialog = (
     <div
       className={`fixed inset-0 z-50 items-center justify-center bg-black/70 p-4 ${
@@ -340,7 +340,7 @@ export default function RequestList() {
     );
   }
 
-  // Empty state for a new account.
+  // Empty state.
   if (projects.length === 0) {
     return (
       <>
@@ -366,7 +366,7 @@ export default function RequestList() {
   }
 
   // Loading requests.
-  if (loading && requests.length === 0) {
+  if (loading && requests.length === 0 && !settingsOpen) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#0c080a]">
         <div className="flex flex-col items-center">
@@ -385,83 +385,108 @@ export default function RequestList() {
       {projectDialog}
 
       {/* SIDEBAR */}
-
       <RequestSidebar
         projects={projects}
         selectedProject={selectedProject}
         onSelectProject={handleSelectProject}
         onCreateProject={handleOpenCreateDialog}
+        onOpenSettings={() => setSettingsOpen(true)}
         requests={requests}
         selectedRequest={selectedRequest}
         onSelectRequest={handleSelectRequest}
       />
 
       {/* MAIN AREA */}
-
       <main className="relative flex min-w-0 flex-1 flex-col">
-        {/* TOP BAR */}
+        {settingsOpen && selectedProject ? (
+          <>
+            {/* SETTINGS HEADER */}
+            <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#242022] bg-[#0c080a] px-5">
+              <div>
+                <h1 className="text-sm font-semibold text-[#f1eeee]">Project Settings</h1>
 
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#242022] bg-[#0c080a] px-5">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-sm font-semibold tracking-tight text-[#f1eeee]">Requests</h1>
+                <p className="mt-0.5 text-[10px] text-[#716b6e]">Manage {selectedProject.name}</p>
+              </div>
 
-              <span className="text-[#403a3d]">/</span>
+              <button
+                type="button"
+                onClick={() => setSettingsOpen(false)}
+                className="rounded-md border border-[#302b2d] px-3 py-1.5 text-xs text-[#c9c5c6] transition hover:bg-[#1a1618]"
+              >
+                ← Back to requests
+              </button>
+            </header>
 
-              <span className="max-w-[240px] truncate text-xs text-[#8f898c]">{selectedProject?.name}</span>
-            </div>
+            {/* ACTUAL PROJECT SETTINGS COMPONENT */}
+            <ProjectSettings
+              key={selectedProject.id}
+              projectId={selectedProject.id}
+              projectName={selectedProject.name}
+              getToken={getToken}
+            />
+          </>
+        ) : (
+          <>
+            {/* REQUESTS HEADER */}
+            <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#242022] bg-[#0c080a] px-5">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-sm font-semibold tracking-tight text-[#f1eeee]">Requests</h1>
 
-            <p className="mt-0.5 text-[10px] text-[#716b6e]">Captured HTTP traffic</p>
-          </div>
+                  <span className="text-[#403a3d]">/</span>
 
-          <div className="shrink-0 text-[11px] font-medium text-[#777174]">
-            {total} {total === 1 ? "request" : "requests"}
-          </div>
-        </header>
+                  <span className="max-w-[240px] truncate text-xs text-[#8f898c]">{selectedProject?.name}</span>
+                </div>
 
-        {/* REQUEST TABLE */}
+                <p className="mt-0.5 text-[10px] text-[#716b6e]">Captured HTTP traffic</p>
+              </div>
 
-        <RequestTable requests={requests} selectedRequest={selectedRequest} onSelectRequest={handleSelectRequest} />
+              <div className="shrink-0 text-[11px] font-medium text-[#777174]">
+                {total} {total === 1 ? "request" : "requests"}
+              </div>
+            </header>
 
-        {/* DETAILS PANEL */}
+            {/* REQUEST TABLE */}
+            <RequestTable requests={requests} selectedRequest={selectedRequest} onSelectRequest={handleSelectRequest} />
 
-        <RequestDetailsPanel
-          selectedRequest={selectedRequest}
-          requestDetails={requestDetails}
-          detailsLoading={detailsLoading}
-          onClose={() => {
-            setSelectedRequest(null);
-            setRequestDetails(null);
+            {/* DETAILS PANEL */}
+            <RequestDetailsPanel
+              selectedRequest={selectedRequest}
+              requestDetails={requestDetails}
+              detailsLoading={detailsLoading}
+              onClose={() => {
+                setSelectedRequest(null);
+                setRequestDetails(null);
+                localStorage.removeItem(SELECTED_REQUEST_KEY);
+              }}
+            />
 
-            localStorage.removeItem(SELECTED_REQUEST_KEY);
-          }}
-        />
+            {/* PAGINATION */}
+            <footer className="flex h-12 shrink-0 items-center justify-between border-t border-[#242022] px-5">
+              <span className="text-xs text-[#716b6e]">
+                Page {page} of {totalPages}
+              </span>
 
-        {/* PAGINATION */}
+              <div className="flex gap-2">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage((current) => current - 1)}
+                  className="rounded-md border border-[#302b2d] px-3 py-1.5 text-xs text-[#a9a4a6] transition hover:border-[#403a3d] hover:bg-[#141012] hover:text-[#e5e1e2] disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  ← Previous
+                </button>
 
-        <footer className="flex h-12 shrink-0 items-center justify-between border-t border-[#242022] px-5">
-          <span className="text-xs text-[#716b6e]">
-            Page {page} of {totalPages}
-          </span>
-
-          <div className="flex gap-2">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((current) => current - 1)}
-              className="rounded-md border border-[#302b2d] px-3 py-1.5 text-xs text-[#a9a4a6] transition hover:border-[#403a3d] hover:bg-[#141012] hover:text-[#e5e1e2] disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              ← Previous
-            </button>
-
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage((current) => current + 1)}
-              className="rounded-md border border-[#302b2d] px-3 py-1.5 text-xs text-[#a9a4a6] transition hover:border-[#403a3d] hover:bg-[#141012] hover:text-[#e5e1e2] disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              Next →
-            </button>
-          </div>
-        </footer>
+                <button
+                  disabled={page === totalPages}
+                  onClick={() => setPage((current) => current + 1)}
+                  className="rounded-md border border-[#302b2d] px-3 py-1.5 text-xs text-[#a9a4a6] transition hover:border-[#403a3d] hover:bg-[#141012] hover:text-[#e5e1e2] disabled:cursor-not-allowed disabled:opacity-30"
+                >
+                  Next →
+                </button>
+              </div>
+            </footer>
+          </>
+        )}
       </main>
     </div>
   );
