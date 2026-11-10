@@ -4,6 +4,7 @@ import { createproject, getProjects } from "../services/projectService.js";
 export async function projectController(req: Request, res: Response) {
   try {
     const { name } = req.body;
+    const ownerId = res.locals.userId as string;
 
     if (typeof name !== "string" || name.trim() === "") {
       return res.status(400).json({
@@ -11,7 +12,7 @@ export async function projectController(req: Request, res: Response) {
       });
     }
 
-    const project = await createproject(name.trim());
+    const project = await createproject(name.trim(), ownerId);
 
     return res.status(201).json(project);
   } catch (error) {
@@ -22,11 +23,12 @@ export async function projectController(req: Request, res: Response) {
     });
   }
 }
-0;
 
-export async function getProjectsController(req: Request, res: Response) {
+export async function getProjectsController(_req: Request, res: Response) {
   try {
-    const projects = await getProjects();
+    const ownerId = res.locals.userId as string;
+
+    const projects = await getProjects(ownerId);
 
     return res.status(200).json(projects);
   } catch (error) {

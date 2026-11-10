@@ -1,19 +1,21 @@
 import prisma from "../lib/prisma.js";
 
-export async function createproject(name: string) {
-  const project = await prisma.project.create({
+export async function createproject(name: string, ownerId: string) {
+  return prisma.project.create({
     data: {
       name,
+      ownerId,
     },
   });
-  return project;
 }
 
-export async function getProjects() {
-  const projects = await prisma.project.findMany({
+export async function getProjects(ownerId: string) {
+  return prisma.project.findMany({
+    where: {
+      ownerId,
+    },
     orderBy: {
       createdAt: "desc",
     },
   });
-  return projects;
 }
