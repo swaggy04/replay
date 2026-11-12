@@ -16,18 +16,23 @@ model User {
   projects    Project[]
 }
 
+
 model Project {
-  id        String        @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  createdAt DateTime      @default(now())
+  createdAt DateTime @default(now())
+
+  // Replay configuration
+  replayBaseUrl String? @db.VarChar(2048)
 
   // Temporarily nullable for safe migration
   ownerId   String?
-  owner     User?        @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  owner     User?    @relation(fields: [ownerId], references: [id], onDelete: Restrict)
 
   requests  RequestLog[]
   apiKeys   ApiKey[]
 }
+
 
 model ApiKey {
   id        String     @id @default(cuid())
