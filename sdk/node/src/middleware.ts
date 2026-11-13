@@ -12,21 +12,34 @@ const SENSITIVE_HEADERS = new Set([
   "x-devreplay-api-key",
 ]);
 
+// Normalized (lowercased, non-alphanumeric removed) sensitive body field names/variants.
 const SENSITIVE_BODY_FIELDS = new Set([
   "password",
+  "passwd",
   "token",
   "accesstoken",
   "refreshtoken",
-  "secret",
+  "idtoken",
   "apikey",
+  "secret",
+  "clientsecret",
+  "privatekey",
+  "session",
+  "sessionid",
+  "csrftoken",
+  "xsrf",
+  "xsrftoken",
+  "authorization",
 ]);
 
 const DEFAULT_MAX_BODY_SIZE = 64 * 1024;
 const DEFAULT_UPLOAD_TIMEOUT_MS = 2000;
+const DEFAULT_MAX_CONCURRENT_UPLOADS = 5;
 
 export function resolveOptions(options: DevReplayOptions): ResolvedDevReplayOptions {
   const apiKey = typeof options.apiKey === "string" ? options.apiKey.trim() : "";
-  const endpoint = typeof options.endpoint === "string" ? options.endpoint.trim() : "";
+  const rawEndpoint = typeof options.endpoint === "string" ? options.endpoint.trim() : "";
+  const endpoint = normalizeEndpoint(rawEndpoint);
   const excludePaths = normalizeExcludePaths(options.excludePaths);
   const maxBodySize =
     typeof options.maxBodySize === "number" && Number.isFinite(options.maxBodySize) && options.maxBodySize > 0
@@ -38,6 +51,17 @@ export function resolveOptions(options: DevReplayOptions): ResolvedDevReplayOpti
     options.uploadTimeoutMs > 0
       ? Math.floor(options.uploadTimeoutMs)
       : DEFAULT_UPLOAD_TIMEOUT_MS;
+  const maxConcurrentUploads =
+    typeof options.maxConcurrentUploads === "number" &&
+    Number.isFinite(options.maxConcurrentUploads) &&
+    options.maxConcurrentUploads > 0
+      ? Math.floor(options.maxConcurrentUploads)
+      : DEFAULT_MAX_CONCURRENT_UPLOADS;
+
+  const logger = options.logger ?? console;
+  if (rawEndpoint && !endpoint) {
+    safeWarnWithLogger(logger, "Invalid endpoint URL; capture uploads are disabled");
+  }
 
   return {
     apiKey,
@@ -45,9 +69,25 @@ export function resolveOptions(options: DevReplayOptions): ResolvedDevReplayOpti
     excludePaths,
     maxBodySize,
     uploadTimeoutMs,
+    maxConcurrentUploads,
     enabled: options.enabled !== false,
-    logger: options.logger ?? console,
+    logger,
   };
+}
+
+function normalizeEndpoint(endpoint: string): string {
+  if (!endpoint) return "";
+  try {
+    const url = new URL(endpoint);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return "";
+    url.hash = "";
+    // Keep pathname/search if provided, but uploads target `${endpoint}/ingest` in client by base trimming;
+    // we store normalized origin+pathname without trailing slash for predictable concatenation.
+    const normalized = url.toString().replace(/\/+$/, "");
+    return normalized;
+  } catch {
+    return "";
+  }
 }
 
 function normalizeExcludePaths(paths: string[] | undefined): string[] {
@@ -71,54 +111,91 @@ export function createDevReplayMiddleware(options: DevReplayOptions) {
     resolved.logger.warn("[DevReplay] Missing API key; capture uploads are disabled.");
   }
   if (!resolved.endpoint) {
-    resolved.logger.warn("[DevReplay] Missing endpoint; capture uploads are disabled.");
+    // Warning may already have been emitted for invalid URL; emit a generic one only if truly empty input.
+    if (!options.endpoint) {
+      resolved.logger.warn("[DevReplay] Missing endpoint; capture uploads are disabled.");
+    }
   }
 
   return function devReplayMiddleware(req: Request, res: Response, next: NextFunction): void {
+    let nextCalled = false;
+    const safeNext = (err?: unknown) => {
+      if (nextCalled) return;
+      nextCalled = true;
+      if (err !== undefined) (next as any)(err);
+      else next();
+    };
+
     try {
       if (!shouldCaptureRequest(req, resolved)) {
-        next();
+        safeNext();
         return;
       }
 
       // Avoid capturing multipart/binary request bodies in initial implementation.
       if (isMultipartRequest(req)) {
-        next();
+        safeNext();
         return;
       }
 
       const startTime = Date.now();
       const capturedRequestBody = sanitizeRequestBody(req.body, resolved.maxBodySize);
-      const capturedQuery = sanitizeQuery(req.query);
+      const capturedQuery = sanitizeQuery(req.query, resolved.maxBodySize);
       let responsePayload: unknown = undefined;
-      let responsePayloadSet = false;
+      let responseCaptureState: "none" | "single" | "stream" = "none";
+      let finished = false;
 
       const originalJson = res.json.bind(res);
       const originalSend = res.send.bind(res);
       const originalEnd = res.end.bind(res);
+      const originalWrite = res.write.bind(res);
 
-      res.json = ((body: unknown) => {
-        responsePayload = body;
-        responsePayloadSet = true;
-        return originalJson(body);
-      }) as Response["json"];
-
-      res.send = ((body: unknown) => {
-        responsePayload = body;
-        responsePayloadSet = true;
-        return originalSend(body as any);
-      }) as Response["send"];
-
-      res.end = ((chunk?: any, encoding?: any, cb?: any) => {
-        if (!responsePayloadSet && chunk !== undefined && chunk !== null) {
-          // Capture only if likely text/json and no prior json/send captured.
-          responsePayload = chunk;
-          responsePayloadSet = true;
+      res.json = function patchedJson(this: Response, ...args: any[]) {
+        if (responseCaptureState === "none") {
+          responsePayload = args[0];
+          responseCaptureState = "single";
         }
-        return originalEnd(chunk, encoding as any, cb as any);
-      }) as Response["end"];
+        return originalJson.apply(this, args as any);
+      } as Response["json"];
+
+      res.send = function patchedSend(this: Response, ...args: any[]) {
+        if (responseCaptureState === "none") {
+          responsePayload = args[0];
+          responseCaptureState = "single";
+        }
+        return originalSend.apply(this, args as any);
+      } as Response["send"];
+
+      res.write = function patchedWrite(this: Response, ...args: any[]) {
+        // If streaming via write(), we cannot safely capture the complete response body.
+        if (responseCaptureState === "none") {
+          responsePayload = "[STREAMED_RESPONSE_BODY_NOT_CAPTURED]";
+          responseCaptureState = "stream";
+        } else if (responseCaptureState === "single") {
+          // A prior send/json followed by write is unusual, but treat as streamed/incomplete.
+          responsePayload = "[STREAMED_RESPONSE_BODY_NOT_CAPTURED]";
+          responseCaptureState = "stream";
+        }
+        return originalWrite.apply(this, args as any);
+      } as Response["write"];
+
+      res.end = function patchedEnd(this: Response, ...args: any[]) {
+        const chunk = args[0];
+        if (responseCaptureState === "none") {
+          if (chunk !== undefined && chunk !== null && typeof chunk !== "function") {
+            responsePayload = chunk;
+            responseCaptureState = "single";
+          }
+        } else if (responseCaptureState === "stream") {
+          // Keep marker; do not append/replace with potentially partial end chunk.
+          responsePayload = "[STREAMED_RESPONSE_BODY_NOT_CAPTURED]";
+        }
+        return originalEnd.apply(this, args as any);
+      } as Response["end"];
 
       res.on("finish", () => {
+        if (finished) return;
+        finished = true;
         try {
           const durationMs = Math.max(0, Date.now() - startTime);
           const event: CaptureEvent = {
@@ -138,10 +215,10 @@ export function createDevReplayMiddleware(options: DevReplayOptions) {
         }
       });
 
-      next();
+      safeNext();
     } catch (error) {
       safeWarn(resolved, "Middleware error; request passed through", error);
-      next();
+      safeNext();
     }
   };
 }
@@ -193,10 +270,19 @@ export function redactHeaders(headers: Request["headers"] | undefined): Record<s
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
-export function sanitizeQuery(query: unknown): Record<string, JsonValue> | undefined {
+export function sanitizeQuery(query: unknown, maxBodySize = DEFAULT_MAX_BODY_SIZE): Record<string, JsonValue> | undefined {
   const redacted = redactAndClone(query, new WeakSet(), 0);
-  if (!redacted || typeof redacted !== "object" || Array.isArray(redacted)) return undefined;
-  return redacted as Record<string, JsonValue>;
+  if (redacted === undefined) return undefined;
+
+  // Apply size limit to query payloads too (best-effort, with safe serialization handling).
+  const limited = applyPayloadLimit(redacted, maxBodySize);
+  if (!limited || typeof limited !== "object" || Array.isArray(limited)) {
+    // If truncation produced a marker object that's not a record in the usual query shape,
+    // preserve a structured record so callers still receive a query object.
+    if (limited && typeof limited === "object" && !Array.isArray(limited)) return limited as Record<string, JsonValue>;
+    return undefined;
+  }
+  return limited as Record<string, JsonValue>;
 }
 
 export function sanitizeRequestBody(body: unknown, maxBodySize: number): JsonValue | undefined {
@@ -204,7 +290,7 @@ export function sanitizeRequestBody(body: unknown, maxBodySize: number): JsonVal
   if (isUnsafeBinaryBody(body)) return "[BINARY_BODY_OMITTED]";
   const redacted = redactAndClone(body, new WeakSet(), 0);
   if (redacted === undefined) return undefined;
-  return applyBodyLimit(redacted, maxBodySize);
+  return applyPayloadLimit(redacted, maxBodySize);
 }
 
 export function sanitizeResponseBody(
@@ -216,6 +302,10 @@ export function sanitizeResponseBody(
     return body as null | undefined;
   }
 
+  if (body === "[STREAMED_RESPONSE_BODY_NOT_CAPTURED]") {
+    return body;
+  }
+
   const contentType = Array.isArray(contentTypeHeader)
     ? contentTypeHeader.join(";").toLowerCase()
     : String(contentTypeHeader ?? "").toLowerCase();
@@ -224,15 +314,13 @@ export function sanitizeResponseBody(
     if (!isTextualContentType(contentType)) return "[BINARY_BODY_OMITTED]";
     const text = body.toString("utf8");
     if (contentType.includes("application/json") || contentType.includes("+json") || looksLikeJson(text)) {
-      try {
-        const parsed = JSON.parse(text);
-        const redacted = redactAndClone(parsed, new WeakSet(), 0);
-        return redacted === undefined ? undefined : applyBodyLimit(redacted, maxBodySize);
-      } catch {
-        // fall through to plain text handling
+      const parsed = safeJsonParse(text);
+      if (parsed.ok) {
+        const redacted = redactAndClone(parsed.value, new WeakSet(), 0);
+        return redacted === undefined ? undefined : applyPayloadLimit(redacted, maxBodySize);
       }
     }
-    return applyBodyLimit(text, maxBodySize);
+    return applyPayloadLimit(text, maxBodySize);
   }
 
   if (typeof body === "string") {
@@ -240,15 +328,14 @@ export function sanitizeResponseBody(
     if (contentType && !isTextualContentType(contentType)) return "[BINARY_BODY_OMITTED]";
     // If it looks like JSON, try to parse so we can redact nested sensitive fields.
     if (contentType.includes("application/json") || contentType.includes("+json") || looksLikeJson(body)) {
-      try {
-        const parsed = JSON.parse(body);
-        const redacted = redactAndClone(parsed, new WeakSet(), 0);
-        return redacted === undefined ? undefined : applyBodyLimit(redacted, maxBodySize);
-      } catch {
-        return applyBodyLimit(body, maxBodySize);
+      const parsed = safeJsonParse(body);
+      if (parsed.ok) {
+        const redacted = redactAndClone(parsed.value, new WeakSet(), 0);
+        return redacted === undefined ? undefined : applyPayloadLimit(redacted, maxBodySize);
       }
+      return applyPayloadLimit(body, maxBodySize);
     }
-    return applyBodyLimit(body, maxBodySize);
+    return applyPayloadLimit(body, maxBodySize);
   }
 
   if (isUnsafeBinaryBody(body)) return "[BINARY_BODY_OMITTED]";
@@ -262,7 +349,7 @@ export function sanitizeResponseBody(
   ) {
     const redacted = redactAndClone(body, new WeakSet(), 0);
     if (redacted === undefined) return undefined;
-    return applyBodyLimit(redacted, maxBodySize);
+    return applyPayloadLimit(redacted, maxBodySize);
   }
 
   if (typeof body === "number" || typeof body === "boolean") {
@@ -301,6 +388,15 @@ function isUnsafeBinaryBody(value: unknown): boolean {
   return false;
 }
 
+function isSensitiveBodyKey(key: string): boolean {
+  const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!normalized) return false;
+  if (SENSITIVE_BODY_FIELDS.has(normalized)) return true;
+  // Common exact-ish variants that normalize cleanly: access_token, refresh_token, api_key, client_secret, privateKey, session, etc.
+  // Avoid broad substring matches to reduce false positives on ordinary fields.
+  return false;
+}
+
 export function redactAndClone(value: unknown, seen: WeakSet<object>, depth: number): JsonValue | undefined {
   if (depth > 20) return "[MAX_DEPTH_REACHED]";
   if (value === null) return null;
@@ -316,29 +412,38 @@ export function redactAndClone(value: unknown, seen: WeakSet<object>, depth: num
   if (value instanceof ArrayBuffer || ArrayBuffer.isView(value)) return "[BINARY_BODY_OMITTED]";
 
   if (Array.isArray(value)) {
-    return value.map((item) => {
-      const redacted = redactAndClone(item, seen, depth + 1);
-      return redacted === undefined ? null : redacted;
-    });
+    if (seen.has(value)) return "[CIRCULAR]";
+    seen.add(value);
+    try {
+      return value.map((item) => {
+        const redacted = redactAndClone(item, seen, depth + 1);
+        return redacted === undefined ? null : redacted;
+      });
+    } finally {
+      seen.delete(value);
+    }
   }
 
   if (t === "object") {
     const obj = value as Record<string, unknown>;
     if (seen.has(obj)) return "[CIRCULAR]";
     seen.add(obj);
-
-    const out: Record<string, JsonValue> = {};
-    for (const [key, child] of Object.entries(obj)) {
-      if (SENSITIVE_BODY_FIELDS.has(key.toLowerCase())) {
-        out[key] = "[REDACTED]";
-        continue;
+    try {
+      const out: Record<string, JsonValue> = {};
+      for (const [key, child] of Object.entries(obj)) {
+        if (isSensitiveBodyKey(key)) {
+          out[key] = "[REDACTED]";
+          continue;
+        }
+        const redactedChild = redactAndClone(child, seen, depth + 1);
+        if (redactedChild !== undefined) {
+          out[key] = redactedChild;
+        }
       }
-      const redactedChild = redactAndClone(child, seen, depth + 1);
-      if (redactedChild !== undefined) {
-        out[key] = redactedChild;
-      }
+      return out;
+    } finally {
+      seen.delete(obj);
     }
-    return out;
   }
 
   try {
@@ -348,10 +453,15 @@ export function redactAndClone(value: unknown, seen: WeakSet<object>, depth: num
   }
 }
 
-export function applyBodyLimit(value: JsonValue, maxBodySize: number): JsonValue {
+/**
+ * Best-effort payload size limiting. Serialization/truncation here does not prevent
+ * memory usage from the original in-memory payloads; callers should still avoid capturing
+ * oversized/binary/streamed data where possible.
+ */
+export function applyPayloadLimit(value: JsonValue, maxBodySize: number): JsonValue {
   try {
     const serialized = JSON.stringify(value);
-    if (serialized === undefined) return "[UNSERIALIZABLE_BODY]";
+    if (serialized === undefined) return "[UNSERIALIZABLE_PAYLOAD]";
     const bytes = Buffer.byteLength(serialized, "utf8");
     if (bytes <= maxBodySize) return value;
 
@@ -359,15 +469,18 @@ export function applyBodyLimit(value: JsonValue, maxBodySize: number): JsonValue
     const preview = truncateUtf8(serialized, previewLimit);
     return {
       __devreplay_truncated: true,
-      message: "Payload exceeded maxBodySize and was truncated",
+      message: "Payload exceeded maxBodySize and was truncated for capture (best-effort)",
       originalBytes: bytes,
       maxBodySize,
       preview,
     };
   } catch {
-    return "[UNSERIALIZABLE_BODY]";
+    return "[UNSERIALIZABLE_PAYLOAD]";
   }
 }
+
+// Backward-compatible export name used by existing tests/code.
+export const applyBodyLimit = applyPayloadLimit;
 
 function truncateUtf8(input: string, maxBytes: number): string {
   if (maxBytes <= 0) return "";
@@ -382,14 +495,26 @@ function truncateUtf8(input: string, maxBytes: number): string {
   return out;
 }
 
+function safeJsonParse(text: string): { ok: true; value: unknown } | { ok: false } {
+  try {
+    return { ok: true, value: JSON.parse(text) };
+  } catch {
+    return { ok: false };
+  }
+}
+
 function safeWarn(options: ResolvedDevReplayOptions, message: string, error?: unknown): void {
+  safeWarnWithLogger(options.logger, message, error);
+}
+
+function safeWarnWithLogger(logger: Pick<Console, "warn" | "error">, message: string, error?: unknown): void {
   try {
     if (error instanceof Error) {
-      options.logger.warn(`[DevReplay] ${message}: ${error.message}`);
+      logger.warn(`[DevReplay] ${message}: ${error.message}`);
     } else if (error !== undefined) {
-      options.logger.warn(`[DevReplay] ${message}: ${String(error)}`);
+      logger.warn(`[DevReplay] ${message}: ${String(error)}`);
     } else {
-      options.logger.warn(`[DevReplay] ${message}`);
+      logger.warn(`[DevReplay] ${message}`);
     }
   } catch {
     // ignore

@@ -3,18 +3,37 @@ import type { CaptureEvent, ResolvedDevReplayOptions } from "./types.js";
 export function createClient(options: ResolvedDevReplayOptions) {
   const endpoint = options.endpoint.replace(/\/+$/, "");
   const ingestUrl = `${endpoint}/ingest`;
+  let inFlight = 0;
 
   function send(event: CaptureEvent): void {
     if (!options.enabled) return;
     if (!options.apiKey || !options.endpoint) return;
 
+    if (inFlight >= options.maxConcurrentUploads) {
+      safeWarn(options, "Dropping capture event: max concurrent uploads reached");
+      return;
+    }
+
+    inFlight += 1;
     // Fire-and-forget: never block response path and never throw.
-    void upload(event).catch((error) => {
-      safeWarn(options, "Failed to upload capture event", error);
-    });
+    void upload(event)
+      .catch((error) => {
+        safeWarn(options, "Failed to upload capture event", error);
+      })
+      .finally(() => {
+        inFlight = Math.max(0, inFlight - 1);
+      });
   }
 
   async function upload(event: CaptureEvent): Promise<void> {
+    let body: string;
+    try {
+      body = JSON.stringify(event);
+    } catch (error) {
+      safeWarn(options, "Failed to serialize capture event", error);
+      return;
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), options.uploadTimeoutMs);
     timeout.unref?.();
@@ -26,24 +45,15 @@ export function createClient(options: ResolvedDevReplayOptions) {
           "content-type": "application/json",
           "x-devreplay-api-key": options.apiKey,
         },
-        body: JSON.stringify(event),
+        body,
         signal: controller.signal,
       });
 
-      // Drain small response bodies to avoid socket issues in some runtimes.
+      // Avoid buffering potentially large ingest response bodies.
+      await discardResponseBody(response);
+
       if (!response.ok) {
-        try {
-          await response.text();
-        } catch {
-          // ignore
-        }
         safeWarn(options, `Ingest responded with status ${response.status}`);
-      } else {
-        try {
-          await response.arrayBuffer();
-        } catch {
-          // ignore
-        }
       }
     } catch (error) {
       if (isAbortError(error)) {
@@ -57,6 +67,23 @@ export function createClient(options: ResolvedDevReplayOptions) {
   }
 
   return { send };
+}
+
+async function discardResponseBody(response: Response): Promise<void> {
+  try {
+    if (response.body && typeof (response.body as any).cancel === "function") {
+      await (response.body as any).cancel();
+      return;
+    }
+  } catch {
+    // fall through
+  }
+  try {
+    // Fallback: consume without retaining application-level buffers where possible.
+    await response.arrayBuffer();
+  } catch {
+    // ignore
+  }
 }
 
 function isAbortError(error: unknown): boolean {

@@ -8,10 +8,12 @@ export interface DevReplayOptions {
   endpoint: string;
   /** Paths to exclude from capture. Supports exact paths ("/health") and prefix wildcards ("/internal/*"). Defaults to ["/ingest"]. */
   excludePaths?: string[];
-  /** Max bytes for captured request/response bodies before truncation. Defaults to 65536. */
+  /** Max bytes for captured request/response bodies and query payloads before truncation. Defaults to 65536. */
   maxBodySize?: number;
   /** Upload timeout in milliseconds. Defaults to 2000. */
   uploadTimeoutMs?: number;
+  /** Maximum number of concurrent ingest uploads. Defaults to 5. Excess events are dropped. */
+  maxConcurrentUploads?: number;
   /** Enable/disable capture. Defaults to true. */
   enabled?: boolean;
   /** Optional logger for non-fatal SDK messages. */
@@ -24,6 +26,7 @@ export interface ResolvedDevReplayOptions {
   excludePaths: string[];
   maxBodySize: number;
   uploadTimeoutMs: number;
+  maxConcurrentUploads: number;
   enabled: boolean;
   logger: Pick<Console, "warn" | "error">;
 }
