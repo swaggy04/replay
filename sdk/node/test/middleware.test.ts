@@ -135,16 +135,31 @@ test("passes through when API key is missing/invalid (no upload attempted)", asy
   await close(appSrv.server);
 });
 
-test("bounds concurrent uploads and drops excess events without blocking responses", async () => {
-  const events: any[] = [];
+test("bounds concurrent uploads and queues events without blocking responses", async () => {
+  const received: any[] = [];
   let ingestHits = 0;
+  let active = 0;
+  let maxActive = 0;
   const ingest = express();
-  ingest.use(express.json());
+  ingest.use(express.json({ limit: "1mb" }));
   ingest.post("/ingest", async (req, res) => {
     ingestHits++;
-    events.push(req.body);
-    await wait(120);
+    active++;
+    maxActive = Math.max(maxActive, active);
+    received.push(req.body);
+    await wait(80);
+    active--;
     res.status(201).json({ id: String(ingestHits) });
+  });
+  ingest.post("/ingest/batch", async (req, res) => {
+    ingestHits++;
+    active++;
+    maxActive = Math.max(maxActive, active);
+    const events = Array.isArray(req.body?.events) ? req.body.events : [];
+    received.push(...events);
+    await wait(80);
+    active--;
+    res.status(201).json({ accepted: events.length, duplicates: 0, failed: 0, results: [] });
   });
   const ingestSrv = await listen(ingest);
 
@@ -158,7 +173,9 @@ test("bounds concurrent uploads and drops excess events without blocking respons
   const sdk = new DevReplay({
     apiKey: `dr_live_${"c".repeat(64)}`,
     endpoint: `http://127.0.0.1:${ingestSrv.port}`,
-    maxConcurrentUploads: 1,
+    maxConcurrentUploads: 1, // Day 2: interpreted as bounded batch upload concurrency
+    maxBatchSize: 1,
+    flushIntervalMs: 10,
     logger,
   });
   app.use(sdk.middleware());
@@ -176,11 +193,12 @@ test("bounds concurrent uploads and drops excess events without blocking respons
     await r.json();
   }
 
-  await wait(350);
-  assert.equal(ingestHits, 1, "only one upload should be in flight and accepted");
-  assert.equal(events.length, 1);
-  assert.ok(warnings.some((w) => w.includes("Dropping capture event")), "drop policy should be logged");
+  await sdk.flush(3000);
+  assert.equal(received.length, 3, "all captured events should be queued and delivered");
+  assert.equal(maxActive, 1, "batch upload concurrency should be bounded");
+  assert.ok(!warnings.some((w) => w.includes("Dropping capture event")), "events should not be dropped when queue has capacity");
 
+  await sdk.shutdown(1000);
   await close(appSrv.server);
   await close(ingestSrv.server);
 });
