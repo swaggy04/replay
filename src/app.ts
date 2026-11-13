@@ -6,7 +6,7 @@ import { requireUser } from "./middleware/requireUser.js";
 import { requireApiKey } from "./middleware/requireApiKey.js";
 
 import { replayController } from "./controllers/replayController.js";
-import { captureController } from "./controllers/captureController.js";
+import { batchCaptureController, captureController } from "./controllers/captureController.js";
 import {
   compareReplayController,
   replayHistoryController,
@@ -97,6 +97,7 @@ app.get(
 
 // SDK ingestion is separate and needs API-key authentication.
 app.post("/ingest", requireApiKey, captureController);
+app.post("/ingest/batch", requireApiKey, batchCaptureController);
 app.post(
   "/projects/:projectId/api-keys",
   requireUser,

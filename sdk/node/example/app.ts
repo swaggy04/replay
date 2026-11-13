@@ -6,13 +6,32 @@ async function main() {
   let failIngest = false;
 
   const ingestApp = express();
-  ingestApp.use(express.json({ limit: "256kb" }));
+  ingestApp.use(express.json({ limit: "1mb" }));
+  const recordEvent = (event: any) => {
+    if (failIngest) return false;
+    ingestEvents.push(event);
+    return true;
+  };
   ingestApp.post("/ingest", (req, res) => {
-    if (failIngest) {
+    if (!recordEvent(req.body)) {
       return res.status(500).json({ message: "Simulated ingest failure" });
     }
-    ingestEvents.push(req.body);
     return res.status(201).json({ id: `evt_${ingestEvents.length}`, message: "Request captured successfully" });
+  });
+  ingestApp.post("/ingest/batch", (req, res) => {
+    const events = Array.isArray(req.body?.events) ? req.body.events : [];
+    for (const event of events) {
+      if (!recordEvent(event)) {
+        return res.status(500).json({ message: "Simulated ingest failure" });
+      }
+    }
+    return res.status(201).json({
+      accepted: events.length,
+      duplicates: 0,
+      failed: 0,
+      results: events.map((e: any) => ({ eventId: e?.eventId })),
+      message: "Batch captured successfully",
+    });
   });
   const ingestServer = ingestApp.listen(5055);
 
@@ -22,7 +41,10 @@ async function main() {
   const devreplay = new DevReplay({
     apiKey: process.env.DEVREPLAY_API_KEY || `dr_live_${"0".repeat(64)}`,
     endpoint: process.env.DEVREPLAY_ENDPOINT || "http://127.0.0.1:5055",
-    excludePaths: ["/ingest"],
+    excludePaths: ["/ingest", "/ingest/batch"],
+    flushIntervalMs: 100,
+    maxBatchSize: 10,
+    shutdownTimeoutMs: 2000,
   });
 
   // Middleware must come after body parsers and before application routes.
@@ -82,16 +104,20 @@ async function main() {
   });
   console.log("POST /demo/redact ->", r.status, await r.json());
 
-  await wait(250); // allow async uploads before failing ingest
+  const drainedBeforeFailure = await devreplay.flush(1500); // allow async/batched uploads before failing ingest
+  console.log("Drained before failure mode:", drainedBeforeFailure);
 
   console.log("5) Ingestion failure that does not break the application response");
   failIngest = true;
   r = await fetch(`${base}/demo/ok`);
   console.log("GET /demo/ok (ingest failing) ->", r.status, await r.json());
 
-  await wait(400);
+  // Let retries attempt while ingest is failing, then stop failure mode and flush remaining work.
+  await wait(300);
+  failIngest = false;
+  await devreplay.flush(3000);
 
-  console.log(`\nMock ingest captured ${ingestEvents.length} event(s) before failure mode`);
+  console.log(`\nMock ingest captured ${ingestEvents.length} event(s) total (including post-recovery retry)`);
   const redactEvent = ingestEvents.find((e) => e.path === "/demo/redact");
   if (redactEvent) {
     console.log("Captured auth header:", redactEvent.headers?.authorization);
@@ -101,6 +127,9 @@ async function main() {
     console.log("Redaction event not found in captured events (unexpected for demo).");
   }
 
+  console.log("Delivery stats before shutdown:", devreplay.getStats());
+  await devreplay.shutdown(2000);
+  console.log("Delivery stats after shutdown:", devreplay.getStats());
   await closeServer(appServer);
   await closeServer(ingestServer);
   console.log("Example finished successfully.");

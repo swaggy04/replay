@@ -1,6 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
 import { createClient } from "./client.js";
-import type { CaptureEvent, DevReplayOptions, JsonValue, ResolvedDevReplayOptions } from "./types.js";
+import type {
+  CaptureEvent,
+  DeliveryStats,
+  DevReplayOptions,
+  JsonValue,
+  ResolvedDevReplayOptions,
+} from "./types.js";
 
 const CAPTURE_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE"]);
 
@@ -34,7 +40,14 @@ const SENSITIVE_BODY_FIELDS = new Set([
 
 const DEFAULT_MAX_BODY_SIZE = 64 * 1024;
 const DEFAULT_UPLOAD_TIMEOUT_MS = 2000;
-const DEFAULT_MAX_CONCURRENT_UPLOADS = 5;
+const DEFAULT_MAX_CONCURRENT_BATCH_UPLOADS = 2;
+const DEFAULT_MAX_QUEUE_SIZE = 1000;
+const DEFAULT_MAX_BATCH_SIZE = 50;
+const DEFAULT_FLUSH_INTERVAL_MS = 5000;
+const DEFAULT_MAX_RETRY_ATTEMPTS = 5;
+const DEFAULT_RETRY_BASE_DELAY_MS = 500;
+const DEFAULT_RETRY_MAX_DELAY_MS = 30_000;
+const DEFAULT_SHUTDOWN_TIMEOUT_MS = 10_000;
 
 export function resolveOptions(options: DevReplayOptions): ResolvedDevReplayOptions {
   const apiKey = typeof options.apiKey === "string" ? options.apiKey.trim() : "";
@@ -51,12 +64,21 @@ export function resolveOptions(options: DevReplayOptions): ResolvedDevReplayOpti
     options.uploadTimeoutMs > 0
       ? Math.floor(options.uploadTimeoutMs)
       : DEFAULT_UPLOAD_TIMEOUT_MS;
-  const maxConcurrentUploads =
-    typeof options.maxConcurrentUploads === "number" &&
-    Number.isFinite(options.maxConcurrentUploads) &&
-    options.maxConcurrentUploads > 0
-      ? Math.floor(options.maxConcurrentUploads)
-      : DEFAULT_MAX_CONCURRENT_UPLOADS;
+
+  const maxConcurrentBatchUploads = resolvePositiveInt(
+    options.maxConcurrentBatchUploads ?? options.maxConcurrentUploads,
+    DEFAULT_MAX_CONCURRENT_BATCH_UPLOADS,
+  );
+  const maxQueueSize = resolvePositiveInt(options.maxQueueSize, DEFAULT_MAX_QUEUE_SIZE);
+  const maxBatchSize = resolvePositiveInt(options.maxBatchSize, DEFAULT_MAX_BATCH_SIZE);
+  const flushIntervalMs = resolvePositiveInt(options.flushIntervalMs, DEFAULT_FLUSH_INTERVAL_MS);
+  const maxRetryAttempts = resolvePositiveInt(options.maxRetryAttempts, DEFAULT_MAX_RETRY_ATTEMPTS);
+  const retryBaseDelayMs = resolvePositiveInt(options.retryBaseDelayMs, DEFAULT_RETRY_BASE_DELAY_MS);
+  const retryMaxDelayMs = Math.max(
+    retryBaseDelayMs,
+    resolvePositiveInt(options.retryMaxDelayMs, DEFAULT_RETRY_MAX_DELAY_MS),
+  );
+  const shutdownTimeoutMs = resolvePositiveInt(options.shutdownTimeoutMs, DEFAULT_SHUTDOWN_TIMEOUT_MS);
 
   const logger = options.logger ?? console;
   if (rawEndpoint && !endpoint) {
@@ -69,10 +91,24 @@ export function resolveOptions(options: DevReplayOptions): ResolvedDevReplayOpti
     excludePaths,
     maxBodySize,
     uploadTimeoutMs,
-    maxConcurrentUploads,
+    maxConcurrentBatchUploads,
+    maxQueueSize,
+    maxBatchSize,
+    flushIntervalMs,
+    maxRetryAttempts,
+    retryBaseDelayMs,
+    retryMaxDelayMs,
+    shutdownTimeoutMs,
     enabled: options.enabled !== false,
     logger,
   };
+}
+
+function resolvePositiveInt(value: unknown, fallback: number): number {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
+  }
+  return fallback;
 }
 
 function normalizeEndpoint(endpoint: string): string {
@@ -103,21 +139,20 @@ function normalizeExcludePaths(paths: string[] | undefined): string[] {
   return Array.from(new Set(normalized));
 }
 
-export function createDevReplayMiddleware(options: DevReplayOptions) {
-  const resolved = resolveOptions(options);
+export function createDevReplayRuntime(options: DevReplayOptions | ResolvedDevReplayOptions) {
+  const resolved = isResolvedOptions(options) ? options : resolveOptions(options);
   const client = createClient(resolved);
 
-  if (!resolved.apiKey) {
-    resolved.logger.warn("[DevReplay] Missing API key; capture uploads are disabled.");
-  }
-  if (!resolved.endpoint) {
-    // Warning may already have been emitted for invalid URL; emit a generic one only if truly empty input.
-    if (!options.endpoint) {
+  if (!isResolvedOptions(options)) {
+    if (!resolved.apiKey) {
+      resolved.logger.warn("[DevReplay] Missing API key; capture uploads are disabled.");
+    }
+    if (!resolved.endpoint && !options.endpoint) {
       resolved.logger.warn("[DevReplay] Missing endpoint; capture uploads are disabled.");
     }
   }
 
-  return function devReplayMiddleware(req: Request, res: Response, next: NextFunction): void {
+  const middleware = function devReplayMiddleware(req: Request, res: Response, next: NextFunction): void {
     let nextCalled = false;
     const safeNext = (err?: unknown) => {
       if (nextCalled) return;
@@ -209,7 +244,7 @@ export function createDevReplayMiddleware(options: DevReplayOptions) {
             durationMs,
           };
 
-          client.send(event);
+          client.enqueue(event);
         } catch (error) {
           safeWarn(resolved, "Failed to prepare capture event", error);
         }
@@ -221,6 +256,32 @@ export function createDevReplayMiddleware(options: DevReplayOptions) {
       safeNext();
     }
   };
+
+  return {
+    middleware,
+    flush: (timeoutMs?: number) => client.flush(timeoutMs),
+    shutdown: (timeoutMs?: number) => client.shutdown(timeoutMs),
+    getStats: (): DeliveryStats => client.getStats(),
+    options: resolved,
+  };
+}
+
+export function createDevReplayMiddleware(options: DevReplayOptions | ResolvedDevReplayOptions) {
+  return createDevReplayRuntime(options).middleware;
+}
+
+function isResolvedOptions(
+  options: DevReplayOptions | ResolvedDevReplayOptions,
+): options is ResolvedDevReplayOptions {
+  const o = options as any;
+  return (
+    o &&
+    typeof o === "object" &&
+    Array.isArray(o.excludePaths) &&
+    typeof o.maxConcurrentBatchUploads === "number" &&
+    typeof o.maxQueueSize === "number" &&
+    typeof o.flushIntervalMs === "number"
+  );
 }
 
 export function shouldCaptureRequest(req: Request, options: ResolvedDevReplayOptions): boolean {
