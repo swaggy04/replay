@@ -19,7 +19,11 @@ import {
   revokeApiKeyController,
 } from "./controllers/apiKeyController.js";
 
-import { getProjectsController, projectController } from "./controllers/projectController.js";
+import {
+  getProjectsController,
+  projectController,
+  updateProjectReplayBaseUrlController,
+} from "./controllers/projectController.js";
 
 const app = express();
 
@@ -71,6 +75,7 @@ app.get("/plain", (_req, res) => {
 // Authenticated dashboard routes.
 app.post("/projects", requireUser, projectController);
 app.get("/projects", requireUser, getProjectsController);
+app.put("/projects/:projectId/replay-target", requireUser, updateProjectReplayBaseUrlController);
 
 app.get("/requests", requireUser, requestController);
 app.get("/requests/:id", requireUser, requestIdController);

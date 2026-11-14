@@ -75,6 +75,21 @@ export async function createProject(
   });
 }
 
+export async function updateProjectReplayTarget(
+  projectId: string,
+  replayBaseUrl: string | null,
+  token: string,
+): Promise<Project> {
+  return authenticatedFetch<Project>(
+    `/projects/${encodeURIComponent(projectId)}/replay-target`,
+    token,
+    {
+      method: "PUT",
+      body: JSON.stringify({ replayBaseUrl }),
+    },
+  );
+}
+
 // --------------------------------------------------
 // REQUESTS
 // --------------------------------------------------

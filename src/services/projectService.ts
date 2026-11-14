@@ -19,3 +19,20 @@ export async function getProjects(ownerId: string) {
     },
   });
 }
+
+export async function updateProjectReplayBaseUrl(
+  projectId: string,
+  ownerId: string,
+  replayBaseUrl: string | null,
+) {
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ownerId },
+    select: { id: true },
+  });
+  if (!project) return null;
+
+  return prisma.project.update({
+    where: { id: projectId },
+    data: { replayBaseUrl },
+  });
+}
