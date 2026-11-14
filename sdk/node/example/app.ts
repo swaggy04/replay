@@ -50,12 +50,77 @@ async function main() {
   // Middleware must come after body parsers and before application routes.
   app.use(devreplay.middleware());
 
+  // Deterministic in-memory data for the example API.
+  const users = new Map<number, { id: number; name: string; email: string }>([
+    [1, { id: 1, name: "Alice", email: "alice@example.com" }],
+    [2, { id: 2, name: "Bob", email: "bob@example.com" }],
+  ]);
+  let nextUserId = 3;
+
+  app.get("/users", (_req, res) => {
+    res.json([...users.values()]);
+  });
+
+  app.get("/users/:id", (req, res) => {
+    const id = Number(req.params.id);
+    const user = users.get(id);
+    if (!user) return res.status(404).json({ error: "not found" });
+    return res.json(user);
+  });
+
+  app.post("/users", (req, res) => {
+    const { name, email } = req.body || {};
+    if (typeof name !== "string" || typeof email !== "string") {
+      return res.status(400).json({ error: "invalid payload" });
+    }
+    const user = { id: nextUserId++, name, email };
+    users.set(user.id, user);
+    return res.status(201).json(user);
+  });
+
+  app.put("/users/:id", (req, res) => {
+    const id = Number(req.params.id);
+    if (!users.has(id)) return res.status(404).json({ error: "not found" });
+    const { name, email } = req.body || {};
+    const user = { id, name: String(name), email: String(email) };
+    users.set(id, user);
+    return res.json(user);
+  });
+
+  app.patch("/users/:id", (req, res) => {
+    const id = Number(req.params.id);
+    const user = users.get(id);
+    if (!user) return res.status(404).json({ error: "not found" });
+    if (typeof req.body?.name === "string") user.name = req.body.name;
+    if (typeof req.body?.email === "string") user.email = req.body.email;
+    return res.json(user);
+  });
+
+  app.delete("/users/:id", (req, res) => {
+    const id = Number(req.params.id);
+    if (!users.has(id)) return res.status(404).json({ error: "not found" });
+    users.delete(id);
+    return res.status(204).end();
+  });
+
   app.get("/demo/ok", (_req, res) => {
     res.json({ ok: true, message: "hello" });
   });
 
   app.post("/demo/echo", (req, res) => {
     res.status(201).json({ received: req.body });
+  });
+
+  app.get("/success", (_req, res) => {
+    res.json({ ok: true, message: "hello" });
+  });
+
+  app.post("/auth/login", (req, res) => {
+    const { username, password } = req.body || {};
+    if (username === "demo" && password === "secret") {
+      return res.json({ token: "demo-token" });
+    }
+    return res.status(401).json({ error: "invalid credentials" });
   });
 
   app.get("/demo/bad", (_req, res) => {
