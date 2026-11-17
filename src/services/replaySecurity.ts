@@ -253,6 +253,7 @@ export async function secureFetch(
           // Redirect handling
           if (isRedirect(res.statusCode) && res.headers.location) {
             res.resume();
+            clearTimeout(totalTimer);
             resolve({
               status: res.statusCode,
               headers: collectHeaders(res.headers),
@@ -281,6 +282,7 @@ export async function secureFetch(
             chunks.push(chunk);
           });
           res.on("end", () => {
+            clearTimeout(totalTimer);
             if (aborted) return;
             resolve({
               status: res.statusCode,

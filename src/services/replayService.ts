@@ -114,6 +114,7 @@ export async function executeReplay(
       connectTimeoutMs: 5000,
       totalTimeoutMs: 15000,
       maxRedirects: 3,
+      allowLoopback: process.env.REPLAY_ALLOW_LOOPBACK === "true",
     });
     status = result.status;
     responseHeaders = result.headers;

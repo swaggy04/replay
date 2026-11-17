@@ -75,7 +75,8 @@ test("secureFetch connects to pinned host and returns response (loopback allowed
   assert.equal(result.status, 200);
   assert.equal(JSON.parse(result.body).ok, true);
 
-  server.close();
+  server.closeAllConnections();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
 test("secureFetch follows redirects to validated hosts", async () => {
@@ -103,7 +104,57 @@ test("secureFetch follows redirects to validated hosts", async () => {
   assert.equal(result.status, 200);
   assert.equal(JSON.parse(result.body).path, "/final");
 
-  server.close();
+  server.closeAllConnections();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+});
+
+test("secureFetch rejects redirect to blocked address", async () => {
+  const server = http.createServer((req, res) => {
+    res.statusCode = 302;
+    res.setHeader("location", "http://10.0.0.1/secret");
+    res.end();
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as any).port;
+
+  await assert.rejects(
+    () =>
+      secureFetch(`http://127.0.0.1:${port}/start`, {
+        method: "GET",
+        allowLoopback: true,
+        maxBytes: 1024,
+        totalTimeoutMs: 2000,
+      }),
+    /not allowed|blocked/i,
+  );
+
+  server.closeAllConnections();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+});
+
+test("secureFetch enforces total timeout", async () => {
+  const server = http.createServer((req, res) => {
+    // never respond
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as any).port;
+
+  await assert.rejects(
+    () =>
+      secureFetch(`http://127.0.0.1:${port}/slow`, {
+        method: "GET",
+        allowLoopback: true,
+        maxBytes: 1024,
+        totalTimeoutMs: 50,
+        connectTimeoutMs: 1000,
+      }),
+    /timeout/i,
+  );
+
+  server.closeAllConnections();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
 test("secureFetch enforces max response size", async () => {
@@ -126,5 +177,6 @@ test("secureFetch enforces max response size", async () => {
     /maximum size/i,
   );
 
-  server.close();
+  server.closeAllConnections();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
 });
