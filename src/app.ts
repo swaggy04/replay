@@ -6,7 +6,7 @@ import { requireUser } from "./middleware/requireUser.js";
 import { requireApiKey } from "./middleware/requireApiKey.js";
 
 import { replayController } from "./controllers/replayController.js";
-import { captureController } from "./controllers/captureController.js";
+import { batchCaptureController, captureController } from "./controllers/captureController.js";
 import {
   compareReplayController,
   replayHistoryController,
@@ -19,7 +19,11 @@ import {
   revokeApiKeyController,
 } from "./controllers/apiKeyController.js";
 
-import { getProjectsController, projectController } from "./controllers/projectController.js";
+import {
+  getProjectsController,
+  projectController,
+  updateProjectReplayBaseUrlController,
+} from "./controllers/projectController.js";
 
 const app = express();
 
@@ -71,6 +75,7 @@ app.get("/plain", (_req, res) => {
 // Authenticated dashboard routes.
 app.post("/projects", requireUser, projectController);
 app.get("/projects", requireUser, getProjectsController);
+app.put("/projects/:projectId/replay-target", requireUser, updateProjectReplayBaseUrlController);
 
 app.get("/requests", requireUser, requestController);
 app.get("/requests/:id", requireUser, requestIdController);
@@ -97,6 +102,7 @@ app.get(
 
 // SDK ingestion is separate and needs API-key authentication.
 app.post("/ingest", requireApiKey, captureController);
+app.post("/ingest/batch", requireApiKey, batchCaptureController);
 app.post(
   "/projects/:projectId/api-keys",
   requireUser,

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { createProjectApiKey, getProjectApiKeys, revokeProjectApiKey } from "../requestsApi";
+import { createProjectApiKey, getProjectApiKeys, revokeProjectApiKey, updateProjectReplayTarget } from "../requestsApi";
 
 import type { ApiKey, CreatedApiKey } from "../requestsApi";
 
@@ -15,6 +15,9 @@ type ProjectSettingsProps = {
 export function ProjectSettings({ projectId, projectName, getToken }: ProjectSettingsProps) {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [newApiKey, setNewApiKey] = useState<CreatedApiKey | null>(null);
+  const [replayBaseUrl, setReplayBaseUrl] = useState("");
+  const [replaySaving, setReplaySaving] = useState(false);
+  const [replayMessage, setReplayMessage] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -59,6 +62,21 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
   async function handleRefresh() {
     setLoading(true);
     await loadApiKeys();
+  }
+
+  async function handleSaveReplayTarget() {
+    setReplaySaving(true);
+    setReplayMessage(null);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Unable to obtain Clerk session token.");
+      await updateProjectReplayTarget(projectId, replayBaseUrl.trim() || null, token);
+      setReplayMessage("Replay target saved.");
+    } catch (err) {
+      setReplayMessage(err instanceof Error ? err.message : "Failed to save replay target.");
+    } finally {
+      setReplaySaving(false);
+    }
   }
 
   // Generate a new API key.
@@ -315,6 +333,32 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
               </div>
             )}
           </div>
+        </div>
+
+        {/* REPLAY TARGET */}
+        <div className="mt-6 rounded-xl border border-[#302b2d] bg-[#100d0f] p-5">
+          <h3 className="text-sm font-semibold text-[#f1eeee]">Replay target</h3>
+          <p className="mt-2 text-xs leading-5 text-[#918b8e]">
+            Base URL used when replaying captured requests. Must be an absolute http(s) URL.
+          </p>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <input
+              type="url"
+              value={replayBaseUrl}
+              onChange={(e) => setReplayBaseUrl(e.target.value)}
+              placeholder="https://api.example.com"
+              className="min-h-10 flex-1 rounded-md border border-[#302b2d] bg-[#0c080a] px-3 text-xs text-[#f1eeee] outline-none"
+            />
+            <button
+              type="button"
+              onClick={handleSaveReplayTarget}
+              disabled={replaySaving}
+              className="rounded-md border border-[#302b2d] px-4 py-2 text-xs text-[#d8d4d5] transition hover:bg-[#1a1618] disabled:opacity-50"
+            >
+              {replaySaving ? "Saving..." : "Save target"}
+            </button>
+          </div>
+          {replayMessage && <p className="mt-2 text-xs text-[#918b8e]">{replayMessage}</p>}
         </div>
 
         {/* SDK INTEGRATION */}

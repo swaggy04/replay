@@ -1,11 +1,6 @@
-
 import type { Request, Response } from "express";
 
-import {
-  replayService,
-} from "../services/replayService.js";
-
-import prisma from "../lib/prisma.js";
+import { executeReplay } from "../services/replayService.js";
 
 export async function replayController(req: Request, res: Response) {
   try {
@@ -13,69 +8,36 @@ export async function replayController(req: Request, res: Response) {
     const requestId = req.params.id;
 
     if (typeof requestId !== "string") {
-      return res.status(400).json({
-        message: "Invalid request ID",
+      return res.status(400).json({ message: "Invalid request ID" });
+    }
+
+    const result = await executeReplay(requestId, ownerId);
+
+    if (!result) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    if (result.infraError) {
+      return res.status(502).json({
+        message: "Replay failed",
+        error: result.infraError,
+        replay: result.replay,
       });
     }
 
-    // This lookup also checks project ownership.
-    const replay = await replayService(requestId, ownerId);
-
-    if (!replay) {
-      return res.status(404).json({
-        message: "Request not found",
-      });
-    }
-
-    const headers = {
-      ...((replay.headers ?? {}) as Record<string, string>),
-    };
-
-    delete headers.host;
-    delete headers["content-length"];
-    delete headers.connection;
-    delete headers["accept-encoding"];
-
-    const startTime = Date.now();
-
-    const response = await fetch(replay.url, {
-      method: replay.method,
-      headers,
-      body: replay.body,
-    });
-
-    const contentType = response.headers.get("content-type");
-
-    let responseBody: unknown;
-
-    if (contentType?.includes("application/json")) {
-      responseBody = await response.json();
-    } else {
-      responseBody = await response.text();
-    }
-
-    const durationMs = Date.now() - startTime;
-
-    const replayExecution = await prisma.replayExecution.create({
-      data: {
-        requestLogId: requestId,
-        statusCode: response.status,
-        responseBody:
-          responseBody === undefined ? undefined : responseBody as any,
-        durationMs,
-      },
-    });
-
-    return res.status(response.status).json({
-      status: response.status,
-      body: responseBody,
-      replay: replayExecution,
+    return res.status(result.status >= 200 && result.status < 600 ? result.status : 200).json({
+      status: result.status,
+      body: result.body,
+      targetError: result.targetError,
+      replay: result.replay,
     });
   } catch (error) {
     console.error("Replay failed:", error);
-
-    return res.status(500).json({
-      message: "Replay failed",
-    });
+    const message = error instanceof Error ? error.message : "Replay failed";
+    // Missing target configuration -> 400
+    if (message.toLowerCase().includes("not configured")) {
+      return res.status(400).json({ message });
+    }
+    return res.status(500).json({ message });
   }
 }
