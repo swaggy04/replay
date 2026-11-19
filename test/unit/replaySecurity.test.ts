@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import http from "node:http";
+import https from "node:https";
 import { once } from "node:events";
 import {
   isBlockedIP,
@@ -155,6 +157,115 @@ test("secureFetch enforces total timeout", async () => {
 
   server.closeAllConnections();
   await new Promise<void>((resolve) => server.close(() => resolve()));
+});
+
+const fixturesDir = new URL("../../test/fixtures/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
+// normalize windows path
+const fx = fixturesDir.replace(/\\/g, "/");
+
+test("TLS: valid certificate with matching hostname succeeds", async () => {
+  const key = fs.readFileSync(`${fx}/localhost.key`);
+  const cert = fs.readFileSync(`${fx}/localhost.crt`);
+  const ca = fs.readFileSync(`${fx}/ca.crt`);
+  const server = https.createServer({ key, cert }, (req, res) => {
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ ok: true }));
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as any).port;
+
+  const result = await secureFetch(`https://127.0.0.1:${port}/ok`, {
+    method: "GET",
+    allowLoopback: true,
+    ca,
+    maxBytes: 1024,
+    totalTimeoutMs: 2000,
+  });
+  assert.equal(result.status, 200);
+
+  server.closeAllConnections();
+  await new Promise<void>((r) => server.close(() => r()));
+});
+
+test("TLS: wrong-hostname certificate fails", async () => {
+  const key = fs.readFileSync(`${fx}/wronghost.key`);
+  const cert = fs.readFileSync(`${fx}/wronghost.crt`);
+  const ca = fs.readFileSync(`${fx}/ca.crt`);
+  const server = https.createServer({ key, cert }, (req, res) => {
+    res.end("ok");
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as any).port;
+
+  await assert.rejects(
+    () =>
+      secureFetch(`https://127.0.0.1:${port}/ok`, {
+        method: "GET",
+        allowLoopback: true,
+        ca,
+        maxBytes: 1024,
+        totalTimeoutMs: 2000,
+      }),
+    /certificate|hostname|self-signed|unable to verify/i,
+  );
+
+  server.closeAllConnections();
+  await new Promise<void>((r) => server.close(() => r()));
+});
+
+test("TLS: self-signed certificate fails without trusted CA", async () => {
+  const key = fs.readFileSync(`${fx}/localhost.key`);
+  const cert = fs.readFileSync(`${fx}/localhost.crt`);
+  const server = https.createServer({ key, cert }, (req, res) => {
+    res.end("ok");
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as any).port;
+
+  await assert.rejects(
+    () =>
+      secureFetch(`https://127.0.0.1:${port}/ok`, {
+        method: "GET",
+        allowLoopback: true,
+        maxBytes: 1024,
+        totalTimeoutMs: 2000,
+      }),
+    /certificate|self-signed|unable to verify/i,
+  );
+
+  server.closeAllConnections();
+  await new Promise<void>((r) => server.close(() => r()));
+});
+
+test("TLS: pinned IP does not bypass hostname verification", async () => {
+  const key = fs.readFileSync(`${fx}/wronghost.key`);
+  const cert = fs.readFileSync(`${fx}/wronghost.crt`);
+  const ca = fs.readFileSync(`${fx}/ca.crt`);
+  const server = https.createServer({ key, cert }, (req, res) => {
+    res.end("ok");
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as any).port;
+
+  // URL hostname is localhost, but cert is for example.com -> must fail
+  await assert.rejects(
+    () =>
+      secureFetch(`https://127.0.0.1:${port}/ok`, {
+        method: "GET",
+        allowLoopback: true,
+        ca,
+        maxBytes: 1024,
+        totalTimeoutMs: 2000,
+      }),
+    /certificate|hostname|self-signed|unable to verify/i,
+  );
+
+  server.closeAllConnections();
+  await new Promise<void>((r) => server.close(() => r()));
 });
 
 test("secureFetch enforces max response size", async () => {

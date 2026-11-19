@@ -160,6 +160,8 @@ export type SecureFetchOptions = {
   totalTimeoutMs?: number;
   maxRedirects?: number;
   allowLoopback?: boolean;
+  /** Optional CA bundle for TLS verification (testing/custom CAs). Production uses system CAs. */
+  ca?: string | Buffer;
 };
 
 export type SecureFetchResult = {
@@ -248,6 +250,8 @@ export async function secureFetch(
           headers,
           servername: isHttps ? currentUrl.hostname : undefined,
           timeout: connectTimeout,
+          ca: options.ca,
+          rejectUnauthorized: true,
         },
         (res: any) => {
           // Redirect handling

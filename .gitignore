@@ -10,6 +10,9 @@ node_modules/
 # Build output
 dist/
 
+# Test fixtures (may contain generated keys/certs)
+/test/fixtures/
+
 # Logs
 *.log
 /src/generated/prisma
