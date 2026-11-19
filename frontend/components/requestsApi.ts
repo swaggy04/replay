@@ -143,15 +143,18 @@ export async function replayRequest(id: string, token: string) {
 
   const data = await response.json().catch(() => null);
 
-  // A replay can legitimately return a non-2xx status.
-  if (response.status === 500 && data?.message) {
-    throw new Error(data.message);
-  }
+  // A replay can legitimately return a non-2xx target status.
+  // Only treat as an error when no replay execution was persisted.
+  if (!data?.replay) {
+    if (response.status >= 500 && data?.message) {
+      throw new Error(data.message);
+    }
 
-  if (!response.ok && response.status !== 500) {
-    throw new Error(
-      data?.message || `Replay request failed (${response.status})`,
-    );
+    if (!response.ok) {
+      throw new Error(
+        data?.message || `Replay request failed (${response.status})`,
+      );
+    }
   }
 
   return data;

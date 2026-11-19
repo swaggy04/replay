@@ -227,6 +227,82 @@ test("compareReplayService compares original and replay", async () => {
   await close(srv.server);
 });
 
+test("replay redacts sensitive response body before persistence", async () => {
+  const rl = await makeRequestLog(200, { hello: "world" });
+  const srv = await listen((req, res) => {
+    res.statusCode = 200;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ password: "secret", token: "tok", nested: { apiKey: "k" }, ok: true }));
+  });
+  await setTarget(`http://127.0.0.1:${srv.port}`);
+
+  const result = await executeReplay(rl.id, user.id);
+  assert.ok(result);
+  const persisted = await prisma.replayExecution.findUnique({ where: { id: result!.replay.id } });
+  const body = persisted!.responseBody as any;
+  assert.equal(body.password, "[REDACTED]");
+  assert.equal(body.token, "[REDACTED]");
+  assert.equal(body.nested.apiKey, "[REDACTED]");
+  assert.equal(body.ok, true);
+
+  await close(srv.server);
+});
+
+test("replay redacts sensitive JSON response body before persistence", async () => {
+  const rl = await makeRequestLog(200, { hello: "world" });
+  const srv = await listen((req, res) => {
+    res.statusCode = 200;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ password: "secret", token: "tok", nested: { apiKey: "k" }, ok: true }));
+  });
+  await setTarget(`http://127.0.0.1:${srv.port}`);
+
+  const result = await executeReplay(rl.id, user.id);
+  assert.ok(result);
+  const persisted = await prisma.replayExecution.findUnique({ where: { id: result!.replay.id } });
+  const body = persisted!.responseBody as any;
+  assert.equal(body.password, "[REDACTED]");
+  assert.equal(body.token, "[REDACTED]");
+  assert.equal(body.nested.apiKey, "[REDACTED]");
+  assert.equal(body.ok, true);
+
+  await close(srv.server);
+});
+
+test("replay does not persist raw non-JSON or malformed response bodies", async () => {
+  const rl = await makeRequestLog(200, { hello: "world" });
+  // Malformed JSON
+  const srv1 = await listen((req, res) => {
+    res.statusCode = 200;
+    res.setHeader("content-type", "application/json");
+    res.end("{not json, token: secret}");
+  });
+  await setTarget(`http://127.0.0.1:${srv1.port}`);
+  const r1 = await executeReplay(rl.id, user.id);
+  assert.ok(r1);
+  const p1 = await prisma.replayExecution.findUnique({ where: { id: r1!.replay.id } });
+  assert.ok(!String(p1!.responseBody).includes("secret"));
+  assert.ok(String(p1!.responseBody).includes("omitted"));
+
+  await close(srv1.server);
+
+  // Plain text
+  const rl2 = await makeRequestLog(200, { hello: "world" });
+  const srv2 = await listen((req, res) => {
+    res.statusCode = 200;
+    res.setHeader("content-type", "text/plain");
+    res.end("password=secret token=tok");
+  });
+  await setTarget(`http://127.0.0.1:${srv2.port}`);
+  const r2 = await executeReplay(rl2.id, user.id);
+  assert.ok(r2);
+  const p2 = await prisma.replayExecution.findUnique({ where: { id: r2!.replay.id } });
+  assert.ok(!String(p2!.responseBody).includes("secret"));
+  assert.ok(!String(p2!.responseBody).includes("tok"));
+
+  await close(srv2.server);
+});
+
 test("replay filters sensitive headers", async () => {
   const rl = await prisma.requestLog.create({
     data: {
