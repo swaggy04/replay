@@ -85,6 +85,12 @@ function isBlockedIPv6(ip: string): boolean {
     return isBlockedIPv4(compatMatch[1]);
   }
   if (lower === "::" || lower === "::0") return true;
+  // IPv6 transition/translation ranges.
+  if (lower.startsWith("2002:")) return true; // 6to4
+  if (lower.startsWith("64:ff9b:")) return true; // NAT64
+  if (lower.startsWith("2001:0:") || lower === "2001::") return true; // Teredo 2001::/32
+  if (lower.startsWith("2001:10:") || lower.startsWith("2001:20:")) return true; // ORCHID
+  if (lower.startsWith("100:")) return true; // discard prefix 100::/64
   return false;
 }
 
@@ -160,6 +166,8 @@ export type SecureFetchOptions = {
   totalTimeoutMs?: number;
   maxRedirects?: number;
   allowLoopback?: boolean;
+  /** Optional CA bundle for TLS verification (testing/custom CAs). Production uses system CAs. */
+  ca?: string | Buffer;
 };
 
 export type SecureFetchResult = {
@@ -200,6 +208,7 @@ export async function secureFetch(
   let method = options.method.toUpperCase();
   let body = options.body;
   let redirects = 0;
+  const overallDeadline = Date.now() + (options.totalTimeoutMs ?? DEFAULT_TOTAL_TIMEOUT);
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -248,12 +257,15 @@ export async function secureFetch(
           headers,
           servername: isHttps ? currentUrl.hostname : undefined,
           timeout: connectTimeout,
+          ca: options.ca,
+          rejectUnauthorized: true,
         },
         (res: any) => {
           // Redirect handling
           if (isRedirect(res.statusCode) && res.headers.location) {
             res.resume();
             clearTimeout(totalTimer);
+            clearTimeout(connectTimer);
             resolve({
               status: res.statusCode,
               headers: collectHeaders(res.headers),
@@ -283,6 +295,7 @@ export async function secureFetch(
           });
           res.on("end", () => {
             clearTimeout(totalTimer);
+            clearTimeout(connectTimer);
             if (aborted) return;
             resolve({
               status: res.statusCode,
@@ -297,15 +310,32 @@ export async function secureFetch(
         },
       );
 
+      const remainingTotal = Math.max(1, overallDeadline - Date.now());
       const totalTimer = setTimeout(() => {
         req.destroy(new Error("Total request timeout"));
-      }, totalTimeout);
+      }, remainingTotal);
+
+      let connected = false;
+      const connectTimer = setTimeout(() => {
+        if (!connected) req.destroy(new Error("Connection timeout"));
+      }, connectTimeout);
+      req.on("socket", (socket: any) => {
+        socket.on("connect", () => {
+          connected = true;
+          clearTimeout(connectTimer);
+        });
+        socket.on("secureConnect", () => {
+          connected = true;
+          clearTimeout(connectTimer);
+        });
+      });
 
       req.on("timeout", () => {
         req.destroy(new Error("Connection timeout"));
       });
       req.on("error", (err: Error) => {
         clearTimeout(totalTimer);
+        clearTimeout(connectTimer);
         if (aborted) return;
         reject(err);
       });

@@ -1,5 +1,6 @@
 import prisma from "../lib/prisma.js";
 import { validateReplayBaseUrl, secureFetch } from "./replaySecurity.js";
+import { redactHeaders, redactValue } from "../utils/redaction.js";
 
 const HOP_BY_HOP = new Set([
   "host",
@@ -118,15 +119,20 @@ export async function executeReplay(
     });
     status = result.status;
     responseHeaders = result.headers;
-    const contentType = String(result.headers["content-type"] || "");
-    if (contentType.includes("application/json")) {
+    const contentType = String(result.headers["content-type"] || "").toLowerCase();
+    const isJson = contentType.includes("application/json") || contentType.includes("+json");
+
+    if (isJson) {
       try {
-        responseBody = JSON.parse(result.body);
+        const parsed = JSON.parse(result.body);
+        responseBody = redactValue(parsed);
       } catch {
-        responseBody = result.body;
+        // Malformed JSON: never store the raw body.
+        responseBody = "[REDACTED: response body omitted because safe inspection is unsupported]";
       }
     } else {
-      responseBody = result.body;
+      // Non-JSON/unknown/binary: do not persist raw content.
+      responseBody = "[REDACTED: response body omitted because safe inspection is unsupported]";
     }
     if (status >= 400) targetError = true;
   } catch (error) {

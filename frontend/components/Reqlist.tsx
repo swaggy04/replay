@@ -128,7 +128,7 @@ export default function RequestList() {
           const savedRequest = data.data.find((request) => request.id === savedRequestId);
 
           if (savedRequest) {
-            await handleSelectRequest(savedRequest);
+            handleSelectRequest(savedRequest);
           } else {
             localStorage.removeItem(SELECTED_REQUEST_KEY);
           }
@@ -226,30 +226,54 @@ export default function RequestList() {
     }
   }
 
-  // Fetch selected request details.
-  async function handleSelectRequest(request: RequestLog) {
+  // Select a request and persist the selection. Details are loaded by the effect below.
+  function handleSelectRequest(request: RequestLog) {
     setSelectedRequest(request);
     setRequestDetails(null);
-    setDetailsLoading(true);
-
     localStorage.setItem(SELECTED_REQUEST_KEY, request.id);
-
-    try {
-      const token = await getToken();
-
-      if (!token) {
-        throw new Error("Unable to obtain Clerk session token.");
-      }
-
-      const data: RequestDetails = await getRequestDetails(request.id, token);
-
-      setRequestDetails(data);
-    } catch (error) {
-      console.error("Failed to fetch request details:", error);
-    } finally {
-      setDetailsLoading(false);
-    }
   }
+
+  // Load details whenever the selected request changes.
+  useEffect(() => {
+    if (!selectedRequest) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadDetails() {
+      setDetailsLoading(true);
+      setRequestDetails(null);
+
+      try {
+        const token = await getToken();
+
+        if (!token) {
+          throw new Error("Unable to obtain Clerk session token.");
+        }
+
+        const data: RequestDetails = await getRequestDetails(selectedRequest!.id, token);
+
+        if (!cancelled) {
+          setRequestDetails(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Failed to fetch request details:", error);
+        }
+      } finally {
+        if (!cancelled) {
+          setDetailsLoading(false);
+        }
+      }
+    }
+
+    void loadDetails();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRequest, getToken]);
 
   // Project creation dialog.
   const projectDialog = (
