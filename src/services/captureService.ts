@@ -174,6 +174,7 @@ export async function captureRequests(
       else accepted += 1;
     } catch (error) {
       failed += 1;
+      console.error("Failed to capture request:", error);
       results.push({
         eventId: input.eventId,
         duplicate: false,
