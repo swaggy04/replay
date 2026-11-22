@@ -1,4 +1,4 @@
-﻿-- AlterTable
+-- AlterTable
 ALTER TABLE "RequestLog" ADD COLUMN "eventId" TEXT;
 
 -- CreateIndex

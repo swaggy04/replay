@@ -90,6 +90,15 @@ export async function executeReplay(
     }
   }
 
+  // Loopback replay targets are a normal dev setup (the external test app);
+  // permit them here instead of failing SSRF-style. All other blocked ranges
+  // stay blocked, and the REPLAY_ALLOW_LOOPBACK operator override still works.
+  const allowLoopback =
+    process.env.REPLAY_ALLOW_LOOPBACK === "true" ||
+    target.hostname === "localhost" ||
+    target.hostname === "127.0.0.1" ||
+    target.hostname === "::1";
+
   const method = (requestLog.method || "GET").toUpperCase();
   const headers = filterHeaders(requestLog.headers);
 
@@ -115,7 +124,7 @@ export async function executeReplay(
       connectTimeoutMs: 5000,
       totalTimeoutMs: 15000,
       maxRedirects: 3,
-      allowLoopback: process.env.REPLAY_ALLOW_LOOPBACK === "true",
+      allowLoopback,
     });
     status = result.status;
     responseHeaders = result.headers;
@@ -147,7 +156,11 @@ export async function executeReplay(
       requestLogId: requestId,
       statusCode: status || null,
       responseBody:
-        responseBody === undefined ? undefined : (responseBody as any),
+        responseBody === undefined
+          ? infraError
+            ? { error: infraError }
+            : undefined
+          : (responseBody as any),
       durationMs,
     },
   });
