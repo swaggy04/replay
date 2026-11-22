@@ -173,6 +173,12 @@ export function createDevReplayRuntime(options: DevReplayOptions | ResolvedDevRe
         return;
       }
 
+      // Capture the original path early; Express routers rewrite req.path/req.url
+      // to be relative to the matched mount point by the time res finishes.
+      const capturedPath = req.originalUrl
+        ? new URL(req.originalUrl, "http://localhost").pathname
+        : (req.path || "/");
+
       const startTime = Date.now();
       const capturedRequestBody = sanitizeRequestBody(req.body, resolved.maxBodySize);
       const capturedQuery = sanitizeQuery(req.query, resolved.maxBodySize);
@@ -235,7 +241,7 @@ export function createDevReplayRuntime(options: DevReplayOptions | ResolvedDevRe
           const durationMs = Math.max(0, Date.now() - startTime);
           const event: CaptureEvent = {
             method: req.method.toUpperCase(),
-            path: req.path || "/",
+            path: capturedPath || "/",
             headers: redactHeaders(req.headers),
             query: capturedQuery,
             body: capturedRequestBody,

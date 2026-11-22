@@ -313,6 +313,42 @@ test("middleware error handling does not call next twice and validates endpoint 
   await close(appSrv.server);
 });
 
+test("captures full original path for requests under mounted routers", async () => {
+  const events: any[] = [];
+  const ingest = express();
+  ingest.use(express.json());
+  ingest.post("/ingest", (req, res) => {
+    events.push(req.body);
+    res.status(201).json({ id: "ok" });
+  });
+  const ingestSrv = await listen(ingest);
+
+  const app = express();
+  app.use(express.json());
+  const sdk = new DevReplay({
+    apiKey: `dr_live_${"z".repeat(64)}`,
+    endpoint: `http://127.0.0.1:${ingestSrv.port}`,
+  });
+
+  const router = express.Router();
+  router.get("/users", (_req, res) => res.json({ ok: true }));
+  app.use("/api", sdk.middleware(), router);
+
+  const appSrv = await listen(app);
+  const base = `http://127.0.0.1:${appSrv.port}`;
+
+  const res = await fetch(`${base}/api/users`);
+  assert.equal(res.status, 200);
+  await res.json();
+
+  await wait(350);
+  assert.equal(events.length, 1);
+  assert.equal(events[0].path, "/api/users");
+
+  await close(appSrv.server);
+  await close(ingestSrv.server);
+});
+
 test("applies payload size limits to query parameters during capture", async () => {
   const events: any[] = [];
   const ingest = express();
