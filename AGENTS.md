@@ -29,6 +29,7 @@ API request capture / inspect / replay / compare tool. Monorepo layout:
 
 - TS is NodeNext (`tsconfig.json`): relative imports in `src/**` must use `.js` extensions (e.g. `./app.js`).
 - `express.json({ limit: "256kb" })` — request bodies are capped at 256 KB.
+- Replay to loopback: `src/services/replayService.ts` allows replay targets on `localhost`/`127.0.0.1`/`::1` only when the backend runs with `NODE_ENV=development` (the explicit development signal). `REPLAY_ALLOW_LOOPBACK=true` is the operator override and applies in any mode — see the security note in `allowLoopbackForReplayTarget`: it lets a project owner replay against loopback addresses of their configured replay target (recorded status + redacted response body), so enable it only deliberately in production. Production blocks loopback by default (`src/services/replaySecurity.ts`).
 - Auto-capture: the middleware in `src/middleware/requestLogger.ts` (captures requests with an `x-devreplay-project-id` header, skipping `/requests`, `/replay/*`, `/_next/*`, `/favicon.ico`, `/ingest`) is **not mounted** in `src/app.ts` — the README's "automatic capture" is stale; ingest via `POST /ingest` / `POST /ingest/batch` or the SDK.
 - Env files: root `.env` (`DATABASE_URL`), `frontend/.env.local` (`NEXT_PUBLIC_API_URL`, Clerk keys).
 - Seed data: `npx tsx demo.ts` while the backend is running (creates a Demo Project, captures built-in routes, replays one).

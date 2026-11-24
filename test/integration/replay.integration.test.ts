@@ -218,7 +218,7 @@ test("compareReplayService returns comparison data for a failed replay", async (
   await prisma.project.update({ where: { id: project.id }, data: { replayBaseUrl: null } });
 });
 
-test("replay to loopback target succeeds without REPLAY_ALLOW_LOOPBACK", async () => {
+test("replay to loopback target succeeds in development mode", async () => {
   const rl = await makeRequestLog(200, { hello: "world" });
   const srv = await listen((req, res) => {
     res.statusCode = 200;
@@ -227,9 +227,11 @@ test("replay to loopback target succeeds without REPLAY_ALLOW_LOOPBACK", async (
   });
   await setTarget(`http://127.0.0.1:${srv.port}`);
 
-  // Replay to the configured loopback target must work even when the
-  // operator-level REPLAY_ALLOW_LOOPBACK override is not enabled.
-  const saved = process.env.REPLAY_ALLOW_LOOPBACK;
+  // Development mode (NODE_ENV=development) allows loopback replay targets
+  // without the operator-level REPLAY_ALLOW_LOOPBACK override.
+  const savedNodeEnv = process.env.NODE_ENV;
+  const savedAllow = process.env.REPLAY_ALLOW_LOOPBACK;
+  process.env.NODE_ENV = "development";
   delete process.env.REPLAY_ALLOW_LOOPBACK;
   try {
     const result = await executeReplay(rl.id, user.id);
@@ -240,7 +242,9 @@ test("replay to loopback target succeeds without REPLAY_ALLOW_LOOPBACK", async (
     assert.equal(persisted!.statusCode, 200);
     assert.equal((persisted!.responseBody as any).ok, true);
   } finally {
-    if (saved !== undefined) process.env.REPLAY_ALLOW_LOOPBACK = saved;
+    if (savedNodeEnv !== undefined) process.env.NODE_ENV = savedNodeEnv;
+    else delete process.env.NODE_ENV;
+    if (savedAllow !== undefined) process.env.REPLAY_ALLOW_LOOPBACK = savedAllow;
   }
 
   await close(srv.server);

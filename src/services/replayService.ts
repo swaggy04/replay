@@ -45,6 +45,38 @@ export type ReplayExecutionResult = {
   infraError: string | null;
 };
 
+/**
+ * Whether replay requests may reach loopback addresses of the configured
+ * replay target.
+ *
+ * - `NODE_ENV=development` (the explicit development signal) allows loopback
+ *   targets on `localhost`, `127.0.0.1` and `::1`. Non-loopback hostnames are
+ *   never opened by this condition, even in development mode.
+ * - `REPLAY_ALLOW_LOOPBACK=true` is the explicit operator override and applies
+ *   in any mode (including production). Security note: it lets a project
+ *   owner replay against loopback addresses of their configured replay
+ *   target (recorded status + redacted response body) — enable it only
+ *   deliberately, never in production unless intended.
+ *
+ * Production blocks loopback by default: leave both unset/other modes to
+ * keep it blocked unless the operator opts in explicitly.
+ */
+export function allowLoopbackForReplayTarget(
+  hostname: string,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  // Windows `cmd`'s `set` keeps trailing whitespace in the value, so the
+  // development signal is normalized: "development ", "development" all count.
+  const nodeEnv = env.NODE_ENV?.trim();
+  return (
+    env.REPLAY_ALLOW_LOOPBACK === "true" ||
+    (nodeEnv === "development" &&
+      (hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname === "::1"))
+  );
+}
+
 export async function executeReplay(
   requestId: string,
   ownerId: string,
@@ -90,14 +122,9 @@ export async function executeReplay(
     }
   }
 
-  // Loopback replay targets are a normal dev setup (the external test app);
-  // permit them here instead of failing SSRF-style. All other blocked ranges
-  // stay blocked, and the REPLAY_ALLOW_LOOPBACK operator override still works.
-  const allowLoopback =
-    process.env.REPLAY_ALLOW_LOOPBACK === "true" ||
-    target.hostname === "localhost" ||
-    target.hostname === "127.0.0.1" ||
-    target.hostname === "::1";
+  // Loopback replay targets are a normal dev setup; they are allowed only in
+  // development mode (see allowLoopbackForReplayTarget).
+  const allowLoopback = allowLoopbackForReplayTarget(target.hostname);
 
   const method = (requestLog.method || "GET").toUpperCase();
   const headers = filterHeaders(requestLog.headers);
