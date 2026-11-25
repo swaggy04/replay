@@ -4,6 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { createProjectApiKey, getProjectApiKeys, revokeProjectApiKey, updateProjectReplayTarget } from "../requestsApi";
 
+import { NewApiKeyDialog } from "./NewApiKeyDialog";
+
+import { copyToClipboard } from "@/lib/clipboard";
+import { rawKeyForKeyId } from "@/lib/apiKeys";
+
 import type { ApiKey, CreatedApiKey } from "../requestsApi";
 
 type ProjectSettingsProps = {
@@ -27,7 +32,6 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // Load active API keys.
   const loadApiKeys = useCallback(async () => {
@@ -87,7 +91,6 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
     setError(null);
     setSuccess(null);
     setNewApiKey(null);
-    setCopied(false);
 
     try {
       const token = await getToken();
@@ -113,57 +116,11 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
     }
   }
 
-  // Copy the original, unmasked API key.
-  async function handleCopyKey() {
-    const rawKey = newApiKey?.rawKey;
-
-    if (!rawKey) {
-      setError("API key is missing. Generate a new key.");
-      return;
-    }
-
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(rawKey);
-      } else {
-        const textarea = document.createElement("textarea");
-
-        textarea.value = rawKey;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        textarea.style.pointerEvents = "none";
-
-        document.body.appendChild(textarea);
-        textarea.select();
-
-        const successful = document.execCommand("copy");
-
-        document.body.removeChild(textarea);
-
-        if (!successful) {
-          throw new Error("Clipboard copy failed.");
-        }
-      }
-
-      setCopied(true);
-      setError(null);
-      setSuccess("API key copied to clipboard.");
-
-      window.setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-    } catch {
-      setCopied(false);
-      setError("Unable to copy the API key. Please try again.");
-    }
-  }
-
   // Copy the complete API key of an active key.
   // The raw secret is only available for the key that was just created
-  // (see activeKeyRawKey); it is never stored.
+  // (see rawKeyForKeyId); it is never stored.
   async function handleCopyActiveKey(apiKey: ApiKey) {
-    const rawKey = activeKeyRawKey(apiKey.id);
+    const rawKey = rawKeyForKeyId(apiKey.id, newApiKey);
 
     if (!rawKey) {
       setCopyError("The full API key is not available here.");
@@ -171,29 +128,7 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
     }
 
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(rawKey);
-      } else {
-        const textarea = document.createElement("textarea");
-
-        textarea.value = rawKey;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        textarea.style.pointerEvents = "none";
-
-        document.body.appendChild(textarea);
-        textarea.select();
-
-        const successful = document.execCommand("copy");
-
-        document.body.removeChild(textarea);
-
-        if (!successful) {
-          throw new Error("Clipboard copy failed.");
-        }
-      }
-
+      await copyToClipboard(rawKey);
       setCopiedKeyId(apiKey.id);
       setCopyError(null);
     } catch {
@@ -239,12 +174,6 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
 
   function formatDate(date: string) {
     return new Date(date).toLocaleString();
-  }
-
-  // Raw secret for a key is available only while the just-created key is
-  // still in state; list entries otherwise have no copyable secret.
-  function activeKeyRawKey(keyId: string): string | undefined {
-    return newApiKey && newApiKey.id === keyId ? newApiKey.rawKey : undefined;
   }
 
   return (
@@ -309,44 +238,8 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
             </div>
           )}
 
-          {/* NEW API KEY */}
-          {newApiKey && (
-            <div className="mt-6 rounded-lg border border-amber-900/50 bg-amber-950/10 p-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-amber-300">Your new API key</span>
-
-                <span className="rounded border border-amber-900/60 px-2 py-0.5 text-[9px] text-amber-300">
-                  Copy now
-                </span>
-              </div>
-
-              <p className="mt-2 text-xs leading-5 text-[#b5abad]">
-                Your API key is masked for security. Copy it now and store it securely. The complete key cannot be
-                retrieved later.
-              </p>
-
-              {/* MASKED KEY + COPY */}
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <div
-                  className="flex min-h-11 min-w-0 flex-1 items-center overflow-hidden rounded-md border border-[#40352c] bg-[#0c080a] px-3"
-                  aria-label="Masked API key"
-                >
-                  <code className="truncate font-mono text-sm tracking-[0.2em] text-[#eee4d5]">
-                    {"•".repeat(Math.min(newApiKey.rawKey.length, 48))}
-                  </code>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCopyKey}
-                  disabled={!newApiKey.rawKey}
-                  className="shrink-0 rounded-md border border-[#554431] px-4 py-2 text-xs text-amber-200 transition hover:bg-amber-950/30 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {copied ? "Copied!" : "Copy key"}
-                </button>
-              </div>
-            </div>
-          )}
+          {/* NEW API KEY (one-time dialog shown immediately after generation) */}
+          <NewApiKeyDialog apiKey={newApiKey} onClose={() => setNewApiKey(null)} />
 
           {/* ACTIVE API KEYS */}
           <div className="mt-8">
@@ -374,7 +267,7 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
             ) : (
               <div className="divide-y divide-[#302b2d]">
                 {apiKeys.map((apiKey) => {
-                  const canCopy = Boolean(activeKeyRawKey(apiKey.id));
+                  const canCopy = Boolean(rawKeyForKeyId(apiKey.id, newApiKey));
 
                   return (
                     <div

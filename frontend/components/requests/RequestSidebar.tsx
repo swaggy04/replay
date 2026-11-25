@@ -36,6 +36,10 @@ export function RequestSidebar({
   const settingsHref = selectedProject
     ? `/projects/${selectedProject.id}/settings`
     : "/projects";
+  // The Replays page is project-scoped. When no project is selected yet,
+  // fall back to the Requests page (where a project is loaded and selected)
+  // instead of pointing at a route without a project id.
+  const replaysHref = selectedProject ? `/replays/${selectedProject.id}` : "/";
 
   function getNavClass(key: string) {
     return active === key ? navButtonActive : navButtonInactive;
@@ -104,7 +108,7 @@ export function RequestSidebar({
           <span>Requests</span>
         </Link>
 
-        <Link href="/replays" className={`mt-1 ${navButtonBase} ${getNavClass("replays")}`}>
+        <Link href={replaysHref} className={`mt-1 ${navButtonBase} ${getNavClass("replays")}`}>
           <span className="flex w-4 justify-center text-[11px]">↻</span>
           <span>Replays</span>
         </Link>

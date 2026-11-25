@@ -8,6 +8,7 @@ import { useParams } from "next/navigation";
 
 import { ProjectSettings } from "@/components/requests/ProjectSettings";
 import { getProjects } from "@/components/requestsApi";
+import { SELECTED_PROJECT_KEY } from "@/lib/preferences";
 
 export default function ProjectSettingsPage() {
   const { isLoaded, getToken } = useAuth();
@@ -37,6 +38,9 @@ export default function ProjectSettingsPage() {
           throw new Error("Project not found");
         }
 
+        // Remember the project while on Settings so returning to the
+        // Requests page keeps the same selection (no state is reset).
+        localStorage.setItem(SELECTED_PROJECT_KEY, projectId);
         setProjectName(project.name);
       } catch (err) {
         if (cancelled) return;

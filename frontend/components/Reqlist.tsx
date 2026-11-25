@@ -5,14 +5,13 @@ import { useAuth } from "@clerk/nextjs";
 
 import type { Project, RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 
+import { SELECTED_PROJECT_KEY, SELECTED_REQUEST_KEY } from "@/lib/preferences";
+
 import { createProject, getProjects, getRequestDetails, getRequests } from "./requestsApi";
 
 import { RequestSidebar } from "./requests/RequestSidebar";
 import { RequestTable } from "./requests/RequestTable";
 import { RequestDetailsPanel } from "./requests/RequestDetailsPanel";
-
-const SELECTED_PROJECT_KEY = "devreplay:selectedProject";
-const SELECTED_REQUEST_KEY = "devreplay:selectedRequest";
 
 export default function RequestList() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
