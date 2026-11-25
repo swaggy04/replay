@@ -213,3 +213,74 @@ export async function replayHistoryService(requestId: string, ownerId: string) {
     orderBy: { createdAt: "desc" },
   });
 }
+
+export type ProjectReplayListItem = {
+  id: string;
+  requestLogId: string;
+  statusCode: number | null;
+  durationMs: number | null;
+  createdAt: Date;
+  requestLog: {
+    id: string;
+    method: string;
+    path: string;
+  };
+};
+
+export type ProjectReplaysPage = {
+  data: ProjectReplayListItem[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+/**
+ * List replay executions for a project, newest first.
+ * Scoped by project owner so the dashboard can only see its own replays.
+ */
+export async function getProjectReplays(
+  projectId: string,
+  ownerId: string,
+  page: number,
+  limit: number,
+): Promise<ProjectReplaysPage | null> {
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, ownerId },
+    select: { id: true },
+  });
+
+  if (!project) {
+    return null;
+  }
+
+  const where = { requestLog: { projectId: project.id } };
+
+  const [data, total] = await Promise.all([
+    prisma.replayExecution.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        requestLogId: true,
+        statusCode: true,
+        durationMs: true,
+        createdAt: true,
+        requestLog: {
+          select: { id: true, method: true, path: true },
+        },
+      },
+    }),
+    prisma.replayExecution.count({ where }),
+  ]);
+
+  return {
+    data,
+    page,
+    limit,
+    total,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+  };
+}
