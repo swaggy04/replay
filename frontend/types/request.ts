@@ -35,6 +35,23 @@ export type ReplayResult = {
   replay: ReplayExecution;
 };
 
+export type ProjectReplay = Omit<ReplayExecution, "statusCode"> & {
+  statusCode: number | null;
+  requestLog: {
+    id: string;
+    method: string;
+    path: string;
+  };
+};
+
+export type ProjectReplaysResponse = {
+  data: ProjectReplay[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
 export type RequestsResponse = {
   data: RequestLog[];
   page: number;

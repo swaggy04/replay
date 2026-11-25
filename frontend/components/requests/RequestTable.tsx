@@ -1,6 +1,7 @@
 "use client";
 
 import type { RequestLog } from "@/types/request";
+import { getMethodClass, getStatusClass } from "@/lib/ui";
 
 type RequestTableProps = {
   requests: RequestLog[];
@@ -9,57 +10,6 @@ type RequestTableProps = {
 };
 
 export function RequestTable({ requests, selectedRequest, onSelectRequest }: RequestTableProps) {
-  function getMethodClass(method: string) {
-    switch (method.toUpperCase()) {
-      case "GET":
-        return "text-emerald-400";
-
-      case "POST":
-        return "text-[#F4D77E]";
-
-      case "PUT":
-        return "text-blue-400";
-
-      case "PATCH":
-        return "text-purple-400";
-
-      case "DELETE":
-        return "text-red-400";
-
-      case "HEAD":
-        return "text-emerald-300";
-
-      case "OPTIONS":
-        return "text-pink-400";
-
-      default:
-        return "text-[#d8d4d5]";
-    }
-  }
-
-  function getStatusClass(status: number | null) {
-    if (status === null) {
-      return "text-[#777174]";
-    }
-
-    if (status >= 200 && status < 300) {
-      return "text-emerald-400";
-    }
-
-    if (status >= 300 && status < 400) {
-      return "text-amber-400";
-    }
-
-    if (status >= 400 && status < 500) {
-      return "text-orange-400";
-    }
-
-    if (status >= 500) {
-      return "text-red-400";
-    }
-
-    return "text-[#d8d4d5]";
-  }
 
   return (
     <section
