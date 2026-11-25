@@ -15,6 +15,8 @@ type ProjectSettingsProps = {
 export function ProjectSettings({ projectId, projectName, getToken }: ProjectSettingsProps) {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [newApiKey, setNewApiKey] = useState<CreatedApiKey | null>(null);
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
   const [replayBaseUrl, setReplayBaseUrl] = useState("");
   const [replaySaving, setReplaySaving] = useState(false);
   const [replayMessage, setReplayMessage] = useState<string | null>(null);
@@ -157,6 +159,49 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
     }
   }
 
+  // Copy the complete API key of an active key.
+  // The raw secret is only available for the key that was just created
+  // (see activeKeyRawKey); it is never stored.
+  async function handleCopyActiveKey(apiKey: ApiKey) {
+    const rawKey = activeKeyRawKey(apiKey.id);
+
+    if (!rawKey) {
+      setCopyError("The full API key is not available here.");
+      return;
+    }
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(rawKey);
+      } else {
+        const textarea = document.createElement("textarea");
+
+        textarea.value = rawKey;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        textarea.style.pointerEvents = "none";
+
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        const successful = document.execCommand("copy");
+
+        document.body.removeChild(textarea);
+
+        if (!successful) {
+          throw new Error("Clipboard copy failed.");
+        }
+      }
+
+      setCopiedKeyId(apiKey.id);
+      setCopyError(null);
+    } catch {
+      setCopiedKeyId(null);
+      setCopyError("Unable to copy the API key. Please try again.");
+    }
+  }
+
   // Revoke an API key.
   async function handleRevokeKey(keyId: string) {
     const confirmed = window.confirm(
@@ -194,6 +239,12 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
 
   function formatDate(date: string) {
     return new Date(date).toLocaleString();
+  }
+
+  // Raw secret for a key is available only while the just-created key is
+  // still in state; list entries otherwise have no copyable secret.
+  function activeKeyRawKey(keyId: string): string | undefined {
+    return newApiKey && newApiKey.id === keyId ? newApiKey.rawKey : undefined;
   }
 
   return (
@@ -245,6 +296,16 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
               className="mt-5 rounded-md border border-emerald-900/50 bg-emerald-950/20 px-4 py-3 text-xs text-emerald-400"
             >
               {success}
+            </div>
+          )}
+
+          {/* COPY ERROR */}
+          {copyError && (
+            <div
+              role="alert"
+              className="mt-5 rounded-md border border-red-900/50 bg-red-950/20 px-4 py-3 text-xs text-red-400"
+            >
+              {copyError}
             </div>
           )}
 
@@ -312,24 +373,50 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
               </div>
             ) : (
               <div className="divide-y divide-[#302b2d]">
-                {apiKeys.map((apiKey) => (
-                  <div key={apiKey.id} className="flex flex-col justify-between gap-3 py-4 sm:flex-row sm:items-center">
-                    <div className="min-w-0">
-                      <code className="text-xs text-[#ddd6d8]">{apiKey.keyPrefix ?? "Unknown prefix"}...</code>
+                {apiKeys.map((apiKey) => {
+                  const canCopy = Boolean(activeKeyRawKey(apiKey.id));
 
-                      <p className="mt-1 text-[10px] text-[#716b6e]">Created {formatDate(apiKey.createdAt)}</p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRevokeKey(apiKey.id)}
-                      disabled={revokingKeyId === apiKey.id}
-                      className="self-start rounded-md border border-red-900/50 px-3 py-1.5 text-[11px] text-red-400 transition hover:bg-red-950/30 disabled:opacity-50 sm:self-auto"
+                  return (
+                    <div
+                      key={apiKey.id}
+                      className="flex flex-col justify-between gap-3 py-4 sm:flex-row sm:items-center"
                     >
-                      {revokingKeyId === apiKey.id ? "Revoking..." : "Revoke"}
-                    </button>
-                  </div>
-                ))}
+                      <div className="min-w-0">
+                        <code className="text-xs text-[#ddd6d8]">{apiKey.keyPrefix ?? "Unknown prefix"}...</code>
+
+                        <p className="mt-1 text-[10px] text-[#716b6e]">
+                          Created {formatDate(apiKey.createdAt)}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
+                        {canCopy ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleCopyActiveKey(apiKey)}
+                            disabled={copiedKeyId === apiKey.id}
+                            className="rounded-md border border-[#554431] px-3 py-1.5 text-[11px] text-amber-200 transition hover:bg-amber-950/30 disabled:opacity-50"
+                          >
+                            {copiedKeyId === apiKey.id ? "Copied!" : "Copy"}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-[#716b6e]">
+                            Full key unavailable
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeKey(apiKey.id)}
+                          disabled={revokingKeyId === apiKey.id}
+                          className="rounded-md border border-red-900/50 px-3 py-1.5 text-[11px] text-red-400 transition hover:bg-red-950/30 disabled:opacity-50"
+                        >
+                          {revokingKeyId === apiKey.id ? "Revoking..." : "Revoke"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
