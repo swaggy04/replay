@@ -4,6 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import { createProjectApiKey, getProjectApiKeys, revokeProjectApiKey, updateProjectReplayTarget } from "../requestsApi";
 
+import { NewApiKeyDialog } from "./NewApiKeyDialog";
+
+import { copyToClipboard } from "@/lib/clipboard";
+import { rawKeyForKeyId } from "@/lib/apiKeys";
+
 import type { ApiKey, CreatedApiKey } from "../requestsApi";
 
 type ProjectSettingsProps = {
@@ -15,6 +20,8 @@ type ProjectSettingsProps = {
 export function ProjectSettings({ projectId, projectName, getToken }: ProjectSettingsProps) {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [newApiKey, setNewApiKey] = useState<CreatedApiKey | null>(null);
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
   const [replayBaseUrl, setReplayBaseUrl] = useState("");
   const [replaySaving, setReplaySaving] = useState(false);
   const [replayMessage, setReplayMessage] = useState<string | null>(null);
@@ -25,7 +32,6 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   // Load active API keys.
   const loadApiKeys = useCallback(async () => {
@@ -85,7 +91,6 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
     setError(null);
     setSuccess(null);
     setNewApiKey(null);
-    setCopied(false);
 
     try {
       const token = await getToken();
@@ -111,49 +116,24 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
     }
   }
 
-  // Copy the original, unmasked API key.
-  async function handleCopyKey() {
-    const rawKey = newApiKey?.rawKey;
+  // Copy the complete API key of an active key.
+  // The raw secret is only available for the key that was just created
+  // (see rawKeyForKeyId); it is never stored.
+  async function handleCopyActiveKey(apiKey: ApiKey) {
+    const rawKey = rawKeyForKeyId(apiKey.id, newApiKey);
 
     if (!rawKey) {
-      setError("API key is missing. Generate a new key.");
+      setCopyError("The full API key is not available here.");
       return;
     }
 
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(rawKey);
-      } else {
-        const textarea = document.createElement("textarea");
-
-        textarea.value = rawKey;
-        textarea.setAttribute("readonly", "");
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        textarea.style.pointerEvents = "none";
-
-        document.body.appendChild(textarea);
-        textarea.select();
-
-        const successful = document.execCommand("copy");
-
-        document.body.removeChild(textarea);
-
-        if (!successful) {
-          throw new Error("Clipboard copy failed.");
-        }
-      }
-
-      setCopied(true);
-      setError(null);
-      setSuccess("API key copied to clipboard.");
-
-      window.setTimeout(() => {
-        setCopied(false);
-      }, 2000);
+      await copyToClipboard(rawKey);
+      setCopiedKeyId(apiKey.id);
+      setCopyError(null);
     } catch {
-      setCopied(false);
-      setError("Unable to copy the API key. Please try again.");
+      setCopiedKeyId(null);
+      setCopyError("Unable to copy the API key. Please try again.");
     }
   }
 
@@ -248,44 +228,18 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
             </div>
           )}
 
-          {/* NEW API KEY */}
-          {newApiKey && (
-            <div className="mt-6 rounded-lg border border-amber-900/50 bg-amber-950/10 p-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-amber-300">Your new API key</span>
-
-                <span className="rounded border border-amber-900/60 px-2 py-0.5 text-[9px] text-amber-300">
-                  Copy now
-                </span>
-              </div>
-
-              <p className="mt-2 text-xs leading-5 text-[#b5abad]">
-                Your API key is masked for security. Copy it now and store it securely. The complete key cannot be
-                retrieved later.
-              </p>
-
-              {/* MASKED KEY + COPY */}
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <div
-                  className="flex min-h-11 min-w-0 flex-1 items-center overflow-hidden rounded-md border border-[#40352c] bg-[#0c080a] px-3"
-                  aria-label="Masked API key"
-                >
-                  <code className="truncate font-mono text-sm tracking-[0.2em] text-[#eee4d5]">
-                    {"•".repeat(Math.min(newApiKey.rawKey.length, 48))}
-                  </code>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCopyKey}
-                  disabled={!newApiKey.rawKey}
-                  className="shrink-0 rounded-md border border-[#554431] px-4 py-2 text-xs text-amber-200 transition hover:bg-amber-950/30 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {copied ? "Copied!" : "Copy key"}
-                </button>
-              </div>
+          {/* COPY ERROR */}
+          {copyError && (
+            <div
+              role="alert"
+              className="mt-5 rounded-md border border-red-900/50 bg-red-950/20 px-4 py-3 text-xs text-red-400"
+            >
+              {copyError}
             </div>
           )}
+
+          {/* NEW API KEY (one-time dialog shown immediately after generation) */}
+          <NewApiKeyDialog apiKey={newApiKey} onClose={() => setNewApiKey(null)} />
 
           {/* ACTIVE API KEYS */}
           <div className="mt-8">
@@ -312,24 +266,50 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
               </div>
             ) : (
               <div className="divide-y divide-[#302b2d]">
-                {apiKeys.map((apiKey) => (
-                  <div key={apiKey.id} className="flex flex-col justify-between gap-3 py-4 sm:flex-row sm:items-center">
-                    <div className="min-w-0">
-                      <code className="text-xs text-[#ddd6d8]">{apiKey.keyPrefix ?? "Unknown prefix"}...</code>
+                {apiKeys.map((apiKey) => {
+                  const canCopy = Boolean(rawKeyForKeyId(apiKey.id, newApiKey));
 
-                      <p className="mt-1 text-[10px] text-[#716b6e]">Created {formatDate(apiKey.createdAt)}</p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleRevokeKey(apiKey.id)}
-                      disabled={revokingKeyId === apiKey.id}
-                      className="self-start rounded-md border border-red-900/50 px-3 py-1.5 text-[11px] text-red-400 transition hover:bg-red-950/30 disabled:opacity-50 sm:self-auto"
+                  return (
+                    <div
+                      key={apiKey.id}
+                      className="flex flex-col justify-between gap-3 py-4 sm:flex-row sm:items-center"
                     >
-                      {revokingKeyId === apiKey.id ? "Revoking..." : "Revoke"}
-                    </button>
-                  </div>
-                ))}
+                      <div className="min-w-0">
+                        <code className="text-xs text-[#ddd6d8]">{apiKey.keyPrefix ?? "Unknown prefix"}...</code>
+
+                        <p className="mt-1 text-[10px] text-[#716b6e]">
+                          Created {formatDate(apiKey.createdAt)}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
+                        {canCopy ? (
+                          <button
+                            type="button"
+                            onClick={() => void handleCopyActiveKey(apiKey)}
+                            disabled={copiedKeyId === apiKey.id}
+                            className="rounded-md border border-[#554431] px-3 py-1.5 text-[11px] text-amber-200 transition hover:bg-amber-950/30 disabled:opacity-50"
+                          >
+                            {copiedKeyId === apiKey.id ? "Copied!" : "Copy"}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-[#716b6e]">
+                            Full key unavailable
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeKey(apiKey.id)}
+                          disabled={revokingKeyId === apiKey.id}
+                          className="rounded-md border border-red-900/50 px-3 py-1.5 text-[11px] text-red-400 transition hover:bg-red-950/30 disabled:opacity-50"
+                        >
+                          {revokingKeyId === apiKey.id ? "Revoking..." : "Revoke"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

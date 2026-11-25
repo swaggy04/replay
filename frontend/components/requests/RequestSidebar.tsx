@@ -1,47 +1,48 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 import type { Project, RequestLog } from "@/types/request";
+import { activeNavForPathname, getMethodClass } from "@/lib/ui";
 
 type RequestSidebarProps = {
   projects: Project[];
   selectedProject: Project | null;
   onSelectProject: (project: Project) => void;
   onCreateProject: () => void;
-  onOpenSettings: () => void;
   requests: RequestLog[];
   selectedRequest: RequestLog | null;
   onSelectRequest: (request: RequestLog) => void;
 };
+
+const navButtonBase =
+  "flex h-9 w-full items-center gap-3 rounded-md px-3 text-xs font-medium transition-colors";
+const navButtonActive = "bg-[#1a1618] text-[#f1eeee]";
+const navButtonInactive =
+  "text-[#918b8e] transition-colors hover:bg-[#161214] hover:text-[#d9d5d6]";
 
 export function RequestSidebar({
   projects,
   selectedProject,
   onSelectProject,
   onCreateProject,
-  onOpenSettings,
   requests,
   selectedRequest,
   onSelectRequest,
 }: RequestSidebarProps) {
-  function getMethodClass(method: string) {
-    switch (method.toUpperCase()) {
-      case "GET":
-        return "text-emerald-400";
-      case "POST":
-        return "text-[#F4D77E]";
-      case "PUT":
-        return "text-blue-400";
-      case "PATCH":
-        return "text-purple-400";
-      case "DELETE":
-        return "text-red-400";
-      case "HEAD":
-        return "text-emerald-300";
-      case "OPTIONS":
-        return "text-pink-400";
-      default:
-        return "text-[#d8d4d5]";
-    }
+  const pathname = usePathname();
+  const active = activeNavForPathname(pathname);
+  const settingsHref = selectedProject
+    ? `/projects/${selectedProject.id}/settings`
+    : "/projects";
+  // The Replays page is project-scoped. When no project is selected yet,
+  // fall back to the Requests page (where a project is loaded and selected)
+  // instead of pointing at a route without a project id.
+  const replaysHref = selectedProject ? `/replays/${selectedProject.id}` : "/";
+
+  function getNavClass(key: string) {
+    return active === key ? navButtonActive : navButtonInactive;
   }
 
   return (
@@ -102,38 +103,25 @@ export function RequestSidebar({
 
       {/* NAVIGATION */}
       <nav className="border-b border-[#242022] px-3 py-3">
-        <button
-          type="button"
-          className="flex h-9 w-full items-center gap-3 rounded-md bg-[#1a1618] px-3 text-xs font-medium text-[#f1eeee]"
-        >
+        <Link href="/" className={`${navButtonBase} ${getNavClass("requests")}`}>
           <span className="flex w-4 justify-center text-[11px] text-[#c9c5c6]">▣</span>
           <span>Requests</span>
-        </button>
+        </Link>
 
-        <button
-          type="button"
-          className="mt-1 flex h-9 w-full items-center gap-3 rounded-md px-3 text-xs font-medium text-[#918b8e] transition-colors hover:bg-[#161214] hover:text-[#d9d5d6]"
-        >
+        <Link href={replaysHref} className={`mt-1 ${navButtonBase} ${getNavClass("replays")}`}>
           <span className="flex w-4 justify-center text-[11px]">↻</span>
           <span>Replays</span>
-        </button>
+        </Link>
 
-        <button
-          type="button"
-          className="mt-1 flex h-9 w-full items-center gap-3 rounded-md px-3 text-xs font-medium text-[#918b8e] transition-colors hover:bg-[#161214] hover:text-[#d9d5d6]"
-        >
+        <Link href="/collections" className={`mt-1 ${navButtonBase} ${getNavClass("collections")}`}>
           <span className="flex w-4 justify-center text-[11px]">▱</span>
           <span>Collections</span>
-        </button>
+        </Link>
 
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          className="mt-1 flex h-9 w-full items-center gap-3 rounded-md px-3 text-xs font-medium text-[#918b8e] transition-colors hover:bg-[#161214] hover:text-[#d9d5d6]"
-        >
+        <Link href={settingsHref} className={`mt-1 ${navButtonBase} ${getNavClass("settings")}`}>
           <span className="flex w-4 justify-center text-[11px]">⚙</span>
           <span>Settings</span>
-        </button>
+        </Link>
       </nav>
 
       {/* RECENT REQUESTS */}

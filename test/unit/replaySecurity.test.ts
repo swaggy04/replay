@@ -291,3 +291,90 @@ test("secureFetch enforces max response size", async () => {
   server.closeAllConnections();
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
+
+test("allowLoopback still blocks private IP ranges and metadata", () => {
+  for (const ip of ["10.0.0.1", "172.16.0.1", "192.168.1.1", "169.254.169.254", "100.64.0.1", "192.0.0.9", "198.18.0.1"]) {
+    assert.equal(isBlockedIP(ip, true), true, ip);
+  }
+});
+
+test("allowLoopback permits ::1 only (v6 loopback)", () => {
+  assert.equal(isBlockedIP("::1", true), false);
+  assert.equal(isBlockedIP("::1", false), true);
+});
+
+test("secureFetch blocks private IP target even with allowLoopback", async () => {
+  await assert.rejects(
+    () =>
+      secureFetch("http://10.0.0.1/secret", {
+        method: "GET",
+        allowLoopback: true,
+        maxBytes: 1024,
+        totalTimeoutMs: 2000,
+      }),
+    /not allowed|blocked/i,
+  );
+});
+
+test("secureFetch blocks redirect to private IP even with allowLoopback", async () => {
+  const server = http.createServer((req, res) => {
+    if (req.url === "/start") {
+      res.statusCode = 302;
+      res.setHeader("location", "http://192.168.1.1/secret");
+      res.end();
+      return;
+    }
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ ok: true, path: req.url }));
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const port = (server.address() as any).port;
+
+  await assert.rejects(
+    () =>
+      secureFetch(`http://127.0.0.1:${port}/start`, {
+        method: "GET",
+        allowLoopback: true,
+        maxBytes: 1024,
+        totalTimeoutMs: 2000,
+      }),
+    /not allowed|blocked/i,
+  );
+
+  server.closeAllConnections();
+  await new Promise<void>((r) => server.close(() => r()));
+});
+
+test("secureFetch permits redirect to loopback with allowLoopback", async () => {
+  const target = http.createServer((req, res) => {
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ ok: true, path: req.url }));
+  });
+  target.listen(0, "127.0.0.1");
+  await once(target, "listening");
+  const targetPort = (target.address() as any).port;
+
+  const start = http.createServer((req, res) => {
+    res.statusCode = 302;
+    res.setHeader("location", `http://127.0.0.1:${targetPort}/final`);
+    res.end();
+  });
+  start.listen(0, "127.0.0.1");
+  await once(start, "listening");
+  const startPort = (start.address() as any).port;
+
+  const result = await secureFetch(`http://127.0.0.1:${startPort}/start`, {
+    method: "GET",
+    allowLoopback: true,
+    maxBytes: 1024,
+    totalTimeoutMs: 2000,
+  });
+  assert.equal(result.status, 200);
+  assert.equal(JSON.parse(result.body).path, "/final");
+
+  start.closeAllConnections();
+  await new Promise<void>((r) => start.close(() => r()));
+  target.closeAllConnections();
+  await new Promise<void>((r) => target.close(() => r()));
+});

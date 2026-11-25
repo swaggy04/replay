@@ -189,8 +189,65 @@ test("replay records network failure as infra error", async () => {
   assert.ok(result!.infraError, "infra error should be set");
   const persisted = await prisma.replayExecution.findUnique({ where: { id: result!.replay.id } });
   assert.equal(persisted!.statusCode, null);
+  const failedBody = persisted!.responseBody as any;
+  assert.ok(
+    failedBody && typeof failedBody === "object" && typeof failedBody.error === "string" && failedBody.error.length > 0,
+    "persisted responseBody should carry the infra error message",
+  );
 
   await prisma.project.update({ where: { id: project.id }, data: { replayBaseUrl: null } });
+});
+
+test("compareReplayService returns comparison data for a failed replay", async () => {
+  const rl = await makeRequestLog(201, { hello: "world" });
+  // Connection refused on a loopback target → infra error, null status code.
+  await setTarget("http://localhost:1");
+
+  const result = await executeReplay(rl.id, user.id);
+  assert.ok(result);
+  assert.equal(result!.status, 0);
+  assert.ok(result!.infraError);
+  assert.equal(result!.replay.statusCode, null);
+
+  const comparison = await compareReplayService(rl.id, result!.replay.id, user.id);
+  assert.ok(comparison!.original);
+  assert.ok(comparison!.replay);
+  assert.equal(comparison!.statusChanged, true);
+  assert.equal(comparison!.bodyChanged, true);
+
+  await prisma.project.update({ where: { id: project.id }, data: { replayBaseUrl: null } });
+});
+
+test("replay to loopback target succeeds in development mode", async () => {
+  const rl = await makeRequestLog(200, { hello: "world" });
+  const srv = await listen((req, res) => {
+    res.statusCode = 200;
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ ok: true }));
+  });
+  await setTarget(`http://127.0.0.1:${srv.port}`);
+
+  // Development mode (NODE_ENV=development) allows loopback replay targets
+  // without the operator-level REPLAY_ALLOW_LOOPBACK override.
+  const savedNodeEnv = process.env.NODE_ENV;
+  const savedAllow = process.env.REPLAY_ALLOW_LOOPBACK;
+  process.env.NODE_ENV = "development";
+  delete process.env.REPLAY_ALLOW_LOOPBACK;
+  try {
+    const result = await executeReplay(rl.id, user.id);
+    assert.ok(result, "executeReplay should return result");
+    assert.equal(result!.status, 200, "replay status should be recorded");
+    assert.equal(result!.infraError, null);
+    const persisted = await prisma.replayExecution.findUnique({ where: { id: result!.replay.id } });
+    assert.equal(persisted!.statusCode, 200);
+    assert.equal((persisted!.responseBody as any).ok, true);
+  } finally {
+    if (savedNodeEnv !== undefined) process.env.NODE_ENV = savedNodeEnv;
+    else delete process.env.NODE_ENV;
+    if (savedAllow !== undefined) process.env.REPLAY_ALLOW_LOOPBACK = savedAllow;
+  }
+
+  await close(srv.server);
 });
 
 test("replay unauthorized for non-owner", async () => {

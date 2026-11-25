@@ -5,7 +5,7 @@ import { clerkMiddleware } from "@clerk/express";
 import { requireUser } from "./middleware/requireUser.js";
 import { requireApiKey } from "./middleware/requireApiKey.js";
 
-import { replayController } from "./controllers/replayController.js";
+import { getProjectReplaysController, replayController } from "./controllers/replayController.js";
 import { batchCaptureController, captureController } from "./controllers/captureController.js";
 import {
   compareReplayController,
@@ -113,6 +113,12 @@ app.get(
   "/projects/:projectId/api-keys",
   requireUser,
   getProjectApiKeysController
+);
+
+app.get(
+  "/projects/:projectId/replays",
+  requireUser,
+  getProjectReplaysController
 );
 
 app.delete(

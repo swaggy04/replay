@@ -1,6 +1,7 @@
 
 import type {
   Project,
+  ProjectReplaysResponse,
   RequestDetails,
   RequestsResponse,
   ReplayComparison,
@@ -167,6 +168,19 @@ export async function requestComparison(
 ): Promise<ReplayComparison> {
   return authenticatedFetch<ReplayComparison>(
     `/requests/${encodeURIComponent(requestId)}/compare/${encodeURIComponent(replayId)}`,
+    token,
+  );
+}
+
+export async function getProjectReplays(
+  projectId: string,
+  page: number,
+  token: string,
+): Promise<ProjectReplaysResponse> {
+  const params = new URLSearchParams({ page: String(page), limit: "20" });
+
+  return authenticatedFetch<ProjectReplaysResponse>(
+    `/projects/${encodeURIComponent(projectId)}/replays?${params.toString()}`,
     token,
   );
 }

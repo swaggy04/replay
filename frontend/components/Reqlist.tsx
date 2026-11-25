@@ -5,15 +5,13 @@ import { useAuth } from "@clerk/nextjs";
 
 import type { Project, RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
 
+import { SELECTED_PROJECT_KEY, SELECTED_REQUEST_KEY } from "@/lib/preferences";
+
 import { createProject, getProjects, getRequestDetails, getRequests } from "./requestsApi";
 
 import { RequestSidebar } from "./requests/RequestSidebar";
 import { RequestTable } from "./requests/RequestTable";
 import { RequestDetailsPanel } from "./requests/RequestDetailsPanel";
-import { ProjectSettings } from "./requests/ProjectSettings";
-
-const SELECTED_PROJECT_KEY = "devreplay:selectedProject";
-const SELECTED_REQUEST_KEY = "devreplay:selectedRequest";
 
 export default function RequestList() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
@@ -40,9 +38,6 @@ export default function RequestList() {
   const [projectName, setProjectName] = useState("");
   const [creatingProject, setCreatingProject] = useState(false);
   const [createProjectError, setCreateProjectError] = useState<string | null>(null);
-
-  // Project settings state.
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Fetch projects.
   useEffect(() => {
@@ -154,7 +149,6 @@ export default function RequestList() {
   // Handle project change.
   function handleSelectProject(project: Project) {
     setSelectedProject(project);
-    setSettingsOpen(false);
 
     localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
     localStorage.removeItem(SELECTED_REQUEST_KEY);
@@ -209,8 +203,6 @@ export default function RequestList() {
       setPage(1);
       setTotal(0);
       setTotalPages(1);
-
-      setSettingsOpen(false);
 
       localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
       localStorage.removeItem(SELECTED_REQUEST_KEY);
@@ -390,7 +382,7 @@ export default function RequestList() {
   }
 
   // Loading requests.
-  if (loading && requests.length === 0 && !settingsOpen) {
+  if (loading && requests.length === 0) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#0c080a]">
         <div className="flex flex-col items-center">
@@ -414,7 +406,6 @@ export default function RequestList() {
         selectedProject={selectedProject}
         onSelectProject={handleSelectProject}
         onCreateProject={handleOpenCreateDialog}
-        onOpenSettings={() => setSettingsOpen(true)}
         requests={requests}
         selectedRequest={selectedRequest}
         onSelectRequest={handleSelectRequest}
@@ -422,35 +413,7 @@ export default function RequestList() {
 
       {/* MAIN AREA */}
       <main className="relative flex min-w-0 flex-1 flex-col">
-        {settingsOpen && selectedProject ? (
-          <>
-            {/* SETTINGS HEADER */}
-            <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#242022] bg-[#0c080a] px-5">
-              <div>
-                <h1 className="text-sm font-semibold text-[#f1eeee]">Project Settings</h1>
-
-                <p className="mt-0.5 text-[10px] text-[#716b6e]">Manage {selectedProject.name}</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSettingsOpen(false)}
-                className="rounded-md border border-[#302b2d] px-3 py-1.5 text-xs text-[#c9c5c6] transition hover:bg-[#1a1618]"
-              >
-                ← Back to requests
-              </button>
-            </header>
-
-            {/* ACTUAL PROJECT SETTINGS COMPONENT */}
-            <ProjectSettings
-              key={selectedProject.id}
-              projectId={selectedProject.id}
-              projectName={selectedProject.name}
-              getToken={getToken}
-            />
-          </>
-        ) : (
-          <>
+        <>
             {/* REQUESTS HEADER */}
             <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#242022] bg-[#0c080a] px-5">
               <div className="min-w-0">
@@ -509,8 +472,7 @@ export default function RequestList() {
                 </button>
               </div>
             </footer>
-          </>
-        )}
+        </>
       </main>
     </div>
   );
