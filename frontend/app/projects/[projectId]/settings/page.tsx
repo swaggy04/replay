@@ -22,15 +22,19 @@ export default function ProjectSettingsPage() {
     >
       {(selectedProject) => (
         <>
-          <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#27272a] bg-[#09090b] px-5">
-            <div>
-              <h1 className="text-sm font-semibold text-[#fafafa]">Project Settings</h1>
-              <p className="mt-0.5 text-[10px] text-[#71717a]">Manage {selectedProject.name}</p>
+          <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#27272a] bg-[#0e0e11] px-6">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 font-mono text-[11px] text-[#71717a]">
+                <span>Settings</span>
+                <span className="text-[#3f3f46]">/</span>
+                <span className="truncate text-[#a1a1aa]">{selectedProject.name}</span>
+              </div>
+              <h1 className="mt-0.5 text-sm font-semibold tracking-tight text-[#fafafa]">Project Settings</h1>
             </div>
 
             <Link
               href="/"
-              className="rounded-md border border-[#27272a] px-3 py-1.5 text-xs text-[#d4d4d8] transition hover:bg-[#18181b]"
+              className="rounded-md border border-[#27272a] px-3 py-1.5 text-xs text-[#d4d4d8] transition hover:bg-[#1f1f22] hover:text-[#fafafa]"
             >
               ← Back to requests
             </Link>

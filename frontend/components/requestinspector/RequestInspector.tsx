@@ -54,44 +54,10 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
   }
 
   return (
-    <div
-      className="
-        fixed inset-0 z-50
-        flex items-center justify-center
-        bg-black/65
-        p-3
-        backdrop-blur-[2px]
-        sm:p-6
-      "
-    >
-      <div
-        className="
-          flex
-          h-[92vh]
-          w-full
-          max-w-6xl
-          flex-col
-          overflow-hidden
-          rounded-xl
-          border border-[#27272a]
-          bg-[#09090b]
-          shadow-[0_24px_80px_rgba(0,0,0,0.55)]
-        "
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 backdrop-blur-[2px] sm:p-6">
+      <div className="flex h-[92vh] w-full max-w-7xl flex-col overflow-hidden rounded-md border border-[#27272a] bg-[#131316] shadow-[0_24px_80px_rgba(0,0,0,0.6)]">
         {/* HEADER */}
-        <div
-          className="
-            flex
-            shrink-0
-            items-center
-            justify-between
-            border-b border-[#27272a]
-            bg-[#0e0e11]
-            px-4
-            py-3.5
-            sm:px-5
-          "
-        >
+        <div className="flex shrink-0 items-center justify-between border-b border-[#27272a] bg-[#0e0e11] px-4 py-3.5 sm:px-5">
           {/* Request identity */}
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-3">
@@ -147,40 +113,10 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
               type="button"
               onClick={handleReplay}
               disabled={replaying}
-              className="
-                inline-flex
-                h-8
-                items-center
-                gap-2
-                rounded-md
-                border border-[#3f3f46]
-                bg-[#18181b]
-                px-3
-                text-xs
-                font-semibold
-                text-[#f4f4f5]
-                shadow-sm
-                transition
-                hover:border-[#52525b]
-                hover:bg-[#1c1c20]
-                hover:text-white
-                active:scale-[0.98]
-                disabled:cursor-not-allowed
-                disabled:opacity-50
-              "
+              className="inline-flex h-8 items-center gap-2 rounded-md bg-[#fafafa] px-3 text-xs font-semibold text-[#09090b] transition hover:bg-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {replaying && (
-                <span
-                  className="
-                    h-3
-                    w-3
-                    animate-spin
-                    rounded-full
-                    border-2
-                    border-[#71717a]
-                    border-t-[#fafafa]
-                  "
-                />
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-[#a1a1aa] border-t-[#09090b]" />
               )}
 
               {replaying ? "Replaying" : "Replay"}
@@ -229,7 +165,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
             min-h-0
             flex-1
             overflow-y-auto
-            bg-[#09090b]
+            bg-[#131316]
             px-4
             py-5
             sm:px-6
@@ -443,30 +379,12 @@ export function JsonBlock({ data }: { data: unknown }) {
 function MethodBadge({ method }: { method: string }) {
   const normalizedMethod = method.toUpperCase();
 
-  const styles: Record<string, string> = {
-    GET: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
-    POST: "border-blue-500/20 bg-blue-500/10 text-blue-400",
-    PUT: "border-amber-500/20 bg-amber-500/10 text-amber-400",
-    PATCH: "border-orange-500/20 bg-orange-500/10 text-orange-400",
-    DELETE: "border-red-500/20 bg-red-500/10 text-red-400",
-  };
-
   return (
     <span
-      className={`
-        inline-flex
-        h-7
-        shrink-0
-        items-center
-        rounded-md
-        border
-        px-2
-        font-mono
-        text-[10px]
-        font-bold
-        tracking-wide
-        ${styles[normalizedMethod] ?? "border-[#3f3f46] bg-[#18181b] text-[#e4e4e7]"}
-      `}
+      className="
+        inline-flex h-7 shrink-0 items-center rounded border border-[#3f3f46] bg-[#27272a]
+        px-2 font-mono text-[10px] font-semibold tracking-wide text-[#fafafa]
+      "
     >
       {normalizedMethod}
     </span>
@@ -479,19 +397,19 @@ function MethodBadge({ method }: { method: string }) {
 
 export function StatusText({ status }: { status: number | null }) {
   if (status === null) {
-    return <span className="font-medium text-[#8d878a]">—</span>;
+    return <span className="font-mono text-[#71717a]">—</span>;
   }
 
-  let className = "font-medium text-[#a1a1aa]";
+  let className = "font-mono font-medium text-[#a1a1aa]";
 
   if (status >= 200 && status < 300) {
-    className = "font-semibold text-emerald-400";
+    className = "font-mono font-semibold text-[#fafafa]";
   } else if (status >= 300 && status < 400) {
-    className = "font-semibold text-amber-400";
+    className = "font-mono font-semibold text-[#d4d4d8]";
   } else if (status >= 400 && status < 500) {
-    className = "font-semibold text-orange-400";
+    className = "font-mono font-semibold text-[#fca5a5]";
   } else if (status >= 500) {
-    className = "font-semibold text-red-400";
+    className = "font-mono font-semibold text-[#f87171]";
   }
 
   return <span className={className}>{status}</span>;
@@ -506,31 +424,20 @@ function StatusPill({ status }: { status: number | null }) {
     return <span className="text-[#71717a]">—</span>;
   }
 
-  let className = "border-[#3f3f46] bg-[#18181b] text-[#a1a1aa]";
+  let className = "border-[#3f3f46] bg-[#1f1f22] text-[#a1a1aa]";
 
   if (status >= 200 && status < 300) {
-    className = "border-emerald-500/15 bg-emerald-500/8 text-emerald-400";
+    className = "border-[#3f3f46] bg-[#27272a] text-[#fafafa]";
   } else if (status >= 300 && status < 400) {
-    className = "border-amber-500/15 bg-amber-500/8 text-amber-400";
+    className = "border-[#3f3f46] bg-[#27272a] text-[#d4d4d8]";
   } else if (status >= 400 && status < 500) {
-    className = "border-orange-500/15 bg-orange-500/8 text-orange-400";
+    className = "border-red-900/40 bg-red-950/20 text-[#fca5a5]";
   } else if (status >= 500) {
-    className = "border-red-500/15 bg-red-500/8 text-red-400";
+    className = "border-red-900/40 bg-red-950/20 text-[#f87171]";
   }
 
   return (
-    <span
-      className={`
-        rounded
-        border
-        px-1.5
-        py-0.5
-        font-mono
-        text-[10px]
-        font-semibold
-        ${className}
-      `}
-    >
+    <span className={`rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${className}`}>
       {status}
     </span>
   );

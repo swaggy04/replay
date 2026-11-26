@@ -191,7 +191,7 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#27272a] bg-[#09090b] px-5">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#27272a] bg-[#0e0e11] px-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
             <h1 className="text-sm font-semibold tracking-tight text-[#fafafa]">Requests</h1>
