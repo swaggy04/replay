@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { createProjectApiKey, getProjectApiKeys, revokeProjectApiKey, updateProjectReplayTarget } from "../requestsApi";
+import {
+  createProjectApiKey,
+  getProjectApiKeys,
+  revealProjectApiKey,
+  revokeProjectApiKey,
+  updateProjectReplayTarget,
+} from "../requestsApi";
 
 import { NewApiKeyDialog } from "./NewApiKeyDialog";
 
@@ -21,6 +27,7 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [newApiKey, setNewApiKey] = useState<CreatedApiKey | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [copyingKeyId, setCopyingKeyId] = useState<string | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
   const [replayBaseUrl, setReplayBaseUrl] = useState("");
   const [replaySaving, setReplaySaving] = useState(false);
@@ -117,23 +124,35 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
   }
 
   // Copy the complete API key of an active key.
-  // The raw secret is only available for the key that was just created
-  // (see rawKeyForKeyId); it is never stored.
+  // Prefer the in-memory raw key for the just-created key; otherwise reveal
+  // it via the owner-authorized reveal endpoint. Never log the key value.
   async function handleCopyActiveKey(apiKey: ApiKey) {
-    const rawKey = rawKeyForKeyId(apiKey.id, newApiKey);
-
-    if (!rawKey) {
-      setCopyError("The full API key is not available here.");
-      return;
-    }
+    setCopyError(null);
+    setCopyingKeyId(apiKey.id);
 
     try {
+      let rawKey = rawKeyForKeyId(apiKey.id, newApiKey);
+
+      if (!rawKey) {
+        const token = await getToken();
+        if (!token) {
+          throw new Error("Unable to obtain Clerk session token.");
+        }
+
+        const revealed = await revealProjectApiKey(projectId, apiKey.id, token);
+        rawKey = revealed.rawKey;
+      }
+
       await copyToClipboard(rawKey);
       setCopiedKeyId(apiKey.id);
-      setCopyError(null);
-    } catch {
+      window.setTimeout(() => {
+        setCopiedKeyId((current) => (current === apiKey.id ? null : current));
+      }, 2000);
+    } catch (err) {
       setCopiedKeyId(null);
-      setCopyError("Unable to copy the API key. Please try again.");
+      setCopyError(err instanceof Error ? err.message : "Unable to copy the API key. Please try again.");
+    } finally {
+      setCopyingKeyId(null);
     }
   }
 
@@ -259,15 +278,24 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
             {loading ? (
               <p className="py-8 text-center text-xs text-[#716b6e]">Loading API keys...</p>
             ) : apiKeys.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-[#302b2d] px-4 py-10 text-center">
-                <p className="text-sm text-[#c9c5c6]">No active API keys</p>
+              error ? (
+                <div className="rounded-lg border border-dashed border-[#302b2d] px-4 py-10 text-center">
+                  <p className="text-sm text-[#c9c5c6]">Unable to load API keys</p>
+                  <p className="mt-2 text-xs text-[#716b6e]">Check your connection and try Refresh.</p>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-[#302b2d] px-4 py-10 text-center">
+                  <p className="text-sm text-[#c9c5c6]">No active API keys</p>
 
-                <p className="mt-2 text-xs text-[#716b6e]">Generate an API key to connect your application.</p>
-              </div>
+                  <p className="mt-2 text-xs text-[#716b6e]">Generate an API key to connect your application.</p>
+                </div>
+              )
             ) : (
               <div className="divide-y divide-[#302b2d]">
                 {apiKeys.map((apiKey) => {
-                  const canCopy = Boolean(rawKeyForKeyId(apiKey.id, newApiKey));
+                  const isCopied = copiedKeyId === apiKey.id;
+                  const isCopying = copyingKeyId === apiKey.id;
+                  const canReveal = apiKey.canReveal !== false;
 
                   return (
                     <div
@@ -280,23 +308,27 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
                         <p className="mt-1 text-[10px] text-[#716b6e]">
                           Created {formatDate(apiKey.createdAt)}
                         </p>
+                        {!canReveal && (
+                          <p className="mt-1 text-[10px] text-amber-400">
+                            Legacy key — rotate to enable copy.
+                          </p>
+                        )}
                       </div>
 
                       <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
-                        {canCopy ? (
-                          <button
-                            type="button"
-                            onClick={() => void handleCopyActiveKey(apiKey)}
-                            disabled={copiedKeyId === apiKey.id}
-                            className="rounded-md border border-[#554431] px-3 py-1.5 text-[11px] text-amber-200 transition hover:bg-amber-950/30 disabled:opacity-50"
-                          >
-                            {copiedKeyId === apiKey.id ? "Copied!" : "Copy"}
-                          </button>
-                        ) : (
-                          <span className="text-[10px] text-[#716b6e]">
-                            Full key unavailable
-                          </span>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => void handleCopyActiveKey(apiKey)}
+                          disabled={isCopying}
+                          title={
+                            canReveal
+                              ? "Copy the complete API key"
+                              : "This legacy key cannot be revealed; revoke and generate a new key."
+                          }
+                          className="rounded-md border border-[#554431] px-3 py-1.5 text-[11px] text-amber-200 transition hover:bg-amber-950/30 disabled:opacity-50"
+                        >
+                          {isCopied ? "Copied!" : isCopying ? "Copying..." : "Copy"}
+                        </button>
 
                         <button
                           type="button"

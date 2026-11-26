@@ -16,6 +16,7 @@ import {
 import {
   createApiKeyController,
   getProjectApiKeysController,
+  revealApiKeyController,
   revokeApiKeyController,
 } from "./controllers/apiKeyController.js";
 
@@ -113,6 +114,12 @@ app.get(
   "/projects/:projectId/api-keys",
   requireUser,
   getProjectApiKeysController
+);
+
+app.get(
+  "/projects/:projectId/api-keys/:keyId/reveal",
+  requireUser,
+  revealApiKeyController
 );
 
 app.get(
