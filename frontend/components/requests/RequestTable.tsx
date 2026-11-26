@@ -12,7 +12,7 @@ type RequestTableProps = {
 export function RequestTable({ requests, selectedRequest, onSelectRequest }: RequestTableProps) {
   return (
     <section className="flex min-h-0 flex-1 flex-col border-b border-[#27272a]">
-      <div className="grid shrink-0 grid-cols-[90px_minmax(0,1fr)_90px_90px] items-center border-b border-[#27272a] bg-[#131316] px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">
+      <div className="grid shrink-0 grid-cols-[90px_minmax(0,1fr)_90px_90px] items-center border-b border-[#27272a] bg-[#131316] px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">
         <span>Method</span>
         <span>Path</span>
         <span>Status</span>
@@ -46,7 +46,7 @@ export function RequestTable({ requests, selectedRequest, onSelectRequest }: Req
                 }`}
               >
                 <div className="flex items-center">
-                  <span className={`font-mono text-[11px] font-semibold tracking-wide ${getMethodClass(request.method)}`}>
+                  <span className={`font-mono text-[10px] font-semibold tracking-wide ${getMethodClass(request.method)}`}>
                     {request.method.toUpperCase()}
                   </span>
                 </div>
@@ -62,13 +62,13 @@ export function RequestTable({ requests, selectedRequest, onSelectRequest }: Req
                 </div>
 
                 <div>
-                  <span className={`font-mono text-[11px] font-medium ${getStatusClass(request.statusCode)}`}>
+                  <span className={`font-mono text-[10px] font-medium ${getStatusClass(request.statusCode)}`}>
                     {request.statusCode ?? "—"}
                   </span>
                 </div>
 
                 <div className="text-right">
-                  <span className="font-mono text-[11px] text-[#71717a] transition-colors group-hover:text-[#a1a1aa]">
+                  <span className="font-mono text-[10px] text-[#71717a] transition-colors group-hover:text-[#a1a1aa]">
                     {typeof request.durationMs === "number" ? `${request.durationMs}ms` : "—"}
                   </span>
                 </div>

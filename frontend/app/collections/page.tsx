@@ -20,7 +20,7 @@ export default function CollectionsPage() {
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#27272a] bg-[#0e0e11] px-6">
             <div className="min-w-0">
               <h1 className="text-sm font-semibold tracking-tight text-[#fafafa]">Collections</h1>
-              <p className="mt-0.5 text-[11px] text-[#71717a]">Organize and reuse captured requests</p>
+              <p className="mt-0.5 text-[10px] text-[#71717a]">Organize and reuse captured requests</p>
             </div>
           </header>
 

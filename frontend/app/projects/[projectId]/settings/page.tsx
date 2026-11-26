@@ -24,7 +24,7 @@ export default function ProjectSettingsPage() {
         <>
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#27272a] bg-[#0e0e11] px-6">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 font-mono text-[11px] text-[#71717a]">
+              <div className="flex items-center gap-2 font-mono text-[10px] text-[#71717a]">
                 <span>Settings</span>
                 <span className="text-[#3f3f46]">/</span>
                 <span className="truncate text-[#a1a1aa]">{selectedProject.name}</span>

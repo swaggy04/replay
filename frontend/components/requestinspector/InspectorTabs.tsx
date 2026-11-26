@@ -26,7 +26,7 @@ export function InspectorTabs({ activeTab, onChange }: InspectorTabsProps) {
             key={value}
             type="button"
             onClick={() => onChange(value)}
-            className={`relative shrink-0 px-3 py-3 font-mono text-[11px] transition-colors ${
+            className={`relative shrink-0 px-3 py-3 font-mono text-[10px] transition-colors ${
               isActive ? "text-[#fafafa]" : "text-[#71717a] hover:text-[#d4d4d8]"
             }`}
           >

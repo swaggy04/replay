@@ -93,7 +93,7 @@ export function RequestSidebar({
     <aside className="flex w-64 shrink-0 flex-col border-r border-[#27272a] bg-[#0e0e11]">
       <div className="flex h-14 shrink-0 items-center border-b border-[#27272a] px-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-white text-[11px] font-bold text-[#09090b]">
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-white text-[10px] font-bold text-[#09090b]">
             D
           </div>
           <span className="font-sans text-[15px] font-semibold tracking-tight text-[#fafafa]">DevReplay</span>
@@ -102,7 +102,7 @@ export function RequestSidebar({
 
       <div className="border-b border-[#27272a] p-3">
         <div className="mb-2 flex items-center justify-between px-1">
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">Project</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">Project</p>
           <button
             type="button"
             onClick={onCreateProject}
@@ -124,7 +124,7 @@ export function RequestSidebar({
               if (project) onSelectProject(project);
             }}
             disabled={projects.length === 0}
-            className="h-9 w-full cursor-pointer appearance-none rounded-md border border-[#27272a] bg-[#18181b] px-3 pr-8 font-mono text-[11px] text-[#e4e1e6] outline-none transition hover:border-[#3f3f46] focus:border-[#52525b] disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-9 w-full cursor-pointer appearance-none rounded-md border border-[#27272a] bg-[#18181b] px-3 pr-8 font-mono text-[10px] text-[#e4e1e6] outline-none transition hover:border-[#3f3f46] focus:border-[#52525b] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {projects.length === 0 ? (
               <option value="">No projects</option>
@@ -153,13 +153,13 @@ export function RequestSidebar({
 
       <div className="devreplay-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-4">
         <div className="mb-2 flex items-center justify-between px-2">
-          <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">Recent</p>
-          {requests.length > 0 && <span className="font-mono text-[11px] text-[#52525b]">{requests.length}</span>}
+          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">Recent</p>
+          {requests.length > 0 && <span className="font-mono text-[10px] text-[#52525b]">{requests.length}</span>}
         </div>
 
         <div className="space-y-0.5">
           {requests.length === 0 ? (
-            <p className="px-2 py-2 text-[11px] text-[#52525b]">No captured requests</p>
+            <p className="px-2 py-2 text-[10px] text-[#52525b]">No captured requests</p>
           ) : (
             requests.map((request) => {
               const isSelected = selectedRequest?.id === request.id;
@@ -173,11 +173,11 @@ export function RequestSidebar({
                   }`}
                 >
                   {isSelected && <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r-full bg-white" />}
-                  <span className={`w-11 shrink-0 font-mono text-[11px] font-semibold tracking-wide ${getMethodClass(request.method)}`}>
+                  <span className={`w-11 shrink-0 font-mono text-[10px] font-semibold tracking-wide ${getMethodClass(request.method)}`}>
                     {request.method.toUpperCase()}
                   </span>
                   <span
-                    className={`min-w-0 flex-1 truncate font-mono text-[11px] ${
+                    className={`min-w-0 flex-1 truncate font-mono text-[10px] ${
                       isSelected ? "text-[#e4e1e6]" : "text-[#a1a1aa] group-hover:text-[#e4e1e6]"
                     }`}
                   >
@@ -191,7 +191,7 @@ export function RequestSidebar({
       </div>
 
       <div className="flex h-14 shrink-0 items-center border-t border-[#27272a] px-4">
-        <div className="flex items-center gap-2 text-[11px] text-[#71717a]">
+        <div className="flex items-center gap-2 text-[10px] text-[#71717a]">
           <span className="h-1.5 w-1.5 rounded-full bg-[#a1a1aa]" />
           <span className="font-mono uppercase tracking-[0.08em]">Workspace</span>
         </div>

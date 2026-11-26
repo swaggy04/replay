@@ -171,12 +171,12 @@ export function DashboardShell({
         className="w-full max-w-md rounded-md border border-[#27272a] bg-[#1b1b1e] p-6 shadow-2xl"
       >
         <div className="mb-5">
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#71717a]">New project</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71717a]">New project</p>
           <h2 className="mt-2 text-lg font-semibold tracking-tight text-[#fafafa]">Create project</h2>
           <p className="mt-1 text-sm text-[#a1a1aa]">Create a project to organize your captured HTTP traffic.</p>
         </div>
 
-        <label htmlFor="project-name" className="mb-2 block font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">
+        <label htmlFor="project-name" className="mb-2 block font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">
           Project name
         </label>
 
@@ -221,7 +221,7 @@ export function DashboardShell({
         <div className="flex flex-col items-center">
           <div className="mb-4 h-5 w-5 animate-spin rounded-full border-2 border-[#27272a] border-t-[#fafafa]" />
           <p className="text-sm font-medium text-[#e4e1e6]">Loading projects</p>
-          <p className="mt-1 font-mono text-[11px] text-[#71717a]">Getting your DevReplay projects...</p>
+          <p className="mt-1 font-mono text-[10px] text-[#71717a]">Getting your DevReplay projects...</p>
         </div>
       </div>
     );

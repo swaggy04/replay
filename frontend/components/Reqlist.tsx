@@ -198,10 +198,10 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
             <span className="text-[#3f3f46]">/</span>
             <span className="max-w-[240px] truncate text-xs text-[#a1a1aa]">{project.name}</span>
           </div>
-          <p className="mt-0.5 text-[11px] text-[#71717a]">Captured HTTP traffic</p>
+          <p className="mt-0.5 text-[10px] text-[#71717a]">Captured HTTP traffic</p>
         </div>
 
-        <div className="shrink-0 text-[11px] font-medium text-[#71717a]">
+        <div className="shrink-0 text-[10px] font-medium text-[#71717a]">
           {total} {total === 1 ? "request" : "requests"}
         </div>
       </header>

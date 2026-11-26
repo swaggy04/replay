@@ -193,7 +193,7 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
 
       <div className="mx-auto flex max-w-6xl flex-col gap-10 px-8 py-10">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#71717a]">Project settings</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71717a]">Project settings</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[#fafafa]">{projectName}</h2>
           <p className="mt-1 text-sm text-[#a1a1aa]">Manage credentials and replay configuration for this project.</p>
         </div>
@@ -222,7 +222,7 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-semibold tracking-tight text-[#fafafa]">API Keys</h3>
-                  <span className="rounded border border-[#27272a] bg-[#1f1f22] px-2 py-0.5 font-mono text-[11px] text-[#a1a1aa]">
+                  <span className="rounded border border-[#27272a] bg-[#1f1f22] px-2 py-0.5 font-mono text-[10px] text-[#a1a1aa]">
                     {apiKeys.length} {apiKeys.length === 1 ? "key" : "keys"}
                   </span>
                 </div>
@@ -255,14 +255,14 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
               <div className="flex items-center justify-between border-b border-[#27272a] px-5 py-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-[#fafafa]">Active credentials</span>
-                  <span className="font-mono text-[11px] text-[#71717a]">Project-scoped</span>
+                  <span className="font-mono text-[10px] text-[#71717a]">Project-scoped</span>
                 </div>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-[#27272a] bg-[#131316] font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">
+                    <tr className="border-b border-[#27272a] bg-[#131316] font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">
                       <th className="px-5 py-3 font-normal">Key</th>
                       <th className="px-5 py-3 font-normal">Created</th>
                       <th className="px-5 py-3 font-normal">Status</th>
@@ -296,13 +296,13 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
                                   {apiKey.keyPrefix ?? "Unknown prefix"}••••••••
                                 </code>
                                 {!canReveal && (
-                                  <span className="text-[11px] text-amber-400">Legacy key — rotate by revoking and generating a new key.</span>
+                                  <span className="text-[10px] text-amber-400">Legacy key — rotate by revoking and generating a new key.</span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-5 py-4 font-mono text-[11px] text-[#a1a1aa]">{formatDate(apiKey.createdAt)}</td>
+                            <td className="px-5 py-4 font-mono text-[10px] text-[#a1a1aa]">{formatDate(apiKey.createdAt)}</td>
                             <td className="px-5 py-4">
-                              <span className={`inline-flex rounded border px-2 py-0.5 font-mono text-[11px] uppercase tracking-[0.08em] ${
+                              <span className={`inline-flex rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] ${
                                 canReveal
                                   ? "border-[#3f3f46] bg-[#27272a] text-[#e4e1e6]"
                                   : "border-amber-900/40 bg-amber-950/20 text-amber-400"
@@ -321,7 +321,7 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
                                       ? "Copy the complete API key"
                                       : "This legacy key cannot be revealed; revoke and generate a new key."
                                   }
-                                  className="rounded-md border border-[#3f3f46] px-3 py-1.5 text-[11px] text-[#e4e1e6] transition hover:bg-[#27272a] disabled:opacity-50"
+                                  className="rounded-md border border-[#3f3f46] px-3 py-1.5 text-[10px] text-[#e4e1e6] transition hover:bg-[#27272a] disabled:opacity-50"
                                 >
                                   {isCopied ? "Copied" : isCopying ? "Copying..." : "Copy"}
                                 </button>
@@ -329,7 +329,7 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
                                   type="button"
                                   onClick={() => void handleRevokeKey(apiKey.id)}
                                   disabled={revokingKeyId === apiKey.id}
-                                  className="rounded-md border border-red-900/40 px-3 py-1.5 text-[11px] text-red-400 transition hover:bg-red-950/20 disabled:opacity-50"
+                                  className="rounded-md border border-red-900/40 px-3 py-1.5 text-[10px] text-red-400 transition hover:bg-red-950/20 disabled:opacity-50"
                                 >
                                   {revokingKeyId === apiKey.id ? "Revoking..." : "Revoke"}
                                 </button>
@@ -354,7 +354,7 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
             </div>
 
             <div className="rounded-md border border-[#27272a] bg-[#1b1b1e] p-6">
-              <label htmlFor="replay-target" className="mb-2 block font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">
+              <label htmlFor="replay-target" className="mb-2 block font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">
                 Default target base URL
               </label>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -392,8 +392,8 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
 
             <div className="overflow-hidden rounded-md border border-[#27272a] bg-[#1b1b1e]">
               <div className="flex items-center justify-between border-b border-[#27272a] bg-[#18181b] px-4 py-2.5">
-                <span className="font-mono text-[11px] text-[#a1a1aa]">Ingest request header</span>
-                <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#71717a]">HTTP</span>
+                <span className="font-mono text-[10px] text-[#a1a1aa]">Ingest request header</span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#71717a]">HTTP</span>
               </div>
               <div className="bg-[#0e0e11] p-5 font-mono text-xs leading-6 text-[#d4d4d8]">
                 <div><span className="text-[#71717a]"># Send captured requests to DevReplay ingest</span></div>

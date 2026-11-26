@@ -89,7 +89,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
                 items-center
                 gap-x-2.5
                 gap-y-1
-                text-[11px]
+                text-[10px]
                 sm:text-xs
               "
             >
@@ -227,7 +227,7 @@ export function DetailSection({ title, children }: { title: string; children: Re
       <div className="flex items-center justify-between">
         <h3
           className="
-            text-[11px]
+            text-[10px]
             font-semibold
             uppercase
             tracking-[0.12em]
@@ -261,7 +261,7 @@ export function InfoRow({ label, value, mono = false }: { label: string; value: 
         sm:grid-cols-[120px_minmax(0,1fr)]
       "
     >
-      <span className="text-[11px] font-medium text-[#71717a]">{label}</span>
+      <span className="text-[10px] font-medium text-[#71717a]">{label}</span>
 
       <span className={mono ? "truncate font-mono text-xs text-[#f4f4f5]" : "truncate text-xs text-[#d4d4d8]"}>
         {value}
@@ -318,7 +318,7 @@ export function JsonBlock({ data }: { data: unknown }) {
           <span
             className="
               font-mono
-              text-[10px]
+              text-[9px]
               font-semibold
               uppercase
               tracking-[0.12em]
@@ -330,7 +330,7 @@ export function JsonBlock({ data }: { data: unknown }) {
 
           <span className="h-1 w-1 rounded-full bg-[#3f3f46]" />
 
-          <span className="text-[10px] text-[#71717a]">Read only</span>
+          <span className="text-[9px] text-[#71717a]">Read only</span>
         </div>
 
         <button
@@ -340,7 +340,7 @@ export function JsonBlock({ data }: { data: unknown }) {
             rounded
             px-2
             py-1
-            text-[11px]
+            text-[10px]
             font-medium
             text-[#a1a1aa]
             transition
@@ -360,7 +360,7 @@ export function JsonBlock({ data }: { data: unknown }) {
           overflow-auto
           p-4
           font-mono
-          text-[11px]
+          text-[10px]
           leading-6
           text-[#d4d4d8]
           sm:text-xs
@@ -383,7 +383,7 @@ function MethodBadge({ method }: { method: string }) {
     <span
       className="
         inline-flex h-7 shrink-0 items-center rounded border border-[#3f3f46] bg-[#27272a]
-        px-2 font-mono text-[11px] font-semibold tracking-wide text-[#fafafa]
+        px-2 font-mono text-[10px] font-semibold tracking-wide text-[#fafafa]
       "
     >
       {normalizedMethod}
@@ -437,7 +437,7 @@ function StatusPill({ status }: { status: number | null }) {
   }
 
   return (
-    <span className={`rounded border px-1.5 py-0.5 font-mono text-[11px] font-semibold ${className}`}>
+    <span className={`rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${className}`}>
       {status}
     </span>
   );
@@ -462,7 +462,7 @@ export function StatCard({ label, value, mono = false }: { label: string; value:
     >
       <div
         className="
-          text-[10px]
+          text-[9px]
           font-semibold
           uppercase
           tracking-[0.12em]
