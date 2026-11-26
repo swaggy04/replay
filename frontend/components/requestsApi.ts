@@ -50,6 +50,7 @@ export type ApiKey = {
   id: string;
   keyPrefix: string | null;
   createdAt: string;
+  canReveal?: boolean;
 };
 
 // Returned only when a new key is generated.
@@ -235,5 +236,16 @@ export async function revokeProjectApiKey(
     {
       method: "DELETE",
     },
+  );
+}
+
+export async function revealProjectApiKey(
+  projectId: string,
+  keyId: string,
+  token: string,
+): Promise<{ rawKey: string }> {
+  return authenticatedFetch<{ rawKey: string }>(
+    `/projects/${encodeURIComponent(projectId)}/api-keys/${encodeURIComponent(keyId)}/reveal`,
+    token,
   );
 }

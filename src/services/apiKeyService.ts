@@ -2,6 +2,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import prisma from "../lib/prisma.js";
+import { decryptApiKey, encryptApiKey } from "../utils/apiKeyEncryption.js";
 
 function hashApiKey(key: string): string {
     return createHash("sha256")
@@ -31,15 +32,20 @@ export async function createApiKey(
     // Generate a cryptographically secure 256-bit secret.
     const rawKey = `dr_live_${randomBytes(32).toString("hex")}`;
 
-    // Only the hash is stored in PostgreSQL.
+    // Hash is stored for authentication lookup; encrypted value is stored for
+    // owner-authorized reveal. Plaintext is never persisted.
     const hashedKey = hashApiKey(rawKey);
     const keyPrefix = rawKey.slice(0, 16);
+    const encrypted = encryptApiKey(rawKey);
 
     const apiKey = await prisma.apiKey.create({
         data: {
             key: hashedKey,
             keyPrefix,
             projectId,
+            encryptedKey: encrypted.encryptedKey,
+            encryptionIv: encrypted.encryptionIv,
+            encryptionTag: encrypted.encryptionTag,
         },
         select: {
             id: true,
@@ -74,7 +80,7 @@ export async function getProjectApiKeys(
         return null;
     }
 
-    return prisma.apiKey.findMany({
+    const keys = await prisma.apiKey.findMany({
         where: {
             projectId,
             revokedAt: null,
@@ -83,11 +89,17 @@ export async function getProjectApiKeys(
             id: true,
             keyPrefix: true,
             createdAt: true,
+            encryptedKey: true,
         },
         orderBy: {
             createdAt: "desc",
         },
     });
+
+    return keys.map(({ encryptedKey, ...rest }) => ({
+        ...rest,
+        canReveal: encryptedKey !== null,
+    }));
 }
 
 export async function revokeApiKey(
@@ -112,4 +124,55 @@ export async function revokeApiKey(
     });
 
     return result.count > 0;
+}
+
+export type RevealApiKeyResult =
+    | { ok: true; rawKey: string }
+    | { ok: false; reason: "not_found" | "not_recoverable" | "encryption_not_configured" };
+
+export async function revealApiKey(
+    projectId: string,
+    keyId: string,
+    ownerId: string,
+): Promise<RevealApiKeyResult> {
+    // Ownership is enforced via the project relation filter.
+    const record = await prisma.apiKey.findFirst({
+        where: {
+            id: keyId,
+            projectId,
+            revokedAt: null,
+            project: {
+                is: {
+                    ownerId,
+                },
+            },
+        },
+        select: {
+            encryptedKey: true,
+            encryptionIv: true,
+            encryptionTag: true,
+        },
+    });
+
+    if (!record) {
+        return { ok: false, reason: "not_found" };
+    }
+
+    if (!record.encryptedKey || !record.encryptionIv || !record.encryptionTag) {
+        return { ok: false, reason: "not_recoverable" };
+    }
+
+    try {
+        const rawKey = decryptApiKey(record);
+        return { ok: true, rawKey };
+    } catch (error) {
+        if (
+            error instanceof Error &&
+            error.message === "API_KEY_ENCRYPTION_KEY is not configured."
+        ) {
+            return { ok: false, reason: "encryption_not_configured" };
+        }
+
+        throw error;
+    }
 }

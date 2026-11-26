@@ -4,6 +4,7 @@ import type { Request, Response } from "express";
 import {
     createApiKey,
     getProjectApiKeys,
+    revealApiKey,
     revokeApiKey,
 } from "../services/apiKeyService.js";
 
@@ -119,6 +120,63 @@ export async function revokeApiKeyController(
 
         return res.status(500).json({
             message: "Failed to revoke API key",
+        });
+    }
+}
+
+export async function revealApiKeyController(req: Request, res: Response) {
+    try {
+        const ownerId = res.locals.userId as string;
+        const { projectId, keyId } = req.params;
+
+        if (
+            typeof projectId !== "string" ||
+            typeof keyId !== "string" ||
+            !ownerId
+        ) {
+            return res.status(400).json({
+                message: "Invalid project or API key ID",
+            });
+        }
+
+        const result = await revealApiKey(projectId, keyId, ownerId);
+
+        if (!result.ok) {
+            if (result.reason === "not_found") {
+                return res.status(404).json({
+                    message: "API key not found",
+                });
+            }
+
+            if (result.reason === "not_recoverable") {
+                return res.status(409).json({
+                    message:
+                        "This API key cannot be revealed because it was created before encrypted key storage was enabled. Revoke it and generate a new key.",
+                });
+            }
+
+            if (result.reason === "encryption_not_configured") {
+                return res.status(503).json({
+                    message:
+                        "API key reveal is not configured on this server. Set API_KEY_ENCRYPTION_KEY.",
+                });
+            }
+
+            return res.status(500).json({
+                message: "Failed to reveal API key",
+            });
+        }
+
+        // Return plaintext only to the authenticated project owner over this
+        // dedicated endpoint. Never log the key value.
+        return res.status(200).json({
+            rawKey: result.rawKey,
+        });
+    } catch (error) {
+        console.error("Failed to reveal API key:", error);
+
+        return res.status(500).json({
+            message: "Failed to reveal API key",
         });
     }
 }

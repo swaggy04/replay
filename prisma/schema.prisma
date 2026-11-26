@@ -41,6 +41,13 @@ model ApiKey {
 
   keyPrefix String
 
+  /// AES-256-GCM ciphertext (base64). Null for legacy hash-only keys.
+  encryptedKey   String?
+  /// AES-256-GCM IV (base64, 12 bytes). Null for legacy hash-only keys.
+  encryptionIv   String?
+  /// AES-256-GCM auth tag (base64). Null for legacy hash-only keys.
+  encryptionTag  String?
+
   createdAt DateTime   @default(now())
   revokedAt DateTime?
 
