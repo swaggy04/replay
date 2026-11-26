@@ -181,9 +181,9 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
         <div className="flex flex-col items-center">
-          <div className="mb-4 h-5 w-5 animate-spin rounded-full border-2 border-[#302b2d] border-t-[#d8d4d5]" />
-          <p className="text-sm font-medium text-[#c9c5c6]">Loading requests</p>
-          <p className="mt-1 text-xs text-[#716b6e]">Fetching captured HTTP traffic...</p>
+          <div className="mb-4 h-5 w-5 animate-spin rounded-full border-2 border-[#27272a] border-t-[#fafafa]" />
+          <p className="text-sm font-medium text-[#d4d4d8]">Loading requests</p>
+          <p className="mt-1 text-xs text-[#71717a]">Fetching captured HTTP traffic...</p>
         </div>
       </div>
     );
@@ -191,17 +191,17 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#242022] bg-[#0c080a] px-5">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#27272a] bg-[#09090b] px-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
-            <h1 className="text-sm font-semibold tracking-tight text-[#f1eeee]">Requests</h1>
-            <span className="text-[#403a3d]">/</span>
-            <span className="max-w-[240px] truncate text-xs text-[#8f898c]">{project.name}</span>
+            <h1 className="text-sm font-semibold tracking-tight text-[#fafafa]">Requests</h1>
+            <span className="text-[#3f3f46]">/</span>
+            <span className="max-w-[240px] truncate text-xs text-[#a1a1aa]">{project.name}</span>
           </div>
-          <p className="mt-0.5 text-[10px] text-[#716b6e]">Captured HTTP traffic</p>
+          <p className="mt-0.5 text-[11px] text-[#71717a]">Captured HTTP traffic</p>
         </div>
 
-        <div className="shrink-0 text-[11px] font-medium text-[#777174]">
+        <div className="shrink-0 text-[11px] font-medium text-[#71717a]">
           {total} {total === 1 ? "request" : "requests"}
         </div>
       </header>
@@ -219,8 +219,8 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
         }}
       />
 
-      <footer className="flex h-12 shrink-0 items-center justify-between border-t border-[#242022] px-5">
-        <span className="text-xs text-[#716b6e]">
+      <footer className="flex h-12 shrink-0 items-center justify-between border-t border-[#27272a] px-5">
+        <span className="text-xs text-[#71717a]">
           Page {page} of {totalPages}
         </span>
 
@@ -228,7 +228,7 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
           <button
             disabled={page === 1}
             onClick={() => setPage((current) => current - 1)}
-            className="rounded-md border border-[#302b2d] px-3 py-1.5 text-xs text-[#a9a4a6] transition hover:border-[#403a3d] hover:bg-[#141012] hover:text-[#e5e1e2] disabled:cursor-not-allowed disabled:opacity-30"
+            className="rounded-md border border-[#27272a] px-3 py-1.5 text-xs text-[#a1a1aa] transition hover:border-[#3f3f46] hover:bg-[#18181b] hover:text-[#fafafa] disabled:cursor-not-allowed disabled:opacity-30"
           >
             ← Previous
           </button>
@@ -236,7 +236,7 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
           <button
             disabled={page === totalPages}
             onClick={() => setPage((current) => current + 1)}
-            className="rounded-md border border-[#302b2d] px-3 py-1.5 text-xs text-[#a9a4a6] transition hover:border-[#403a3d] hover:bg-[#141012] hover:text-[#e5e1e2] disabled:cursor-not-allowed disabled:opacity-30"
+            className="rounded-md border border-[#27272a] px-3 py-1.5 text-xs text-[#a1a1aa] transition hover:border-[#3f3f46] hover:bg-[#18181b] hover:text-[#fafafa] disabled:cursor-not-allowed disabled:opacity-30"
           >
             Next →
           </button>

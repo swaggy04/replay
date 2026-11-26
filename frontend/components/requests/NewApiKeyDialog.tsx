@@ -49,7 +49,7 @@ export function NewApiKeyDialog({ apiKey, onClose }: NewApiKeyDialogProps) {
         }
       }}
     >
-      <div className="w-full max-w-lg rounded-xl border border-[#302b2d] bg-[#100d0f] p-6 shadow-2xl">
+      <div className="w-full max-w-lg rounded-xl border border-[#27272a] bg-[#131316] p-6 shadow-2xl">
         <div className="flex items-center gap-2.5">
           <span className="text-sm font-semibold text-amber-300">Your new API key</span>
 
@@ -58,7 +58,7 @@ export function NewApiKeyDialog({ apiKey, onClose }: NewApiKeyDialogProps) {
           </span>
         </div>
 
-        <p className="mt-2 text-xs leading-5 text-[#b5abad]">
+        <p className="mt-2 text-xs leading-5 text-[#a1a1aa]">
           This is the only time the complete key is shown. Copy it now and store it
           securely — it cannot be retrieved later.
         </p>
@@ -69,14 +69,14 @@ export function NewApiKeyDialog({ apiKey, onClose }: NewApiKeyDialogProps) {
             aria-label="API key"
             value={apiKey.rawKey}
             onClick={(event) => event.currentTarget.select()}
-            className="min-w-0 flex-1 rounded-md border border-[#40352c] bg-[#0c080a] px-3 py-2 font-mono text-xs text-[#eee4d5] outline-none"
+            className="min-w-0 flex-1 rounded-md border border-[#40352c] bg-[#09090b] px-3 py-2 font-mono text-xs text-[#f4f4f5] outline-none"
           />
 
           <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={() => void handleCopy()}
-              className="rounded-md border border-[#554431] px-3 py-1.5 text-xs text-amber-200 transition hover:bg-amber-950/30"
+              className="rounded-md border border-[#52525b] px-3 py-1.5 text-xs text-amber-200 transition hover:bg-amber-950/30"
             >
               {isCopied ? "Copied!" : "Copy API key"}
             </button>
@@ -84,7 +84,7 @@ export function NewApiKeyDialog({ apiKey, onClose }: NewApiKeyDialogProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-[#302b2d] px-3 py-1.5 text-xs text-[#d8d4d5] transition hover:bg-[#1a1618]"
+              className="rounded-md border border-[#27272a] px-3 py-1.5 text-xs text-[#e4e4e7] transition hover:bg-[#18181b]"
             >
               Done
             </button>

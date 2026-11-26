@@ -53,8 +53,8 @@ export function RequestDetailsPanel({
             justify-center
             rounded-xl
             border
-            border-[#302b2d]
-            bg-[#0c080a]
+            border-[#27272a]
+            bg-[#09090b]
             shadow-[0_24px_80px_rgba(0,0,0,0.55)]
           "
         >
@@ -66,8 +66,8 @@ export function RequestDetailsPanel({
               animate-spin
               rounded-full
               border-2
-              border-[#302b2d]
-              border-t-[#d8d4d5]
+              border-[#27272a]
+              border-t-[#e4e4e7]
             "
           />
 
@@ -75,7 +75,7 @@ export function RequestDetailsPanel({
             className="
               text-sm
               font-medium
-              text-[#c9c5c6]
+              text-[#d4d4d8]
             "
           >
             Loading request details
@@ -85,7 +85,7 @@ export function RequestDetailsPanel({
             className="
               mt-1
               text-xs
-              text-[#716b6e]
+              text-[#71717a]
             "
           >
             Fetching captured request data...

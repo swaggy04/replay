@@ -30,11 +30,11 @@ test("activeNavForPathname maps the settings route", () => {
 });
 
 test("getMethodClass colors methods", () => {
-  assert.equal(getMethodClass("GET"), "text-emerald-400");
-  assert.equal(getMethodClass("post"), "text-[#F4D77E]");
-  assert.equal(getMethodClass("DELETE"), "text-red-400");
-  assert.equal(getMethodClass("OPTIONS"), "text-pink-400");
-  assert.equal(getMethodClass("SOMETHING"), "text-[#d8d4d5]");
+  assert.equal(getMethodClass("GET"), "text-[#e4e4e7]");
+  assert.equal(getMethodClass("post"), "text-[#fafafa]");
+  assert.equal(getMethodClass("DELETE"), "text-[#a1a1aa]");
+  assert.equal(getMethodClass("OPTIONS"), "text-[#a1a1aa]");
+  assert.equal(getMethodClass("SOMETHING"), "text-[#e4e4e7]");
 });
 
 test("getStatusClass colors statuses", () => {
@@ -43,5 +43,5 @@ test("getStatusClass colors statuses", () => {
   assert.equal(getStatusClass(302), "text-amber-400");
   assert.equal(getStatusClass(404), "text-orange-400");
   assert.equal(getStatusClass(503), "text-red-400");
-  assert.equal(getStatusClass(null), "text-[#777174]");
+  assert.equal(getStatusClass(null), "text-[#71717a]");
 });

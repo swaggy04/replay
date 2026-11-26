@@ -1,27 +1,27 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
-
 @import "tailwindcss";
 
 :root {
-  --background: #0c080a;
-  --foreground: #e2e2e4;
+  --background: #09090b;
+  --foreground: #fafafa;
 
-  /* DevReplay colors */
-  --surface: #111011;
-  --surface-raised: #171617;
-  --surface-hover: #1d1a1b;
+  --app-bg: #09090b;
+  --sidebar-bg: #0e0e11;
+  --surface-main: #131316;
+  --surface-raised: #18181b;
+  --surface-hover: #1c1c20;
+  --surface-elevated: #222226;
 
-  --border: #2d292a;
-  --border-subtle: #211e1f;
+  --border-default: #27272a;
+  --border-subtle: #1e1e22;
+  --border-strong: #3f3f46;
 
-  --text-primary: #fefefe;
-  --text-secondary: #e2e2e4;
-  --text-muted: #d1d1d3;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
 
-  /* Scrollbar */
   --scrollbar-track: transparent;
-  --scrollbar-thumb: #3a3436;
-  --scrollbar-thumb-hover: #5a5154;
+  --scrollbar-thumb: #3f3f46;
+  --scrollbar-thumb-hover: #52525b;
 }
 
 * {
@@ -38,7 +38,7 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
 button {
@@ -48,13 +48,8 @@ button {
 code,
 pre,
 .font-mono {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 }
-
-
-/* =========================================================
-   DevReplay Scrollbar
-   ========================================================= */
 
 .devreplay-scrollbar {
   scrollbar-width: thin;
@@ -79,21 +74,15 @@ pre,
   background: var(--scrollbar-thumb-hover);
 }
 
-/* Remove browser's ugly arrow buttons */
 .devreplay-scrollbar::-webkit-scrollbar-button {
   display: none;
   width: 0;
   height: 0;
 }
 
-
-/* =========================================================
-   Code / JSON Scrollbar
-   ========================================================= */
-
 pre {
   scrollbar-width: thin;
-  scrollbar-color: #3a3436 transparent;
+  scrollbar-color: #3f3f46 transparent;
 }
 
 pre::-webkit-scrollbar {
@@ -106,12 +95,12 @@ pre::-webkit-scrollbar-track {
 }
 
 pre::-webkit-scrollbar-thumb {
-  background: #3a3436;
+  background: #3f3f46;
   border-radius: 9999px;
 }
 
 pre::-webkit-scrollbar-thumb:hover {
-  background: #5a5154;
+  background: #52525b;
 }
 
 pre::-webkit-scrollbar-button {

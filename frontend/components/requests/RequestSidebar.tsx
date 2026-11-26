@@ -17,10 +17,10 @@ type RequestSidebarProps = {
 };
 
 const navButtonBase =
-  "flex h-9 w-full items-center gap-3 rounded-md px-3 text-xs font-medium transition-colors";
-const navButtonActive = "bg-[#1a1618] text-[#f1eeee]";
+  "group flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-xs transition-colors";
+const navButtonActive = "border border-[#3f3f46] bg-[#18181b] text-[#fafafa] font-medium";
 const navButtonInactive =
-  "text-[#918b8e] transition-colors hover:bg-[#161214] hover:text-[#d9d5d6]";
+  "border border-transparent text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa]";
 
 export function RequestSidebar({
   projects,
@@ -36,9 +36,6 @@ export function RequestSidebar({
   const settingsHref = selectedProject
     ? `/projects/${selectedProject.id}/settings`
     : "/projects";
-  // The Replays page is project-scoped. When no project is selected yet,
-  // fall back to the Requests page (where a project is loaded and selected)
-  // instead of pointing at a route without a project id.
   const replaysHref = selectedProject ? `/replays/${selectedProject.id}` : "/";
 
   function getNavClass(key: string) {
@@ -46,28 +43,26 @@ export function RequestSidebar({
   }
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-[#242022] bg-[#100d0f]">
-      {/* BRAND */}
-      <div className="flex h-14 shrink-0 items-center border-b border-[#242022] px-5">
+    <aside className="flex w-64 shrink-0 flex-col border-r border-[#27272a] bg-[#0e0e11]">
+      <div className="flex h-14 shrink-0 items-center border-b border-[#27272a] px-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md border border-[#342e31] bg-[#171315] text-[11px] font-semibold text-[#d8d4d5]">
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-[#fafafa] text-[11px] font-semibold text-[#09090b]">
             D
           </div>
-          <span className="text-[15px] font-semibold tracking-tight text-[#f5f3f3]">DevReplay</span>
+          <span className="text-[15px] font-semibold tracking-tight text-[#fafafa]">DevReplay</span>
         </div>
       </div>
 
-      {/* PROJECT */}
-      <div className="border-b border-[#242022] px-4 py-4">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#716b6e]">Project</p>
+      <div className="border-b border-[#27272a] px-3 py-4">
+        <div className="mb-2 flex items-center justify-between px-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">Project</p>
 
           <button
             type="button"
             onClick={onCreateProject}
             title="Create project"
             aria-label="Create project"
-            className="flex h-6 w-6 items-center justify-center rounded-md text-base text-[#918b8e] transition hover:bg-[#242022] hover:text-white"
+            className="flex h-6 w-6 items-center justify-center rounded-md text-base text-[#a1a1aa] transition hover:bg-[#18181b] hover:text-white"
           >
             +
           </button>
@@ -82,54 +77,52 @@ export function RequestSidebar({
               if (project) onSelectProject(project);
             }}
             disabled={projects.length === 0}
-            className="h-9 w-full cursor-pointer appearance-none rounded-md border border-[#302b2d] bg-[#0c080a] px-3 pr-8 text-xs font-medium text-[#ddd9da] outline-none transition hover:border-[#3b3538] focus:border-[#4a4245] focus:ring-1 focus:ring-[#4a4245]/30 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-9 w-full cursor-pointer appearance-none rounded-lg border border-[#27272a] bg-[#131316] px-3 pr-8 text-xs font-medium text-[#e4e4e7] outline-none transition hover:border-[#3f3f46] focus:border-[#52525b] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {projects.length === 0 ? (
               <option value="">No projects</option>
             ) : (
               projects.map((project) => (
-                <option key={project.id} value={project.id} className="bg-[#141012] text-[#e2dfe0]">
+                <option key={project.id} value={project.id} className="bg-[#131316] text-[#e4e4e7]">
                   {project.name}
                 </option>
               ))
             )}
           </select>
 
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#716b6e]">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#71717a]">
             ▾
           </span>
         </div>
       </div>
 
-      {/* NAVIGATION */}
-      <nav className="border-b border-[#242022] px-3 py-3">
+      <nav className="border-b border-[#27272a] px-3 py-3">
         <Link href="/" className={`${navButtonBase} ${getNavClass("requests")}`}>
-          <span className="flex w-4 justify-center text-[11px] text-[#c9c5c6]">▣</span>
+          <span className="flex w-4 justify-center text-[12px] text-[#a1a1aa] group-hover:text-[#fafafa]">▣</span>
           <span>Requests</span>
         </Link>
 
         <Link href={replaysHref} className={`mt-1 ${navButtonBase} ${getNavClass("replays")}`}>
-          <span className="flex w-4 justify-center text-[11px]">↻</span>
+          <span className="flex w-4 justify-center text-[12px] text-[#a1a1aa] group-hover:text-[#fafafa]">↻</span>
           <span>Replays</span>
         </Link>
 
         <Link href="/collections" className={`mt-1 ${navButtonBase} ${getNavClass("collections")}`}>
-          <span className="flex w-4 justify-center text-[11px]">▱</span>
+          <span className="flex w-4 justify-center text-[12px] text-[#a1a1aa] group-hover:text-[#fafafa]">▱</span>
           <span>Collections</span>
         </Link>
 
         <Link href={settingsHref} className={`mt-1 ${navButtonBase} ${getNavClass("settings")}`}>
-          <span className="flex w-4 justify-center text-[11px]">⚙</span>
+          <span className="flex w-4 justify-center text-[12px] text-[#a1a1aa] group-hover:text-[#fafafa]">⚙</span>
           <span>Settings</span>
         </Link>
       </nav>
 
-      {/* RECENT REQUESTS */}
       <div className="devreplay-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-4">
         <div className="mb-2 flex items-center justify-between px-2">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#716b6e]">Recent</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">Recent</p>
 
-          {requests.length > 0 && <span className="font-mono text-[9px] text-[#514b4e]">{requests.length}</span>}
+          {requests.length > 0 && <span className="font-mono text-[10px] text-[#52525b]">{requests.length}</span>}
         </div>
 
         <div className="space-y-0.5">
@@ -142,11 +135,11 @@ export function RequestSidebar({
                 type="button"
                 onClick={() => onSelectRequest(request)}
                 className={`group relative flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors ${
-                  isSelected ? "bg-[#1a1618]" : "hover:bg-[#161214]"
+                  isSelected ? "bg-[#18181b] text-[#fafafa]" : "hover:bg-[#18181b]"
                 }`}
               >
                 {isSelected && (
-                  <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[#d8d4d5]" />
+                  <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[#fafafa]" />
                 )}
 
                 <span
@@ -159,7 +152,7 @@ export function RequestSidebar({
 
                 <span
                   className={`min-w-0 flex-1 truncate font-mono text-[11px] transition-colors ${
-                    isSelected ? "text-[#eee9ea]" : "text-[#9d979a] group-hover:text-[#d0cbcc]"
+                    isSelected ? "text-[#f4f4f5]" : "text-[#a1a1aa] group-hover:text-[#e4e4e7]"
                   }`}
                 >
                   {request.path}
@@ -170,16 +163,15 @@ export function RequestSidebar({
         </div>
       </div>
 
-      {/* BOTTOM */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-t border-[#242022] px-4">
+      <div className="flex h-14 shrink-0 items-center justify-between border-t border-[#27272a] px-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#302b2d] bg-[#0c080a] text-xs font-medium text-[#d8d4d5]">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#27272a] bg-[#131316] text-xs font-medium text-[#e4e4e7]">
             N
           </div>
 
           <div>
-            <p className="text-[11px] font-medium text-[#bdb8ba]">Developer</p>
-            <p className="text-[9px] text-[#615b5e]">Local workspace</p>
+            <p className="text-[11px] font-medium text-[#d4d4d8]">Developer</p>
+            <p className="text-[10px] text-[#71717a]">Local workspace</p>
           </div>
         </div>
       </div>

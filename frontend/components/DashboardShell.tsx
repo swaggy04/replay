@@ -26,7 +26,7 @@ type DashboardShellProps = {
 };
 
 /**
- * Shared dashboard shell used by Requests and Replays pages.
+ * Shared dashboard shell used by dashboard routes.
  * Owns project loading/selection, create-project dialog, and the left sidebar.
  */
 export function DashboardShell({
@@ -182,14 +182,14 @@ export function DashboardShell({
     >
       <form
         onSubmit={handleCreateProject}
-        className="w-full max-w-md rounded-xl border border-[#302b2d] bg-[#100d0f] p-6 shadow-2xl"
+        className="w-full max-w-md rounded-xl border border-[#27272a] bg-[#131316] p-6 shadow-2xl"
       >
         <div className="mb-5">
-          <h2 className="text-lg font-semibold text-[#f1eeee]">Create project</h2>
-          <p className="mt-1 text-sm text-[#918b8e]">Create a project to organize your captured HTTP traffic.</p>
+          <h2 className="text-lg font-semibold text-[#fafafa]">Create project</h2>
+          <p className="mt-1 text-sm text-[#a1a1aa]">Create a project to organize your captured HTTP traffic.</p>
         </div>
 
-        <label htmlFor="project-name" className="mb-2 block text-xs font-medium text-[#c9c5c6]">
+        <label htmlFor="project-name" className="mb-2 block text-xs font-medium text-[#d4d4d8]">
           Project name
         </label>
 
@@ -201,7 +201,7 @@ export function DashboardShell({
           placeholder="My Express API"
           maxLength={80}
           disabled={creatingProject}
-          className="h-10 w-full rounded-md border border-[#302b2d] bg-[#0c080a] px-3 text-sm text-white outline-none placeholder:text-[#615b5e] focus:border-[#716b6e] disabled:opacity-50"
+          className="h-10 w-full rounded-md border border-[#27272a] bg-[#09090b] px-3 text-sm text-white outline-none placeholder:text-[#71717a] focus:border-[#52525b] disabled:opacity-50"
         />
 
         {createProjectError && <p className="mt-2 text-xs text-red-400">{createProjectError}</p>}
@@ -211,7 +211,7 @@ export function DashboardShell({
             type="button"
             onClick={() => setCreateDialogOpen(false)}
             disabled={creatingProject}
-            className="rounded-md px-4 py-2 text-xs text-[#aaa4a7] hover:bg-[#242022] disabled:opacity-50"
+            className="rounded-md px-4 py-2 text-xs text-[#a1a1aa] hover:bg-[#1c1c20] disabled:opacity-50"
           >
             Cancel
           </button>
@@ -219,7 +219,7 @@ export function DashboardShell({
           <button
             type="submit"
             disabled={!projectName.trim() || creatingProject}
-            className="rounded-md bg-[#e2dfe0] px-4 py-2 text-xs font-semibold text-[#171315] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md bg-[#fafafa] px-4 py-2 text-xs font-semibold text-[#09090b] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {creatingProject ? "Creating..." : "Create project"}
           </button>
@@ -230,11 +230,11 @@ export function DashboardShell({
 
   if (!isLoaded || projectsLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0c080a]">
+      <div className="flex h-screen items-center justify-center bg-[#09090b]">
         <div className="flex flex-col items-center">
-          <div className="mb-4 h-5 w-5 animate-spin rounded-full border-2 border-[#302b2d] border-t-[#d8d4d5]" />
-          <p className="text-sm font-medium text-[#c9c5c6]">Loading projects</p>
-          <p className="mt-1 text-xs text-[#716b6e]">Getting your DevReplay projects...</p>
+          <div className="mb-4 h-5 w-5 animate-spin rounded-full border-2 border-[#27272a] border-t-[#fafafa]" />
+          <p className="text-sm font-medium text-[#d4d4d8]">Loading projects</p>
+          <p className="mt-1 text-xs text-[#71717a]">Getting your DevReplay projects...</p>
         </div>
       </div>
     );
@@ -242,9 +242,9 @@ export function DashboardShell({
 
   if (projectsError) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0c080a]">
+      <div className="flex h-screen items-center justify-center bg-[#09090b]">
         <div className="max-w-md text-center">
-          <h2 className="text-lg font-semibold text-[#f1eeee]">Unable to load projects</h2>
+          <h2 className="text-lg font-semibold text-[#fafafa]">Unable to load projects</h2>
           <p className="mt-2 text-sm text-red-400">{projectsError}</p>
         </div>
       </div>
@@ -255,14 +255,14 @@ export function DashboardShell({
     return (
       <>
         {projectDialog}
-        <div className="flex h-screen items-center justify-center bg-[#0c080a]">
+        <div className="flex h-screen items-center justify-center bg-[#09090b]">
           <div className="text-center">
-            <h2 className="text-lg font-semibold text-[#f1eeee]">No projects yet</h2>
-            <p className="mt-2 text-sm text-[#8f898c]">Create your first project to start capturing HTTP traffic.</p>
+            <h2 className="text-lg font-semibold text-[#fafafa]">No projects yet</h2>
+            <p className="mt-2 text-sm text-[#a1a1aa]">Create your first project to start capturing HTTP traffic.</p>
             <button
               type="button"
               onClick={handleOpenCreateDialog}
-              className="mt-5 rounded-md bg-[#e2dfe0] px-4 py-2 text-sm font-semibold text-[#171315] transition hover:bg-white"
+              className="mt-5 rounded-md bg-[#fafafa] px-4 py-2 text-sm font-semibold text-[#09090b] transition hover:bg-white"
             >
               + Create project
             </button>
@@ -277,7 +277,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0c080a] text-[#e2e2e4]">
+    <div className="flex h-screen overflow-hidden bg-[#09090b] text-[#fafafa]">
       {projectDialog}
 
       <RequestSidebar
