@@ -152,3 +152,41 @@ test("revealApiKey reports missing encryption config", async () => {
     }
   });
 });
+test("getProjectApiKeys falls back when encryption columns are missing", async () => {
+  const project = prisma.project as any;
+  const apiKey = prisma.apiKey as any;
+  const originalFindFirst = project.findFirst;
+  const originalFindMany = apiKey.findMany;
+  let calls = 0;
+
+  project.findFirst = async () => ({ id: "project-1" });
+  apiKey.findMany = async (args: any) => {
+    calls += 1;
+    if (calls === 1) {
+      throw new Error('column "encryptedKey" does not exist');
+    }
+    assert.equal(args.select.encryptedKey, undefined);
+    return [
+      {
+        id: "key-legacy",
+        keyPrefix: "dr_live_abcd",
+        createdAt: new Date("2026-11-20T10:00:00Z"),
+      },
+    ];
+  };
+
+  try {
+    const keys = await getProjectApiKeys("project-1", "owner-1");
+    assert.deepEqual(keys, [
+      {
+        id: "key-legacy",
+        keyPrefix: "dr_live_abcd",
+        createdAt: new Date("2026-11-20T10:00:00Z"),
+        canReveal: false,
+      },
+    ]);
+  } finally {
+    project.findFirst = originalFindFirst;
+    apiKey.findMany = originalFindMany;
+  }
+});

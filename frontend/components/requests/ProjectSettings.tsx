@@ -278,11 +278,18 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
             {loading ? (
               <p className="py-8 text-center text-xs text-[#716b6e]">Loading API keys...</p>
             ) : apiKeys.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-[#302b2d] px-4 py-10 text-center">
-                <p className="text-sm text-[#c9c5c6]">No active API keys</p>
+              error ? (
+                <div className="rounded-lg border border-dashed border-[#302b2d] px-4 py-10 text-center">
+                  <p className="text-sm text-[#c9c5c6]">Unable to load API keys</p>
+                  <p className="mt-2 text-xs text-[#716b6e]">Check your connection and try Refresh.</p>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-[#302b2d] px-4 py-10 text-center">
+                  <p className="text-sm text-[#c9c5c6]">No active API keys</p>
 
-                <p className="mt-2 text-xs text-[#716b6e]">Generate an API key to connect your application.</p>
-              </div>
+                  <p className="mt-2 text-xs text-[#716b6e]">Generate an API key to connect your application.</p>
+                </div>
+              )
             ) : (
               <div className="divide-y divide-[#302b2d]">
                 {apiKeys.map((apiKey) => {

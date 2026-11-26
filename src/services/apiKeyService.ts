@@ -38,22 +38,50 @@ export async function createApiKey(
     const keyPrefix = rawKey.slice(0, 16);
     const encrypted = encryptApiKey(rawKey);
 
-    const apiKey = await prisma.apiKey.create({
-        data: {
-            key: hashedKey,
-            keyPrefix,
-            projectId,
-            encryptedKey: encrypted.encryptedKey,
-            encryptionIv: encrypted.encryptionIv,
-            encryptionTag: encrypted.encryptionTag,
-        },
-        select: {
-            id: true,
-            keyPrefix: true,
-            createdAt: true,
-            projectId: true,
-        },
-    });
+    let apiKey;
+    try {
+        apiKey = await prisma.apiKey.create({
+            data: {
+                key: hashedKey,
+                keyPrefix,
+                projectId,
+                encryptedKey: encrypted.encryptedKey,
+                encryptionIv: encrypted.encryptionIv,
+                encryptionTag: encrypted.encryptionTag,
+            },
+            select: {
+                id: true,
+                keyPrefix: true,
+                createdAt: true,
+                projectId: true,
+            },
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const missingEncryptionColumn =
+            message.includes("encryptedKey") &&
+            (message.includes("does not exist") || message.includes("Unknown column"));
+
+        if (!missingEncryptionColumn) {
+            throw error;
+        }
+
+        // Backward-compatible fallback: keep hash-based auth working before the
+        // encryption migration is applied. The key will be non-recoverable.
+        apiKey = await prisma.apiKey.create({
+            data: {
+                key: hashedKey,
+                keyPrefix,
+                projectId,
+            },
+            select: {
+                id: true,
+                keyPrefix: true,
+                createdAt: true,
+                projectId: true,
+            },
+        });
+    }
 
     // Return the raw secret only during creation.
     return {
@@ -80,26 +108,58 @@ export async function getProjectApiKeys(
         return null;
     }
 
-    const keys = await prisma.apiKey.findMany({
-        where: {
-            projectId,
-            revokedAt: null,
-        },
-        select: {
-            id: true,
-            keyPrefix: true,
-            createdAt: true,
-            encryptedKey: true,
-        },
-        orderBy: {
-            createdAt: "desc",
-        },
-    });
+    const baseWhere = {
+        projectId,
+        revokedAt: null,
+    } as const;
+    const baseSelect = {
+        id: true,
+        keyPrefix: true,
+        createdAt: true,
+    } as const;
 
-    return keys.map(({ encryptedKey, ...rest }) => ({
-        ...rest,
-        canReveal: encryptedKey !== null,
-    }));
+    try {
+        const keys = await prisma.apiKey.findMany({
+            where: baseWhere,
+            select: {
+                ...baseSelect,
+                encryptedKey: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+
+        return keys.map(({ encryptedKey, ...rest }) => ({
+            ...rest,
+            canReveal: encryptedKey !== null,
+        }));
+    } catch (error) {
+        // Backward-compatible fallback when the encryption migration has not been
+        // applied yet. In that case, keys remain usable for auth but cannot be
+        // revealed until the migration is applied and new keys are generated.
+        const message = error instanceof Error ? error.message : String(error);
+        const missingEncryptionColumn =
+            message.includes("encryptedKey") &&
+            (message.includes("does not exist") || message.includes("Unknown column"));
+
+        if (!missingEncryptionColumn) {
+            throw error;
+        }
+
+        const keys = await prisma.apiKey.findMany({
+            where: baseWhere,
+            select: baseSelect,
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+
+        return keys.map((key) => ({
+            ...key,
+            canReveal: false,
+        }));
+    }
 }
 
 export async function revokeApiKey(
@@ -136,23 +196,44 @@ export async function revealApiKey(
     ownerId: string,
 ): Promise<RevealApiKeyResult> {
     // Ownership is enforced via the project relation filter.
-    const record = await prisma.apiKey.findFirst({
-        where: {
-            id: keyId,
-            projectId,
-            revokedAt: null,
-            project: {
-                is: {
-                    ownerId,
+    let record:
+        | {
+              encryptedKey: string | null;
+              encryptionIv: string | null;
+              encryptionTag: string | null;
+          }
+        | null;
+
+    try {
+        record = await prisma.apiKey.findFirst({
+            where: {
+                id: keyId,
+                projectId,
+                revokedAt: null,
+                project: {
+                    is: {
+                        ownerId,
+                    },
                 },
             },
-        },
-        select: {
-            encryptedKey: true,
-            encryptionIv: true,
-            encryptionTag: true,
-        },
-    });
+            select: {
+                encryptedKey: true,
+                encryptionIv: true,
+                encryptionTag: true,
+            },
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const missingEncryptionColumn =
+            message.includes("encryptedKey") &&
+            (message.includes("does not exist") || message.includes("Unknown column"));
+
+        if (!missingEncryptionColumn) {
+            throw error;
+        }
+
+        return { ok: false, reason: "not_recoverable" };
+    }
 
     if (!record) {
         return { ok: false, reason: "not_found" };
