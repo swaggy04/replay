@@ -73,8 +73,8 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
           flex-col
           overflow-hidden
           rounded-xl
-          border border-[#302b2d]
-          bg-[#0c080a]
+          border border-[#27272a]
+          bg-[#09090b]
           shadow-[0_24px_80px_rgba(0,0,0,0.55)]
         "
       >
@@ -85,8 +85,8 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
             shrink-0
             items-center
             justify-between
-            border-b border-[#2d292a]
-            bg-[#0f0b0d]
+            border-b border-[#27272a]
+            bg-[#0e0e11]
             px-4
             py-3.5
             sm:px-5
@@ -105,7 +105,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
                     text-sm
                     font-semibold
                     tracking-tight
-                    text-[#f7f5f5]
+                    text-[#fafafa]
                     sm:text-[15px]
                   "
                 >
@@ -129,15 +129,15 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
             >
               <StatusPill status={request.statusCode} />
 
-              <span className="text-[#403a3d]">•</span>
+              <span className="text-[#3f3f46]">•</span>
 
-              <span className="font-mono text-[#b7b2b5]">
+              <span className="font-mono text-[#a1a1aa]">
                 {request.durationMs !== null ? `${request.durationMs}ms` : "—"}
               </span>
 
-              <span className="text-[#403a3d]">•</span>
+              <span className="text-[#3f3f46]">•</span>
 
-              <span className="text-[#8f898c]">{new Date(request.createdAt).toLocaleString()}</span>
+              <span className="text-[#a1a1aa]">{new Date(request.createdAt).toLocaleString()}</span>
             </div>
           </div>
 
@@ -153,16 +153,16 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
                 items-center
                 gap-2
                 rounded-md
-                border border-[#403a3d]
-                bg-[#171315]
+                border border-[#3f3f46]
+                bg-[#18181b]
                 px-3
                 text-xs
                 font-semibold
-                text-[#e8e5e6]
+                text-[#f4f4f5]
                 shadow-sm
                 transition
-                hover:border-[#5a5255]
-                hover:bg-[#211c1e]
+                hover:border-[#52525b]
+                hover:bg-[#1c1c20]
                 hover:text-white
                 active:scale-[0.98]
                 disabled:cursor-not-allowed
@@ -177,8 +177,8 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
                     animate-spin
                     rounded-full
                     border-2
-                    border-[#777174]
-                    border-t-[#f5f3f3]
+                    border-[#71717a]
+                    border-t-[#fafafa]
                   "
                 />
               )}
@@ -199,11 +199,11 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
                 rounded-md
                 border
                 border-transparent
-                text-[#8f898c]
+                text-[#a1a1aa]
                 transition
-                hover:border-[#302b2d]
-                hover:bg-[#171315]
-                hover:text-[#f5f3f3]
+                hover:border-[#27272a]
+                hover:bg-[#18181b]
+                hover:text-[#fafafa]
               "
             >
               <span className="text-lg leading-none">×</span>
@@ -215,8 +215,8 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
         <div
           className="
             shrink-0
-            border-b border-[#2d292a]
-            bg-[#0d090b]
+            border-b border-[#27272a]
+            bg-[#0e0e11]
           "
         >
           <InspectorTabs activeTab={activeTab} onChange={setActiveTab} />
@@ -229,7 +229,7 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
             min-h-0
             flex-1
             overflow-y-auto
-            bg-[#0c080a]
+            bg-[#09090b]
             px-4
             py-5
             sm:px-6
@@ -295,7 +295,7 @@ export function DetailSection({ title, children }: { title: string; children: Re
             font-semibold
             uppercase
             tracking-[0.12em]
-            text-[#918b8e]
+            text-[#a1a1aa]
           "
         >
           {title}
@@ -318,16 +318,16 @@ export function InfoRow({ label, value, mono = false }: { label: string; value: 
         grid
         grid-cols-[100px_minmax(0,1fr)]
         items-center
-        border-b border-[#242022]
+        border-b border-[#27272a]
         px-4
         py-3
         last:border-b-0
         sm:grid-cols-[120px_minmax(0,1fr)]
       "
     >
-      <span className="text-[11px] font-medium text-[#777174]">{label}</span>
+      <span className="text-[11px] font-medium text-[#71717a]">{label}</span>
 
-      <span className={mono ? "truncate font-mono text-xs text-[#e5e1e2]" : "truncate text-xs text-[#d7d3d4]"}>
+      <span className={mono ? "truncate font-mono text-xs text-[#f4f4f5]" : "truncate text-xs text-[#d4d4d8]"}>
         {value}
       </span>
     </div>
@@ -361,8 +361,8 @@ export function JsonBlock({ data }: { data: unknown }) {
       className="
         overflow-hidden
         rounded-lg
-        border border-[#292426]
-        bg-[#100d0f]
+        border border-[#27272a]
+        bg-[#131316]
         shadow-sm
       "
     >
@@ -373,8 +373,8 @@ export function JsonBlock({ data }: { data: unknown }) {
           h-9
           items-center
           justify-between
-          border-b border-[#242022]
-          bg-[#131012]
+          border-b border-[#27272a]
+          bg-[#131316]
           px-3
         "
       >
@@ -386,15 +386,15 @@ export function JsonBlock({ data }: { data: unknown }) {
               font-semibold
               uppercase
               tracking-[0.12em]
-              text-[#716b6e]
+              text-[#71717a]
             "
           >
             JSON
           </span>
 
-          <span className="h-1 w-1 rounded-full bg-[#393335]" />
+          <span className="h-1 w-1 rounded-full bg-[#3f3f46]" />
 
-          <span className="text-[9px] text-[#5e585b]">Read only</span>
+          <span className="text-[9px] text-[#71717a]">Read only</span>
         </div>
 
         <button
@@ -406,10 +406,10 @@ export function JsonBlock({ data }: { data: unknown }) {
             py-1
             text-[10px]
             font-medium
-            text-[#9c9699]
+            text-[#a1a1aa]
             transition
-            hover:bg-[#1b1719]
-            hover:text-[#f0edee]
+            hover:bg-[#1c1c20]
+            hover:text-[#fafafa]
           "
         >
           {copied ? "Copied" : "Copy"}
@@ -426,7 +426,7 @@ export function JsonBlock({ data }: { data: unknown }) {
           font-mono
           text-[11px]
           leading-6
-          text-[#d9d5d6]
+          text-[#d4d4d8]
           sm:text-xs
         "
       >
@@ -465,7 +465,7 @@ function MethodBadge({ method }: { method: string }) {
         text-[10px]
         font-bold
         tracking-wide
-        ${styles[normalizedMethod] ?? "border-[#393335] bg-[#171315] text-[#d8d4d5]"}
+        ${styles[normalizedMethod] ?? "border-[#3f3f46] bg-[#18181b] text-[#e4e4e7]"}
       `}
     >
       {normalizedMethod}
@@ -482,7 +482,7 @@ export function StatusText({ status }: { status: number | null }) {
     return <span className="font-medium text-[#8d878a]">—</span>;
   }
 
-  let className = "font-medium text-[#b7b2b5]";
+  let className = "font-medium text-[#a1a1aa]";
 
   if (status >= 200 && status < 300) {
     className = "font-semibold text-emerald-400";
@@ -503,10 +503,10 @@ export function StatusText({ status }: { status: number | null }) {
 
 function StatusPill({ status }: { status: number | null }) {
   if (status === null) {
-    return <span className="text-[#777174]">—</span>;
+    return <span className="text-[#71717a]">—</span>;
   }
 
-  let className = "border-[#393335] bg-[#171315] text-[#b7b2b5]";
+  let className = "border-[#3f3f46] bg-[#18181b] text-[#a1a1aa]";
 
   if (status >= 200 && status < 300) {
     className = "border-emerald-500/15 bg-emerald-500/8 text-emerald-400";
@@ -545,8 +545,8 @@ export function StatCard({ label, value, mono = false }: { label: string; value:
     <div
       className="
         rounded-lg
-        border border-[#292426]
-        bg-[#100d0f]
+        border border-[#27272a]
+        bg-[#131316]
         px-4
         py-3
         transition-colors
@@ -559,14 +559,14 @@ export function StatCard({ label, value, mono = false }: { label: string; value:
           font-semibold
           uppercase
           tracking-[0.12em]
-          text-[#716b6e]
+          text-[#71717a]
         "
       >
         {label}
       </div>
 
       <div
-        className={mono ? "mt-1.5 truncate font-mono text-sm text-[#f0edee]" : "mt-1.5 truncate text-xs text-[#d5d1d2]"}
+        className={mono ? "mt-1.5 truncate font-mono text-sm text-[#fafafa]" : "mt-1.5 truncate text-xs text-[#d5d1d2]"}
       >
         {value}
       </div>
@@ -587,8 +587,8 @@ export function EmptyState({ message }: { message: string }) {
         items-center
         justify-center
         rounded-lg
-        border border-dashed border-[#292426]
-        bg-[#100d0f]
+        border border-dashed border-[#27272a]
+        bg-[#131316]
         px-4
         py-8
         text-center

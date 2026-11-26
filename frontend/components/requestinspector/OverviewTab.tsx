@@ -12,8 +12,8 @@ export function OverviewTab({ request }: { request: RequestDetails }) {
           className="
             overflow-hidden
             rounded-lg
-            border border-[#292426]
-            bg-[#100d0f]
+            border border-[#27272a]
+            bg-[#131316]
           "
         >
           <InfoRow label="Request ID" value={request.id} mono />
@@ -27,7 +27,7 @@ export function OverviewTab({ request }: { request: RequestDetails }) {
               grid
               grid-cols-[100px_minmax(0,1fr)]
               items-center
-              border-b border-[#242022]
+              border-b border-[#27272a]
               px-4
               py-3
               sm:grid-cols-[120px_minmax(0,1fr)]
@@ -37,7 +37,7 @@ export function OverviewTab({ request }: { request: RequestDetails }) {
               className="
                 text-[11px]
                 font-medium
-                text-[#777174]
+                text-[#71717a]
               "
             >
               Status

@@ -13,12 +13,12 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
     <div className="space-y-8">
       {/* Comparison Header */}
 
-      <div className="border-b border-[#292426] pb-5">
+      <div className="border-b border-[#27272a] pb-5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-sm font-semibold tracking-tight text-[#f1eeee]">Replay Comparison</h3>
+            <h3 className="text-sm font-semibold tracking-tight text-[#fafafa]">Replay Comparison</h3>
 
-            <p className="mt-1 text-xs text-[#716b6e]">Compare the original response with the replay result.</p>
+            <p className="mt-1 text-xs text-[#71717a]">Compare the original response with the replay result.</p>
           </div>
 
           {/* Overall result */}
@@ -52,8 +52,8 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
           <div
             className="
               rounded-lg
-              border border-[#292426]
-              bg-[#100d0f]
+              border border-[#27272a]
+              bg-[#131316]
               px-4
               py-3
             "
@@ -66,13 +66,13 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                 font-semibold
                 uppercase
                 tracking-[0.12em]
-                text-[#716b6e]
+                text-[#71717a]
               "
             >
               Original Request
             </div>
 
-            <div className="truncate font-mono text-xs text-[#d8d4d5]">
+            <div className="truncate font-mono text-xs text-[#e4e4e7]">
               {method} {path}
             </div>
           </div>
@@ -82,8 +82,8 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
           <div
             className="
               rounded-lg
-              border border-[#292426]
-              bg-[#100d0f]
+              border border-[#27272a]
+              bg-[#131316]
               px-4
               py-3
             "
@@ -96,13 +96,13 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                 font-semibold
                 uppercase
                 tracking-[0.12em]
-                text-[#716b6e]
+                text-[#71717a]
               "
             >
               Replay
             </div>
 
-            <div className="truncate font-mono text-xs text-[#d8d4d5]">
+            <div className="truncate font-mono text-xs text-[#e4e4e7]">
               {new Date(replay.createdAt).toLocaleString()}
             </div>
           </div>
@@ -115,14 +115,14 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
         className="
           overflow-hidden
           rounded-lg
-          border border-[#292426]
-          bg-[#100d0f]
+          border border-[#27272a]
+          bg-[#131316]
         "
       >
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* Original */}
 
-          <div className="border-b border-[#242022] p-4 md:border-b-0 md:border-r">
+          <div className="border-b border-[#27272a] p-4 md:border-b-0 md:border-r">
             <div className="mb-4 flex items-center justify-between">
               <span
                 className="
@@ -131,18 +131,18 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                   font-semibold
                   uppercase
                   tracking-[0.12em]
-                  text-[#716b6e]
+                  text-[#71717a]
                 "
               >
                 Original
               </span>
 
-              <span className="text-[9px] text-[#514b4e]">BASELINE</span>
+              <span className="text-[9px] text-[#52525b]">BASELINE</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="mb-1 text-[10px] text-[#716b6e]">Status</div>
+                <div className="mb-1 text-[10px] text-[#71717a]">Status</div>
 
                 <div
                   className={`
@@ -157,9 +157,9 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
               </div>
 
               <div>
-                <div className="mb-1 text-[10px] text-[#716b6e]">Duration</div>
+                <div className="mb-1 text-[10px] text-[#71717a]">Duration</div>
 
-                <div className="font-mono text-sm text-[#d8d4d5]">
+                <div className="font-mono text-sm text-[#e4e4e7]">
                   {original.durationMs != null ? `${original.durationMs}ms` : "—"}
                 </div>
               </div>
@@ -177,18 +177,18 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                   font-semibold
                   uppercase
                   tracking-[0.12em]
-                  text-[#716b6e]
+                  text-[#71717a]
                 "
               >
                 Replay
               </span>
 
-              <span className="text-[9px] text-[#514b4e]">EXECUTION</span>
+              <span className="text-[9px] text-[#52525b]">EXECUTION</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="mb-1 text-[10px] text-[#716b6e]">Status</div>
+                <div className="mb-1 text-[10px] text-[#71717a]">Status</div>
 
                 <div
                   className={`
@@ -203,9 +203,9 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
               </div>
 
               <div>
-                <div className="mb-1 text-[10px] text-[#716b6e]">Duration</div>
+                <div className="mb-1 text-[10px] text-[#71717a]">Duration</div>
 
-                <div className="font-mono text-sm text-[#d8d4d5]">{replay.durationMs}ms</div>
+                <div className="font-mono text-sm text-[#e4e4e7]">{replay.durationMs}ms</div>
               </div>
             </div>
           </div>
@@ -239,9 +239,9 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
       <div>
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h4 className="text-xs font-semibold text-[#e2dfe0]">Response Body</h4>
+            <h4 className="text-xs font-semibold text-[#fafafa]">Response Body</h4>
 
-            <p className="mt-0.5 text-[10px] text-[#716b6e]">Side-by-side response comparison</p>
+            <p className="mt-0.5 text-[10px] text-[#71717a]">Side-by-side response comparison</p>
           </div>
 
           <span
@@ -262,20 +262,20 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
           className="
             overflow-hidden
             rounded-lg
-            border border-[#292426]
-            bg-[#100d0f]
+            border border-[#27272a]
+            bg-[#131316]
           "
         >
           <div className="grid grid-cols-1 md:grid-cols-2">
             {/* Original Body */}
 
-            <div className="min-w-0 border-b border-[#242022] md:border-b-0 md:border-r">
+            <div className="min-w-0 border-b border-[#27272a] md:border-b-0 md:border-r">
               <div
                 className="
                   flex
                   items-center
                   justify-between
-                  border-b border-[#242022]
+                  border-b border-[#27272a]
                   bg-[#0e0b0d]
                   px-4
                   py-2.5
@@ -288,7 +288,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                     font-semibold
                     uppercase
                     tracking-[0.12em]
-                    text-[#716b6e]
+                    text-[#71717a]
                   "
                 >
                   Original
@@ -306,7 +306,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                   font-mono
                   text-[11px]
                   leading-5
-                  text-[#bdb8ba]
+                  text-[#d4d4d8]
                 "
               >
                 {JSON.stringify(original.responseBody, null, 2)}
@@ -321,7 +321,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                   flex
                   items-center
                   justify-between
-                  border-b border-[#242022]
+                  border-b border-[#27272a]
                   bg-[#0e0b0d]
                   px-4
                   py-2.5
@@ -334,7 +334,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                     font-semibold
                     uppercase
                     tracking-[0.12em]
-                    text-[#716b6e]
+                    text-[#71717a]
                   "
                 >
                   Replay
@@ -352,7 +352,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                   font-mono
                   text-[11px]
                   leading-5
-                  text-[#bdb8ba]
+                  text-[#d4d4d8]
                 "
               >
                 {JSON.stringify(replay.responseBody, null, 2)}

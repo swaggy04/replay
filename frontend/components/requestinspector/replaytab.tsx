@@ -67,10 +67,10 @@ export function ReplayTab({
         {replayHistory.length === 0 ? (
           <EmptyState message="No replay executions yet." />
         ) : (
-          <div className="overflow-hidden rounded-lg border border-[#292426] bg-[#100d0f]">
+          <div className="overflow-hidden rounded-lg border border-[#27272a] bg-[#131316]">
             {/* Header */}
 
-            <div className="grid grid-cols-[minmax(0,1fr)_80px_90px_82px] items-center gap-4 border-b border-[#242022] bg-[#0e0b0d] px-4 py-2.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[#716b6e]">
+            <div className="grid grid-cols-[minmax(0,1fr)_80px_90px_82px] items-center gap-4 border-b border-[#27272a] bg-[#0e0b0d] px-4 py-2.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">
               <span>Executed</span>
               <span>Status</span>
               <span className="text-right">Duration</span>
@@ -83,8 +83,8 @@ export function ReplayTab({
               return (
                 <div
                   key={replay.id}
-                  className={`group grid grid-cols-[minmax(0,1fr)_80px_90px_82px] items-center gap-4 border-b border-[#211e20] px-4 py-3 last:border-b-0 transition-colors ${
-                    isSelected ? "bg-[#181416]" : "bg-transparent hover:bg-[#141012]"
+                  className={`group grid grid-cols-[minmax(0,1fr)_80px_90px_82px] items-center gap-4 border-b border-[#1e1e22] px-4 py-3 last:border-b-0 transition-colors ${
+                    isSelected ? "bg-[#181416]" : "bg-transparent hover:bg-[#131316]"
                   }`}
                 >
                   {/* Replay identity */}
@@ -100,13 +100,13 @@ export function ReplayTab({
                   >
                     <div
                       className={`truncate text-xs font-medium transition-colors ${
-                        isSelected ? "text-[#f0eded]" : "text-[#d0cbcc] group-hover:text-[#eee9ea]"
+                        isSelected ? "text-[#f0eded]" : "text-[#e4e4e7] group-hover:text-[#fafafa]"
                       }`}
                     >
                       {new Date(replay.createdAt).toLocaleString()}
                     </div>
 
-                    <div className="mt-1 truncate font-mono text-[10px] text-[#716b6e]">{replay.id}</div>
+                    <div className="mt-1 truncate font-mono text-[10px] text-[#71717a]">{replay.id}</div>
                   </button>
 
                   {/* Status */}
@@ -117,7 +117,7 @@ export function ReplayTab({
 
                   {/* Duration */}
 
-                  <div className="text-right font-mono text-[11px] text-[#aaa4a7]">{replay.durationMs ?? "—"}ms</div>
+                  <div className="text-right font-mono text-[11px] text-[#a1a1aa]">{replay.durationMs ?? "—"}ms</div>
 
                   {/* Compare */}
 
@@ -125,7 +125,7 @@ export function ReplayTab({
                     type="button"
                     onClick={() => handleCompare(replay)}
                     disabled={comparisonLoading}
-                    className="flex h-7 items-center justify-center rounded-md border border-[#302b2d] bg-[#151113] px-2.5 font-mono text-[10px] font-medium text-[#bdb7ba] transition-colors hover:border-[#484144] hover:bg-[#1c181a] hover:text-[#f0eded] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-7 items-center justify-center rounded-md border border-[#27272a] bg-[#151113] px-2.5 font-mono text-[10px] font-medium text-[#bdb7ba] transition-colors hover:border-[#484144] hover:bg-[#1c181a] hover:text-[#f0eded] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {comparisonLoading ? (
                       <span className="flex items-center gap-1.5">
@@ -175,9 +175,9 @@ export function ReplayTab({
             <StatCard label="Executed" value={new Date(selectedReplay.createdAt).toLocaleString()} />
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-[#292426] bg-[#100d0f]">
-            <div className="border-b border-[#242022] bg-[#0e0b0d] px-4 py-2.5">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#716b6e]">Response Body</span>
+          <div className="overflow-hidden rounded-lg border border-[#27272a] bg-[#131316]">
+            <div className="border-b border-[#27272a] bg-[#0e0b0d] px-4 py-2.5">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">Response Body</span>
             </div>
 
             <div className="p-4">

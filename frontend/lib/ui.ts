@@ -26,29 +26,29 @@ export function activeNavForPathname(
 export function getMethodClass(method: string): string {
   switch (method.toUpperCase()) {
     case "GET":
-      return "text-emerald-400";
+      return "text-[#e4e4e7]";
     case "POST":
-      return "text-[#F4D77E]";
+      return "text-[#fafafa]";
     case "PUT":
-      return "text-blue-400";
+      return "text-[#d4d4d8]";
     case "PATCH":
-      return "text-purple-400";
+      return "text-[#d4d4d8]";
     case "DELETE":
-      return "text-red-400";
+      return "text-[#a1a1aa]";
     case "HEAD":
-      return "text-emerald-300";
+      return "text-[#d4d4d8]";
     case "OPTIONS":
-      return "text-pink-400";
+      return "text-[#a1a1aa]";
     default:
-      return "text-[#d8d4d5]";
+      return "text-[#e4e4e7]";
   }
 }
 
 export function getStatusClass(status: number | null): string {
-  if (status === null) return "text-[#777174]";
+  if (status === null) return "text-[#71717a]";
   if (status >= 200 && status < 300) return "text-emerald-400";
   if (status >= 300 && status < 400) return "text-amber-400";
   if (status >= 400 && status < 500) return "text-orange-400";
   if (status >= 500) return "text-red-400";
-  return "text-[#d8d4d5]";
+  return "text-[#e4e4e7]";
 }

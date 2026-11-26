@@ -18,7 +18,7 @@ const tabs: [DetailTab, string][] = [
 
 export function InspectorTabs({ activeTab, onChange }: InspectorTabsProps) {
   return (
-    <div className="flex shrink-0 overflow-x-auto border-b border-[#2d292a] px-3">
+    <div className="flex shrink-0 overflow-x-auto border-b border-[#27272a] px-3">
       {tabs.map(([value, label]) => {
         const isActive = activeTab === value;
 
@@ -32,7 +32,7 @@ export function InspectorTabs({ activeTab, onChange }: InspectorTabsProps) {
               px-4 py-3
               text-xs font-medium
               transition-colors
-              ${isActive ? "text-[#fefefe]" : "text-[#d1d1d3] hover:text-[#e2e2e4]"}
+              ${isActive ? "text-[#fafafa]" : "text-[#d4d4d8] hover:text-[#e4e4e7]"}
             `}
           >
             {label}
@@ -43,7 +43,7 @@ export function InspectorTabs({ activeTab, onChange }: InspectorTabsProps) {
                   absolute inset-x-2 bottom-0
                   h-0.5
                   rounded-full
-                  bg-[#fefefe]
+                  bg-[#fafafa]
                 "
               />
             )}
