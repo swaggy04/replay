@@ -41,7 +41,7 @@ export function NewApiKeyDialog({ apiKey, onClose }: NewApiKeyDialogProps) {
       <div className="w-full max-w-lg rounded-md border border-[#27272a] bg-[#1b1b1e] p-6 shadow-2xl">
         <div className="flex items-center gap-2.5">
           <span className="text-sm font-semibold text-[#fafafa]">New API key generated</span>
-          <span className="rounded border border-[#3f3f46] bg-[#27272a] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.08em] text-[#e4e1e6]">
+          <span className="rounded border border-[#3f3f46] bg-[#27272a] px-2 py-0.5 font-mono text-[11px] uppercase tracking-[0.08em] text-[#e4e1e6]">
             One-time display
           </span>
         </div>

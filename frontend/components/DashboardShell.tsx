@@ -171,12 +171,12 @@ export function DashboardShell({
         className="w-full max-w-md rounded-md border border-[#27272a] bg-[#1b1b1e] p-6 shadow-2xl"
       >
         <div className="mb-5">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71717a]">New project</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#71717a]">New project</p>
           <h2 className="mt-2 text-lg font-semibold tracking-tight text-[#fafafa]">Create project</h2>
           <p className="mt-1 text-sm text-[#a1a1aa]">Create a project to organize your captured HTTP traffic.</p>
         </div>
 
-        <label htmlFor="project-name" className="mb-2 block font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">
+        <label htmlFor="project-name" className="mb-2 block font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">
           Project name
         </label>
 

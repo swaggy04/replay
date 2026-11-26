@@ -31,7 +31,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
               px-2.5
               py-1
               font-mono
-              text-[9px]
+              text-[10px]
               font-semibold
               uppercase
               tracking-widest
@@ -62,7 +62,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
               className="
                 mb-1.5
                 font-mono
-                text-[9px]
+                text-[10px]
                 font-semibold
                 uppercase
                 tracking-[0.12em]
@@ -92,7 +92,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
               className="
                 mb-1.5
                 font-mono
-                text-[9px]
+                text-[10px]
                 font-semibold
                 uppercase
                 tracking-[0.12em]
@@ -127,7 +127,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
               <span
                 className="
                   font-mono
-                  text-[9px]
+                  text-[10px]
                   font-semibold
                   uppercase
                   tracking-[0.12em]
@@ -137,12 +137,12 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                 Original
               </span>
 
-              <span className="text-[9px] text-[#52525b]">BASELINE</span>
+              <span className="text-[10px] text-[#52525b]">BASELINE</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="mb-1 text-[10px] text-[#71717a]">Status</div>
+                <div className="mb-1 text-[11px] text-[#71717a]">Status</div>
 
                 <div
                   className={`
@@ -157,7 +157,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
               </div>
 
               <div>
-                <div className="mb-1 text-[10px] text-[#71717a]">Duration</div>
+                <div className="mb-1 text-[11px] text-[#71717a]">Duration</div>
 
                 <div className="font-mono text-sm text-[#e4e4e7]">
                   {original.durationMs != null ? `${original.durationMs}ms` : "—"}
@@ -173,7 +173,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
               <span
                 className="
                   font-mono
-                  text-[9px]
+                  text-[10px]
                   font-semibold
                   uppercase
                   tracking-[0.12em]
@@ -183,12 +183,12 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                 Replay
               </span>
 
-              <span className="text-[9px] text-[#52525b]">EXECUTION</span>
+              <span className="text-[10px] text-[#52525b]">EXECUTION</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="mb-1 text-[10px] text-[#71717a]">Status</div>
+                <div className="mb-1 text-[11px] text-[#71717a]">Status</div>
 
                 <div
                   className={`
@@ -203,7 +203,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
               </div>
 
               <div>
-                <div className="mb-1 text-[10px] text-[#71717a]">Duration</div>
+                <div className="mb-1 text-[11px] text-[#71717a]">Duration</div>
 
                 <div className="font-mono text-sm text-[#e4e4e7]">{replay.durationMs}ms</div>
               </div>
@@ -227,7 +227,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
           >
             <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
 
-            <span className="font-mono text-[10px] text-amber-300">
+            <span className="font-mono text-[11px] text-amber-300">
               Status code changed between original and replay.
             </span>
           </div>
@@ -241,13 +241,13 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
           <div>
             <h4 className="text-xs font-semibold text-[#fafafa]">Response Body</h4>
 
-            <p className="mt-0.5 text-[10px] text-[#71717a]">Side-by-side response comparison</p>
+            <p className="mt-0.5 text-[11px] text-[#71717a]">Side-by-side response comparison</p>
           </div>
 
           <span
             className={`
               font-mono
-              text-[9px]
+              text-[10px]
               font-semibold
               uppercase
               tracking-[0.1em]
@@ -284,7 +284,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                 <span
                   className="
                     font-mono
-                    text-[9px]
+                    text-[10px]
                     font-semibold
                     uppercase
                     tracking-[0.12em]
@@ -330,7 +330,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                 <span
                   className="
                     font-mono
-                    text-[9px]
+                    text-[10px]
                     font-semibold
                     uppercase
                     tracking-[0.12em]
@@ -376,7 +376,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
             >
               <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
 
-              <span className="font-mono text-[10px] text-amber-300">Response body changed</span>
+              <span className="font-mono text-[11px] text-amber-300">Response body changed</span>
             </div>
           ) : (
             <div
@@ -392,7 +392,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
 
-              <span className="font-mono text-[10px] text-emerald-300">Response body unchanged</span>
+              <span className="font-mono text-[11px] text-emerald-300">Response body unchanged</span>
             </div>
           )}
         </div>

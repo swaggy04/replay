@@ -70,7 +70,7 @@ export function ReplayTab({
           <div className="overflow-hidden rounded-lg border border-[#27272a] bg-[#131316]">
             {/* Header */}
 
-            <div className="grid grid-cols-[minmax(0,1fr)_80px_90px_82px] items-center gap-4 border-b border-[#27272a] bg-[#0e0b0d] px-4 py-2.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">
+            <div className="grid grid-cols-[minmax(0,1fr)_80px_90px_82px] items-center gap-4 border-b border-[#27272a] bg-[#0e0b0d] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">
               <span>Executed</span>
               <span>Status</span>
               <span className="text-right">Duration</span>
@@ -106,7 +106,7 @@ export function ReplayTab({
                       {new Date(replay.createdAt).toLocaleString()}
                     </div>
 
-                    <div className="mt-1 truncate font-mono text-[10px] text-[#71717a]">{replay.id}</div>
+                    <div className="mt-1 truncate font-mono text-[11px] text-[#71717a]">{replay.id}</div>
                   </button>
 
                   {/* Status */}
@@ -125,7 +125,7 @@ export function ReplayTab({
                     type="button"
                     onClick={() => handleCompare(replay)}
                     disabled={comparisonLoading}
-                    className="flex h-7 items-center justify-center rounded-md border border-[#27272a] bg-[#151113] px-2.5 font-mono text-[10px] font-medium text-[#bdb7ba] transition-colors hover:border-[#484144] hover:bg-[#1c181a] hover:text-[#f0eded] disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-7 items-center justify-center rounded-md border border-[#27272a] bg-[#151113] px-2.5 font-mono text-[11px] font-medium text-[#bdb7ba] transition-colors hover:border-[#484144] hover:bg-[#1c181a] hover:text-[#f0eded] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {comparisonLoading ? (
                       <span className="flex items-center gap-1.5">
@@ -147,7 +147,7 @@ export function ReplayTab({
 
       {replayError && (
         <div className="rounded-lg border border-red-500/15 bg-red-950/15 px-4 py-3">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-red-400/70">Replay Error</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-red-400/70">Replay Error</p>
 
           <p className="mt-1 text-xs text-red-300">{replayError}</p>
         </div>
@@ -157,7 +157,7 @@ export function ReplayTab({
 
       {comparisonError && (
         <div className="rounded-lg border border-red-500/15 bg-red-950/15 px-4 py-3">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-red-400/70">Comparison Error</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-red-400/70">Comparison Error</p>
 
           <p className="mt-1 text-xs text-red-300">{comparisonError}</p>
         </div>
@@ -177,7 +177,7 @@ export function ReplayTab({
 
           <div className="overflow-hidden rounded-lg border border-[#27272a] bg-[#131316]">
             <div className="border-b border-[#27272a] bg-[#0e0b0d] px-4 py-2.5">
-              <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">Response Body</span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">Response Body</span>
             </div>
 
             <div className="p-4">

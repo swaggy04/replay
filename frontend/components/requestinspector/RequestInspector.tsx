@@ -227,7 +227,7 @@ export function DetailSection({ title, children }: { title: string; children: Re
       <div className="flex items-center justify-between">
         <h3
           className="
-            text-[10px]
+            text-[11px]
             font-semibold
             uppercase
             tracking-[0.12em]
@@ -318,7 +318,7 @@ export function JsonBlock({ data }: { data: unknown }) {
           <span
             className="
               font-mono
-              text-[9px]
+              text-[10px]
               font-semibold
               uppercase
               tracking-[0.12em]
@@ -330,7 +330,7 @@ export function JsonBlock({ data }: { data: unknown }) {
 
           <span className="h-1 w-1 rounded-full bg-[#3f3f46]" />
 
-          <span className="text-[9px] text-[#71717a]">Read only</span>
+          <span className="text-[10px] text-[#71717a]">Read only</span>
         </div>
 
         <button
@@ -340,7 +340,7 @@ export function JsonBlock({ data }: { data: unknown }) {
             rounded
             px-2
             py-1
-            text-[10px]
+            text-[11px]
             font-medium
             text-[#a1a1aa]
             transition
@@ -383,7 +383,7 @@ function MethodBadge({ method }: { method: string }) {
     <span
       className="
         inline-flex h-7 shrink-0 items-center rounded border border-[#3f3f46] bg-[#27272a]
-        px-2 font-mono text-[10px] font-semibold tracking-wide text-[#fafafa]
+        px-2 font-mono text-[11px] font-semibold tracking-wide text-[#fafafa]
       "
     >
       {normalizedMethod}
@@ -437,7 +437,7 @@ function StatusPill({ status }: { status: number | null }) {
   }
 
   return (
-    <span className={`rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${className}`}>
+    <span className={`rounded border px-1.5 py-0.5 font-mono text-[11px] font-semibold ${className}`}>
       {status}
     </span>
   );
@@ -462,7 +462,7 @@ export function StatCard({ label, value, mono = false }: { label: string; value:
     >
       <div
         className="
-          text-[9px]
+          text-[10px]
           font-semibold
           uppercase
           tracking-[0.12em]

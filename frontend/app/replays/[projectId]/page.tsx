@@ -17,7 +17,7 @@ function JsonPanel({ title, value }: { title: string; value: unknown }) {
   return (
     <div className="min-w-0 overflow-hidden rounded-md border border-[#27272a] bg-[#0e0e11]">
       <div className="border-b border-[#27272a] bg-[#18181b] px-4 py-2.5">
-        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">{title}</span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">{title}</span>
       </div>
       <pre className="devreplay-scrollbar max-h-80 overflow-auto p-4 font-mono text-[11px] leading-5 whitespace-pre-wrap break-words text-[#d4d4d8]">
         {JSON.stringify(value, null, 2)}
@@ -131,7 +131,7 @@ function ReplaysView({ project }: { project: Project }) {
       <div className="flex min-h-0 flex-1 flex-col xl:flex-row">
         <section className="flex min-h-0 w-full flex-col border-b border-[#27272a] xl:w-[420px] xl:shrink-0 xl:border-b-0 xl:border-r">
           <div className="border-b border-[#27272a] bg-[#131316] px-5 py-3">
-            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">Replay History</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">Replay History</p>
           </div>
 
           <div className="devreplay-scrollbar min-h-0 flex-1 overflow-y-auto">
@@ -159,7 +159,7 @@ function ReplaysView({ project }: { project: Project }) {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2">
-                        <span className={`font-mono text-[10px] font-semibold tracking-wide ${getMethodClass(replay.requestLog.method)}`}>
+                        <span className={`font-mono text-[11px] font-semibold tracking-wide ${getMethodClass(replay.requestLog.method)}`}>
                           {replay.requestLog.method.toUpperCase()}
                         </span>
                         <span className={`truncate font-mono text-[11px] ${isSelected ? "text-[#fafafa]" : "text-[#d4d4d8]"}`}>
@@ -170,7 +170,7 @@ function ReplaysView({ project }: { project: Project }) {
                         {replay.statusCode ?? "—"}
                       </span>
                     </div>
-                    <div className="mt-2 flex items-center gap-3 font-mono text-[10px] text-[#71717a]">
+                    <div className="mt-2 flex items-center gap-3 font-mono text-[11px] text-[#71717a]">
                       <span>{typeof replay.durationMs === "number" ? `${replay.durationMs}ms` : "—"}</span>
                       <span>{formatDate(replay.createdAt)}</span>
                     </div>
@@ -207,7 +207,7 @@ function ReplaysView({ project }: { project: Project }) {
           {!selectedReplay ? (
             <div className="flex h-full min-h-[280px] items-center justify-center px-6 py-16 text-center">
               <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71717a]">Comparison</p>
+                <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#71717a]">Comparison</p>
                 <p className="mt-3 text-sm font-medium text-[#d4d4d8]">Select a replay to compare</p>
                 <p className="mt-1 text-xs text-[#71717a]">Original request and replay execution details will appear here.</p>
               </div>
@@ -225,7 +225,7 @@ function ReplaysView({ project }: { project: Project }) {
             <div className="space-y-6 px-6 py-6">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#27272a] pb-5">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71717a]">Replay Comparison</p>
+                  <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#71717a]">Replay Comparison</p>
                   <h2 className="mt-2 font-mono text-sm text-[#fafafa]">
                     <span className={getMethodClass(comparison.original.method)}>{comparison.original.method.toUpperCase()}</span>{" "}
                     <span className="text-[#d4d4d8]">{comparison.original.path}</span>
@@ -234,17 +234,17 @@ function ReplaysView({ project }: { project: Project }) {
                 </div>
                 <div className="flex items-center gap-2">
                   {comparison.statusChanged && (
-                    <span className="rounded border border-amber-900/40 bg-amber-950/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-amber-400">
+                    <span className="rounded border border-amber-900/40 bg-amber-950/20 px-2 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-amber-400">
                       Status changed
                     </span>
                   )}
                   {comparison.bodyChanged && (
-                    <span className="rounded border border-amber-900/40 bg-amber-950/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-amber-400">
+                    <span className="rounded border border-amber-900/40 bg-amber-950/20 px-2 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-amber-400">
                       Body changed
                     </span>
                   )}
                   {!comparison.statusChanged && !comparison.bodyChanged && (
-                    <span className="rounded border border-emerald-900/40 bg-emerald-950/20 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-emerald-400">
+                    <span className="rounded border border-emerald-900/40 bg-emerald-950/20 px-2 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-emerald-400">
                       Identical
                     </span>
                   )}
@@ -254,20 +254,20 @@ function ReplaysView({ project }: { project: Project }) {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-md border border-[#27272a] bg-[#1b1b1e] p-4">
                   <div className="mb-4 flex items-center justify-between">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">Original Request</p>
-                    <span className="font-mono text-[10px] text-[#52525b]">Baseline</span>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">Original Request</p>
+                    <span className="font-mono text-[11px] text-[#52525b]">Baseline</span>
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-[#71717a]">Status</p>
+                      <p className="text-[11px] uppercase tracking-[0.08em] text-[#71717a]">Status</p>
                       <p className={`mt-1 font-mono text-sm ${getStatusClass(comparison.original.statusCode)}`}>{comparison.original.statusCode ?? "—"}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-[#71717a]">Duration</p>
+                      <p className="text-[11px] uppercase tracking-[0.08em] text-[#71717a]">Duration</p>
                       <p className="mt-1 font-mono text-sm text-[#d4d4d8]">{comparison.original.durationMs != null ? `${comparison.original.durationMs}ms` : "—"}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-[#71717a]">Captured</p>
+                      <p className="text-[11px] uppercase tracking-[0.08em] text-[#71717a]">Captured</p>
                       <p className="mt-1 font-mono text-[11px] text-[#a1a1aa]">{formatDate(comparison.original.createdAt)}</p>
                     </div>
                   </div>
@@ -275,20 +275,20 @@ function ReplaysView({ project }: { project: Project }) {
 
                 <div className="rounded-md border border-[#27272a] bg-[#1b1b1e] p-4">
                   <div className="mb-4 flex items-center justify-between">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">Replay Execution</p>
-                    <span className="font-mono text-[10px] text-[#52525b]">Execution</span>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#71717a]">Replay Execution</p>
+                    <span className="font-mono text-[11px] text-[#52525b]">Execution</span>
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-[#71717a]">Status</p>
+                      <p className="text-[11px] uppercase tracking-[0.08em] text-[#71717a]">Status</p>
                       <p className={`mt-1 font-mono text-sm ${getStatusClass(comparison.replay.statusCode)}`}>{comparison.replay.statusCode ?? "—"}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-[#71717a]">Duration</p>
+                      <p className="text-[11px] uppercase tracking-[0.08em] text-[#71717a]">Duration</p>
                       <p className="mt-1 font-mono text-sm text-[#d4d4d8]">{comparison.replay.durationMs != null ? `${comparison.replay.durationMs}ms` : "—"}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.08em] text-[#71717a]">Replayed</p>
+                      <p className="text-[11px] uppercase tracking-[0.08em] text-[#71717a]">Replayed</p>
                       <p className="mt-1 font-mono text-[11px] text-[#a1a1aa]">{formatDate(comparison.replay.createdAt)}</p>
                     </div>
                   </div>
@@ -301,7 +301,7 @@ function ReplaysView({ project }: { project: Project }) {
                     <h3 className="text-sm font-semibold text-[#fafafa]">Response Body Comparison</h3>
                     <p className="mt-0.5 text-xs text-[#71717a]">Side-by-side original and replay response bodies.</p>
                   </div>
-                  <span className={`font-mono text-[10px] uppercase tracking-[0.08em] ${comparison.bodyChanged ? "text-amber-400" : "text-emerald-400"}`}>
+                  <span className={`font-mono text-[11px] uppercase tracking-[0.08em] ${comparison.bodyChanged ? "text-amber-400" : "text-emerald-400"}`}>
                     {comparison.bodyChanged ? "Different" : "Identical"}
                   </span>
                 </div>

@@ -12,7 +12,7 @@ type RequestTableProps = {
 export function RequestTable({ requests, selectedRequest, onSelectRequest }: RequestTableProps) {
   return (
     <section className="flex min-h-0 flex-1 flex-col border-b border-[#27272a]">
-      <div className="grid shrink-0 grid-cols-[90px_minmax(0,1fr)_90px_90px] items-center border-b border-[#27272a] bg-[#131316] px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">
+      <div className="grid shrink-0 grid-cols-[90px_minmax(0,1fr)_90px_90px] items-center border-b border-[#27272a] bg-[#131316] px-5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#71717a]">
         <span>Method</span>
         <span>Path</span>
         <span>Status</span>
