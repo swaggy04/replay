@@ -2,16 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
-import type { Project, RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
-
-import { SELECTED_REQUEST_KEY } from "@/lib/preferences";
-
-import { getRequestDetails, getRequests } from "./requestsApi";
-
+import type { Project, RequestLog, RequestsResponse } from "@/types/request";
+import { cacheGetStale, cacheSet, getCacheScope } from "@/lib/cache";
+import { getRequests } from "./requestsApi";
 import { DashboardShell } from "./DashboardShell";
 import { RequestTable } from "./requests/RequestTable";
-import { RequestDetailsPanel } from "./requests/RequestDetailsPanel";
 
 export default function RequestList() {
   const [sidebarRequests, setSidebarRequests] = useState<RequestLog[]>([]);
@@ -59,123 +56,74 @@ type RequestsViewProps = {
 
 function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
   const { getToken } = useAuth();
+  const router = useRouter();
 
-  const [requests, setRequests] = useState<RequestLog[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `requests:${project.id}:1`;
+  const cached = cacheGetStale<RequestsResponse>(cacheKey);
+  const [requests, setRequests] = useState<RequestLog[]>(cached?.data ?? []);
+  const [totalPages, setTotalPages] = useState(cached?.totalPages ?? 1);
+  const [total, setTotal] = useState(cached?.total ?? 0);
+  const [loading, setLoading] = useState(!cached);
 
-  const [selectedRequest, setSelectedRequest] = useState<RequestLog | null>(null);
-  const [requestDetails, setRequestDetails] = useState<RequestDetails | null>(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
+  const handleSelectRequest = useCallback(
+    (request: RequestLog) => {
+      router.push(`/projects/${project.id}/requests/${request.id}`);
+    },
+    [project.id, router],
+  );
 
-  const handleSelectRequest = useCallback((request: RequestLog) => {
-    setSelectedRequest(request);
-    setRequestDetails(null);
-    localStorage.setItem(SELECTED_REQUEST_KEY, request.id);
-  }, []);
-
-  // Keep shell sidebar in sync with current requests/selection.
   useEffect(() => {
     onSidebarChange({
       requests,
-      selectedRequest,
+      selectedRequest: null,
       onSelectRequest: handleSelectRequest,
     });
-  }, [requests, selectedRequest, handleSelectRequest, onSidebarChange]);
+  }, [requests, handleSelectRequest, onSidebarChange]);
 
   useEffect(() => {
     let cancelled = false;
+    const key = `requests:${project.id}:${page}`;
+    const cachedPage = cacheGetStale<RequestsResponse>(key);
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      if (cachedPage) {
+        setRequests(cachedPage.data);
+        setTotalPages(cachedPage.totalPages);
+        setTotal(cachedPage.total);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+    }, 0);
 
     async function fetchRequests() {
-      setLoading(true);
-
+      const scope = getCacheScope();
       try {
         const token = await getToken();
-
-        if (!token) {
-          throw new Error("Unable to obtain Clerk session token.");
-        }
+        if (!token) throw new Error("Unable to obtain Clerk session token.");
 
         const data: RequestsResponse = await getRequests(page, project.id, token);
+        if (getCacheScope() !== scope) return;
 
+        cacheSet(key, data, scope);
         if (cancelled) return;
-
         setRequests(data.data);
         setTotalPages(data.totalPages);
         setTotal(data.total);
-
-        const savedRequestId = localStorage.getItem(SELECTED_REQUEST_KEY);
-
-        if (savedRequestId) {
-          const savedRequest = data.data.find((request) => request.id === savedRequestId);
-
-          if (savedRequest) {
-            handleSelectRequest(savedRequest);
-          } else {
-            localStorage.removeItem(SELECTED_REQUEST_KEY);
-          }
-        }
       } catch (error) {
-        if (!cancelled) {
-          console.error("Failed to fetch requests:", error);
-        }
+        if (!cancelled) console.error("Failed to fetch requests:", error);
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
     void fetchRequests();
-
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
-  }, [page, project.id, getToken, handleSelectRequest]);
-
-  useEffect(() => {
-    if (!selectedRequest) {
-      return;
-    }
-
-    const requestId = selectedRequest.id;
-    let cancelled = false;
-
-    async function loadDetails() {
-      setDetailsLoading(true);
-      setRequestDetails(null);
-
-      try {
-        const token = await getToken();
-
-        if (!token) {
-          throw new Error("Unable to obtain Clerk session token.");
-        }
-
-        const data: RequestDetails = await getRequestDetails(requestId, token);
-
-        if (!cancelled) {
-          setRequestDetails(data);
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Failed to fetch request details:", error);
-        }
-      } finally {
-        if (!cancelled) {
-          setDetailsLoading(false);
-        }
-      }
-    }
-
-    void loadDetails();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedRequest, getToken]);
+  }, [page, project.id, getToken]);
 
   if (loading && requests.length === 0) {
     return (
@@ -191,33 +139,22 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#27272a] bg-[#09090b] px-5">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#27272a] bg-[#0e0e11] px-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
             <h1 className="text-sm font-semibold tracking-tight text-[#fafafa]">Requests</h1>
             <span className="text-[#3f3f46]">/</span>
             <span className="max-w-[240px] truncate text-xs text-[#a1a1aa]">{project.name}</span>
           </div>
-          <p className="mt-0.5 text-[11px] text-[#71717a]">Captured HTTP traffic</p>
+          <p className="mt-0.5 text-[9px] text-[#71717a]">Captured HTTP traffic</p>
         </div>
 
-        <div className="shrink-0 text-[11px] font-medium text-[#71717a]">
+        <div className="shrink-0 text-[9px] font-medium text-[#71717a]">
           {total} {total === 1 ? "request" : "requests"}
         </div>
       </header>
 
-      <RequestTable requests={requests} selectedRequest={selectedRequest} onSelectRequest={handleSelectRequest} />
-
-      <RequestDetailsPanel
-        selectedRequest={selectedRequest}
-        requestDetails={requestDetails}
-        detailsLoading={detailsLoading}
-        onClose={() => {
-          setSelectedRequest(null);
-          setRequestDetails(null);
-          localStorage.removeItem(SELECTED_REQUEST_KEY);
-        }}
-      />
+      <RequestTable requests={requests} selectedRequest={null} onSelectRequest={handleSelectRequest} />
 
       <footer className="flex h-12 shrink-0 items-center justify-between border-t border-[#27272a] px-5">
         <span className="text-xs text-[#71717a]">

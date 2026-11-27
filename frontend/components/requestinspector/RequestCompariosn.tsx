@@ -304,7 +304,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                   whitespace-pre-wrap
                   break-words
                   font-mono
-                  text-[11px]
+                  text-[10px]
                   leading-5
                   text-[#d4d4d8]
                 "
@@ -350,7 +350,7 @@ export function RequestComparison({ comparison, method, path }: RequestCompariso
                   whitespace-pre-wrap
                   break-words
                   font-mono
-                  text-[11px]
+                  text-[10px]
                   leading-5
                   text-[#d4d4d8]
                 "

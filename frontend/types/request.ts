@@ -71,4 +71,5 @@ export type Project = {
   id: string;
   name: string;
   createdAt: string;
+  replayBaseUrl?: string | null;
 };

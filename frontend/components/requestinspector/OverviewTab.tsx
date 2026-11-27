@@ -35,7 +35,7 @@ export function OverviewTab({ request }: { request: RequestDetails }) {
           >
             <span
               className="
-                text-[11px]
+                text-[10px]
                 font-medium
                 text-[#71717a]
               "

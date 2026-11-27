@@ -117,7 +117,7 @@ export function ReplayTab({
 
                   {/* Duration */}
 
-                  <div className="text-right font-mono text-[11px] text-[#a1a1aa]">{replay.durationMs ?? "—"}ms</div>
+                  <div className="text-right font-mono text-[10px] text-[#a1a1aa]">{replay.durationMs ?? "—"}ms</div>
 
                   {/* Compare */}
 

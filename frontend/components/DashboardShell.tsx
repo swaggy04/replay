@@ -4,31 +4,20 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@clerk/nextjs";
 
 import type { Project, RequestLog } from "@/types/request";
-
 import { SELECTED_PROJECT_KEY } from "@/lib/preferences";
-
+import { cacheGetStale, cacheSet, getCacheScope, setCacheScope } from "@/lib/cache";
 import { createProject, getProjects } from "./requestsApi";
 import { RequestSidebar } from "./requests/RequestSidebar";
 
 type DashboardShellProps = {
-  /** When provided, the selected project is driven by this route param. */
   routeProjectId?: string;
-  /** Called when the user picks a different project in route-driven mode. */
   onRouteProjectChange?: (project: Project) => void;
-  /** Requests shown in the sidebar "Recent" section. */
   sidebarRequests?: RequestLog[];
-  /** Currently selected request in the sidebar. */
   selectedSidebarRequest?: RequestLog | null;
-  /** Called when a recent request is clicked in the sidebar. */
   onSelectSidebarRequest?: (request: RequestLog) => void;
-  /** Main content rendered inside the shell. Receives the selected project. */
   children: (selectedProject: Project) => ReactNode;
 };
 
-/**
- * Shared dashboard shell used by dashboard routes.
- * Owns project loading/selection, create-project dialog, and the left sidebar.
- */
 export function DashboardShell({
   routeProjectId,
   onRouteProjectChange,
@@ -37,13 +26,31 @@ export function DashboardShell({
   onSelectSidebarRequest,
   children,
 }: DashboardShellProps) {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { isLoaded, isSignedIn, userId, getToken } = useAuth();
+  if (userId) setCacheScope(userId);
+  else if (isLoaded) setCacheScope("signed-out");
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const cachedProjects = userId ? cacheGetStale<Project[]>("projects") : undefined;
+  const [projects, setProjects] = useState<Project[]>(cachedProjects ?? []);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(() => {
+    if (!cachedProjects || cachedProjects.length === 0) return null;
+    const savedProjectId = typeof window !== "undefined" ? localStorage.getItem(SELECTED_PROJECT_KEY) : null;
+    return cachedProjects.find((project) => project.id === savedProjectId) ?? cachedProjects[0];
+  });
 
-  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(!cachedProjects);
   const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [scopedUserId, setScopedUserId] = useState(userId);
+
+  if (scopedUserId !== userId) {
+    setScopedUserId(userId);
+    setProjects([]);
+    setSelectedProject(null);
+    setProjectsLoading(Boolean(userId));
+    setProjectsError(null);
+  }
+
+  const userTransition = scopedUserId !== userId;
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
@@ -64,10 +71,11 @@ export function DashboardShell({
     if (!isLoaded) return;
 
     let cancelled = false;
+    const scope = getCacheScope();
 
     async function fetchProjects() {
       try {
-        if (!isSignedIn) {
+        if (!isSignedIn || !userId) {
           throw new Error("Please sign in to view your projects.");
         }
 
@@ -79,8 +87,9 @@ export function DashboardShell({
 
         const data: Project[] = await getProjects(token);
 
-        if (cancelled) return;
+        if (cancelled || getCacheScope() !== scope) return;
 
+        cacheSet("projects", data, scope);
         setProjects(data);
 
         if (data.length === 0) {
@@ -91,14 +100,20 @@ export function DashboardShell({
         const savedProjectId = localStorage.getItem(SELECTED_PROJECT_KEY);
         const savedProject = data.find((project) => project.id === savedProjectId);
 
-        setSelectedProject(savedProject ?? data[0]);
+        setSelectedProject((current) => {
+          if (current && data.some((project) => project.id === current.id)) return current;
+          return savedProject ?? data[0];
+        });
       } catch (error) {
-        if (cancelled) return;
+        if (cancelled || getCacheScope() !== scope) return;
 
         console.error("Failed to fetch projects:", error);
-        setProjectsError(error instanceof Error ? error.message : "Failed to fetch projects.");
+        const hasCached = (cacheGetStale<Project[]>("projects")?.length ?? 0) > 0;
+        if (!hasCached) {
+          setProjectsError(error instanceof Error ? error.message : "Failed to fetch projects.");
+        }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && getCacheScope() === scope) {
           setProjectsLoading(false);
         }
       }
@@ -109,7 +124,7 @@ export function DashboardShell({
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, getToken]);
+  }, [isLoaded, isSignedIn, userId, getToken]);
 
   function handleSelectProject(project: Project) {
     localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
@@ -151,7 +166,11 @@ export function DashboardShell({
 
       const project: Project = await createProject(name, token);
 
-      setProjects((current) => [project, ...current.filter((item) => item.id !== project.id)]);
+      setProjects((current) => {
+        const next = [project, ...current.filter((item) => item.id !== project.id)];
+        cacheSet("projects", next, getCacheScope());
+        return next;
+      });
       localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
       setSelectedProject(project);
 
@@ -171,9 +190,7 @@ export function DashboardShell({
 
   const projectDialog = (
     <div
-      className={`fixed inset-0 z-50 items-center justify-center bg-black/70 p-4 ${
-        createDialogOpen ? "flex" : "hidden"
-      }`}
+      className={`fixed inset-0 z-50 items-center justify-center bg-black/70 p-4 ${createDialogOpen ? "flex" : "hidden"}`}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !creatingProject) {
           setCreateDialogOpen(false);
@@ -182,14 +199,15 @@ export function DashboardShell({
     >
       <form
         onSubmit={handleCreateProject}
-        className="w-full max-w-md rounded-xl border border-[#27272a] bg-[#131316] p-6 shadow-2xl"
+        className="w-full max-w-md rounded-md border border-[#27272a] bg-[#1b1b1e] p-6 shadow-2xl"
       >
         <div className="mb-5">
-          <h2 className="text-lg font-semibold text-[#fafafa]">Create project</h2>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#71717a]">New project</p>
+          <h2 className="mt-2 text-lg font-semibold tracking-tight text-[#fafafa]">Create project</h2>
           <p className="mt-1 text-sm text-[#a1a1aa]">Create a project to organize your captured HTTP traffic.</p>
         </div>
 
-        <label htmlFor="project-name" className="mb-2 block text-xs font-medium text-[#d4d4d8]">
+        <label htmlFor="project-name" className="mb-2 block font-mono text-[10px] uppercase tracking-[0.12em] text-[#71717a]">
           Project name
         </label>
 
@@ -201,7 +219,7 @@ export function DashboardShell({
           placeholder="My Express API"
           maxLength={80}
           disabled={creatingProject}
-          className="h-10 w-full rounded-md border border-[#27272a] bg-[#09090b] px-3 text-sm text-white outline-none placeholder:text-[#71717a] focus:border-[#52525b] disabled:opacity-50"
+          className="h-10 w-full rounded-md border border-[#27272a] bg-[#0e0e11] px-3 text-sm text-[#fafafa] outline-none placeholder:text-[#52525b] focus:border-[#52525b] disabled:opacity-50"
         />
 
         {createProjectError && <p className="mt-2 text-xs text-red-400">{createProjectError}</p>}
@@ -211,7 +229,7 @@ export function DashboardShell({
             type="button"
             onClick={() => setCreateDialogOpen(false)}
             disabled={creatingProject}
-            className="rounded-md px-4 py-2 text-xs text-[#a1a1aa] hover:bg-[#1c1c20] disabled:opacity-50"
+            className="rounded-md px-4 py-2 text-xs text-[#a1a1aa] transition hover:bg-[#27272a] hover:text-[#fafafa] disabled:opacity-50"
           >
             Cancel
           </button>
@@ -228,13 +246,13 @@ export function DashboardShell({
     </div>
   );
 
-  if (!isLoaded || projectsLoading) {
+  if (!isLoaded || projectsLoading || userTransition) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#09090b]">
+      <div className="flex h-screen items-center justify-center bg-[#131316]">
         <div className="flex flex-col items-center">
           <div className="mb-4 h-5 w-5 animate-spin rounded-full border-2 border-[#27272a] border-t-[#fafafa]" />
-          <p className="text-sm font-medium text-[#d4d4d8]">Loading projects</p>
-          <p className="mt-1 text-xs text-[#71717a]">Getting your DevReplay projects...</p>
+          <p className="text-sm font-medium text-[#e4e1e6]">Loading projects</p>
+          <p className="mt-1 font-mono text-[10px] text-[#71717a]">Getting your DevReplay projects...</p>
         </div>
       </div>
     );
@@ -242,7 +260,7 @@ export function DashboardShell({
 
   if (projectsError) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#09090b]">
+      <div className="flex h-screen items-center justify-center bg-[#131316]">
         <div className="max-w-md text-center">
           <h2 className="text-lg font-semibold text-[#fafafa]">Unable to load projects</h2>
           <p className="mt-2 text-sm text-red-400">{projectsError}</p>
@@ -255,7 +273,7 @@ export function DashboardShell({
     return (
       <>
         {projectDialog}
-        <div className="flex h-screen items-center justify-center bg-[#09090b]">
+        <div className="flex h-screen items-center justify-center bg-[#131316]">
           <div className="text-center">
             <h2 className="text-lg font-semibold text-[#fafafa]">No projects yet</h2>
             <p className="mt-2 text-sm text-[#a1a1aa]">Create your first project to start capturing HTTP traffic.</p>
@@ -277,7 +295,7 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#09090b] text-[#fafafa]">
+    <div className="flex h-screen overflow-hidden bg-[#131316] text-[#e4e1e6]">
       {projectDialog}
 
       <RequestSidebar
@@ -290,7 +308,7 @@ export function DashboardShell({
         onSelectRequest={onSelectSidebarRequest ?? (() => {})}
       />
 
-      <main className="relative flex min-w-0 flex-1 flex-col">{children(resolvedSelectedProject)}</main>
+      <main className="relative flex min-w-0 flex-1 flex-col bg-[#131316]">{children(resolvedSelectedProject)}</main>
     </div>
   );
 }
