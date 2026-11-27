@@ -15,9 +15,10 @@ import { DetailTab, InspectorTabs } from "./InspectorTabs";
 type RequestInspectorProps = {
   request: RequestDetails;
   onClose: () => void;
+  embedded?: boolean;
 };
 
-export default function RequestInspector({ request, onClose }: RequestInspectorProps) {
+export default function RequestInspector({ request, onClose, embedded = false }: RequestInspectorProps) {
   const { getToken } = useAuth();
 
   const [activeTab, setActiveTab] = useState<DetailTab>("overview");
@@ -53,9 +54,8 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 backdrop-blur-[2px] sm:p-6">
-      <div className="flex h-[92vh] w-full max-w-7xl flex-col overflow-hidden rounded-md border border-[#27272a] bg-[#131316] shadow-[0_24px_80px_rgba(0,0,0,0.6)]">
+  const panel = (
+    <div className={`flex h-full w-full flex-col overflow-hidden bg-[#131316] ${embedded ? "" : "max-w-7xl rounded-md border border-[#27272a] shadow-[0_24px_80px_rgba(0,0,0,0.6)]"}`}>
         {/* HEADER */}
         <div className="flex shrink-0 items-center justify-between border-b border-[#27272a] bg-[#0e0e11] px-4 py-3.5 sm:px-5">
           {/* Request identity */}
@@ -213,6 +213,13 @@ export default function RequestInspector({ request, onClose }: RequestInspectorP
           </div>
         </div>
       </div>
+  );
+
+  if (embedded) return panel;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 backdrop-blur-[2px] sm:p-6">
+      <div className="h-[92vh] w-full max-w-7xl">{panel}</div>
     </div>
   );
 }
