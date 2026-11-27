@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter } from "next/navigation";
 
 import type { Project, RequestDetails, RequestLog, RequestsResponse } from "@/types/request";
+import { cacheGetStale, cacheSet, getCacheScope } from "@/lib/cache";
 import { DashboardShell } from "@/components/DashboardShell";
 import { RequestTable } from "@/components/requests/RequestTable";
 import RequestInspector from "@/components/requestinspector/RequestInspector";
@@ -79,15 +80,28 @@ function RequestWorkbench({
   const { getToken } = useAuth();
   const router = useRouter();
 
-  const [requests, setRequests] = useState<RequestLog[]>([]);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loadingList, setLoadingList] = useState(true);
+  const listCacheKey = `requests:${project.id}:1`;
+  const cachedList = cacheGetStale<RequestsResponse>(listCacheKey);
+  const cachedDetails = cacheGetStale<RequestDetails>(`request:${requestId}`);
 
-  const [requestDetails, setRequestDetails] = useState<RequestDetails | null>(null);
-  const [detailsLoading, setDetailsLoading] = useState(true);
+  const [requests, setRequests] = useState<RequestLog[]>(cachedList?.data ?? []);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(cachedList?.totalPages ?? 1);
+  const [total, setTotal] = useState(cachedList?.total ?? 0);
+  const [loadingList, setLoadingList] = useState(!cachedList);
+
+  const [requestDetails, setRequestDetails] = useState<RequestDetails | null>(cachedDetails ?? null);
+  const [detailsLoading, setDetailsLoading] = useState(!cachedDetails);
   const [detailsError, setDetailsError] = useState<string | null>(null);
+  const listSeqRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const selectedRequest = useMemo(
     () =>
@@ -117,11 +131,26 @@ function RequestWorkbench({
 
   const loadRequests = useCallback(
     async (pageNumber: number) => {
-      setLoadingList(true);
+      const seq = ++listSeqRef.current;
+      const scope = getCacheScope();
+      const key = `requests:${project.id}:${pageNumber}`;
+      const cachedPage = cacheGetStale<RequestsResponse>(key);
+      if (cachedPage) {
+        setRequests(cachedPage.data);
+        setTotalPages(cachedPage.totalPages);
+        setTotal(cachedPage.total);
+        setPage(cachedPage.page);
+        setLoadingList(false);
+      } else {
+        setLoadingList(true);
+      }
       try {
         const token = await getToken();
         if (!token) throw new Error("Unable to obtain Clerk session token.");
         const data: RequestsResponse = await getRequests(pageNumber, project.id, token);
+        if (seq !== listSeqRef.current || getCacheScope() !== scope) return;
+        cacheSet(key, data, scope);
+        if (!mountedRef.current) return;
         setRequests(data.data);
         setTotalPages(data.totalPages);
         setTotal(data.total);
@@ -129,7 +158,7 @@ function RequestWorkbench({
       } catch (error) {
         console.error("Failed to fetch requests:", error);
       } finally {
-        setLoadingList(false);
+        if (seq === listSeqRef.current && mountedRef.current) setLoadingList(false);
       }
     },
     [getToken, project.id],
@@ -144,17 +173,23 @@ function RequestWorkbench({
 
   useEffect(() => {
     let cancelled = false;
+    const key = `request:${requestId}`;
+
     async function loadDetails() {
-      setDetailsLoading(true);
-      setDetailsError(null);
-      setRequestDetails(null);
+      const scope = getCacheScope();
       try {
         const token = await getToken();
         if (!token) throw new Error("Unable to obtain Clerk session token.");
         const data = await getRequestDetails(requestId, token);
-        if (!cancelled) setRequestDetails(data);
+        if (getCacheScope() !== scope) return;
+        cacheSet(key, data, scope);
+        if (cancelled) return;
+        setRequestDetails(data);
+        setDetailsError(null);
       } catch (error) {
-        if (!cancelled) setDetailsError(error instanceof Error ? error.message : "Failed to load request details.");
+        if (!cancelled && getCacheScope() === scope && !cacheGetStale<RequestDetails>(key)) {
+          setDetailsError(error instanceof Error ? error.message : "Failed to load request details.");
+        }
       } finally {
         if (!cancelled) setDetailsLoading(false);
       }

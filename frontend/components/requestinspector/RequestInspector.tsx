@@ -6,6 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 
 import type { ReplayExecution, ReplayResult, RequestDetails } from "@/types/request";
 
+import { cacheDeletePrefix, cacheGetStale, cacheSet, getCacheScope } from "@/lib/cache";
 import { replayRequest } from "../requestsApi";
 
 import { ReplayTab } from "./replaytab";
@@ -44,6 +45,11 @@ export default function RequestInspector({ request, onClose, embedded = false }:
 
       setReplayHistory((history) => [data.replay, ...history]);
       setSelectedReplay(data.replay);
+      const cached = cacheGetStale<RequestDetails>(`request:${request.id}`);
+      if (cached) {
+        cacheSet(`request:${request.id}`, { ...cached, replays: [data.replay, ...(cached.replays ?? [])] }, getCacheScope());
+      }
+      cacheDeletePrefix("replays:");
       setActiveTab("replay");
     } catch (error) {
       console.error("Replay failed:", error);

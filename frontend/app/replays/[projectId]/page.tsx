@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useParams, useRouter } from "next/navigation";
 
 import type { Project, ProjectReplay, ProjectReplaysResponse, ReplayComparison } from "@/types/request";
+import { cacheGetStale, cacheSet, getCacheScope } from "@/lib/cache";
 import { DashboardShell } from "@/components/DashboardShell";
 import { getProjectReplays, requestComparison } from "@/components/requestsApi";
 import { getMethodClass, getStatusClass } from "@/lib/ui";
@@ -46,38 +47,68 @@ function ReplaysView({ project }: { project: Project }) {
   const { getToken } = useAuth();
   const projectId = project.id;
 
-  const [loading, setLoading] = useState(true);
+  const initialCacheKey = `replays:${projectId}:1`;
+  const cachedInitial = cacheGetStale<ProjectReplaysResponse>(initialCacheKey);
+
+  const [loading, setLoading] = useState(!cachedInitial);
   const [error, setError] = useState<string | null>(null);
 
-  const [replays, setReplays] = useState<ProjectReplay[]>([]);
+  const [replays, setReplays] = useState<ProjectReplay[]>(cachedInitial?.data ?? []);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(cachedInitial?.totalPages ?? 1);
+  const [total, setTotal] = useState(cachedInitial?.total ?? 0);
 
   const [selectedReplay, setSelectedReplay] = useState<ProjectReplay | null>(null);
   const [comparison, setComparison] = useState<ReplayComparison | null>(null);
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [comparisonError, setComparisonError] = useState<string | null>(null);
+  const loadSeqRef = useRef(0);
+  const comparisonSeqRef = useRef(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const loadReplays = useCallback(
     async (pageNumber: number) => {
-      setLoading(true);
-      setError(null);
+      const seq = ++loadSeqRef.current;
+      const scope = getCacheScope();
+      const key = `replays:${projectId}:${pageNumber}`;
+      const cached = cacheGetStale<ProjectReplaysResponse>(key);
+      if (!mountedRef.current) return;
+      if (cached) {
+        setReplays(cached.data);
+        setPage(cached.page);
+        setTotalPages(cached.totalPages);
+        setTotal(cached.total);
+        setLoading(false);
+        setError(null);
+      } else {
+        setLoading(true);
+        setError(null);
+      }
 
       try {
         const token = await getToken();
         if (!token) throw new Error("Unable to obtain Clerk session token.");
 
         const data: ProjectReplaysResponse = await getProjectReplays(projectId, pageNumber, token);
-
+        if (seq !== loadSeqRef.current || getCacheScope() !== scope) return;
+        cacheSet(key, data, scope);
+        if (!mountedRef.current) return;
         setReplays(data.data);
         setPage(data.page);
         setTotalPages(data.totalPages);
         setTotal(data.total);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch replays.");
+        if (seq !== loadSeqRef.current || getCacheScope() !== scope || !mountedRef.current) return;
+        if (!cached) setError(err instanceof Error ? err.message : "Failed to fetch replays.");
       } finally {
-        setLoading(false);
+        if (seq === loadSeqRef.current && mountedRef.current) setLoading(false);
       }
     },
     [getToken, projectId],
@@ -92,20 +123,33 @@ function ReplaysView({ project }: { project: Project }) {
 
   const selectReplay = (replay: ProjectReplay) => {
     setSelectedReplay(replay);
-    setComparison(null);
     setComparisonError(null);
+    const key = `comparison:${replay.requestLogId}:${replay.id}`;
+    const cached = cacheGetStale<ReplayComparison>(key);
+    const seq = ++comparisonSeqRef.current;
+    const scope = getCacheScope();
+    if (cached) {
+      setComparison(cached);
+      setComparisonLoading(false);
+    } else {
+      setComparison(null);
+      setComparisonLoading(true);
+    }
 
     (async () => {
-      setComparisonLoading(true);
       try {
         const token = await getToken();
         if (!token) throw new Error("Unable to obtain Clerk session token.");
         const data = await requestComparison(replay.requestLogId, replay.id, token);
+        if (seq !== comparisonSeqRef.current || getCacheScope() !== scope) return;
+        cacheSet(key, data, scope);
+        if (!mountedRef.current) return;
         setComparison(data);
       } catch (err) {
-        setComparisonError(err instanceof Error ? err.message : "Failed to load comparison.");
+        if (seq !== comparisonSeqRef.current || getCacheScope() !== scope || !mountedRef.current) return;
+        if (!cached) setComparisonError(err instanceof Error ? err.message : "Failed to load comparison.");
       } finally {
-        setComparisonLoading(false);
+        if (seq === comparisonSeqRef.current && mountedRef.current) setComparisonLoading(false);
       }
     })();
   };

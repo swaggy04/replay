@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 
 import type { Project, RequestLog } from "@/types/request";
 import { SELECTED_PROJECT_KEY } from "@/lib/preferences";
+import { cacheGetStale, cacheSet, getCacheScope, setCacheScope } from "@/lib/cache";
 import { createProject, getProjects } from "./requestsApi";
 import { RequestSidebar } from "./requests/RequestSidebar";
 
@@ -25,13 +26,31 @@ export function DashboardShell({
   onSelectSidebarRequest,
   children,
 }: DashboardShellProps) {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { isLoaded, isSignedIn, userId, getToken } = useAuth();
+  if (userId) setCacheScope(userId);
+  else if (isLoaded) setCacheScope("signed-out");
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const cachedProjects = userId ? cacheGetStale<Project[]>("projects") : undefined;
+  const [projects, setProjects] = useState<Project[]>(cachedProjects ?? []);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(() => {
+    if (!cachedProjects || cachedProjects.length === 0) return null;
+    const savedProjectId = typeof window !== "undefined" ? localStorage.getItem(SELECTED_PROJECT_KEY) : null;
+    return cachedProjects.find((project) => project.id === savedProjectId) ?? cachedProjects[0];
+  });
 
-  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [projectsLoading, setProjectsLoading] = useState(!cachedProjects);
   const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [scopedUserId, setScopedUserId] = useState(userId);
+
+  if (scopedUserId !== userId) {
+    setScopedUserId(userId);
+    setProjects([]);
+    setSelectedProject(null);
+    setProjectsLoading(Boolean(userId));
+    setProjectsError(null);
+  }
+
+  const userTransition = scopedUserId !== userId;
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
@@ -52,10 +71,11 @@ export function DashboardShell({
     if (!isLoaded) return;
 
     let cancelled = false;
+    const scope = getCacheScope();
 
     async function fetchProjects() {
       try {
-        if (!isSignedIn) {
+        if (!isSignedIn || !userId) {
           throw new Error("Please sign in to view your projects.");
         }
 
@@ -67,8 +87,9 @@ export function DashboardShell({
 
         const data: Project[] = await getProjects(token);
 
-        if (cancelled) return;
+        if (cancelled || getCacheScope() !== scope) return;
 
+        cacheSet("projects", data, scope);
         setProjects(data);
 
         if (data.length === 0) {
@@ -79,14 +100,20 @@ export function DashboardShell({
         const savedProjectId = localStorage.getItem(SELECTED_PROJECT_KEY);
         const savedProject = data.find((project) => project.id === savedProjectId);
 
-        setSelectedProject(savedProject ?? data[0]);
+        setSelectedProject((current) => {
+          if (current && data.some((project) => project.id === current.id)) return current;
+          return savedProject ?? data[0];
+        });
       } catch (error) {
-        if (cancelled) return;
+        if (cancelled || getCacheScope() !== scope) return;
 
         console.error("Failed to fetch projects:", error);
-        setProjectsError(error instanceof Error ? error.message : "Failed to fetch projects.");
+        const hasCached = (cacheGetStale<Project[]>("projects")?.length ?? 0) > 0;
+        if (!hasCached) {
+          setProjectsError(error instanceof Error ? error.message : "Failed to fetch projects.");
+        }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && getCacheScope() === scope) {
           setProjectsLoading(false);
         }
       }
@@ -97,7 +124,7 @@ export function DashboardShell({
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, getToken]);
+  }, [isLoaded, isSignedIn, userId, getToken]);
 
   function handleSelectProject(project: Project) {
     localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
@@ -139,7 +166,11 @@ export function DashboardShell({
 
       const project: Project = await createProject(name, token);
 
-      setProjects((current) => [project, ...current.filter((item) => item.id !== project.id)]);
+      setProjects((current) => {
+        const next = [project, ...current.filter((item) => item.id !== project.id)];
+        cacheSet("projects", next, getCacheScope());
+        return next;
+      });
       localStorage.setItem(SELECTED_PROJECT_KEY, project.id);
       setSelectedProject(project);
 
@@ -215,7 +246,7 @@ export function DashboardShell({
     </div>
   );
 
-  if (!isLoaded || projectsLoading) {
+  if (!isLoaded || projectsLoading || userTransition) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#131316]">
         <div className="flex flex-col items-center">

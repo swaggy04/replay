@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   createProjectApiKey,
@@ -12,7 +12,9 @@ import {
 import { NewApiKeyDialog } from "./NewApiKeyDialog";
 import { copyToClipboard } from "@/lib/clipboard";
 import { rawKeyForKeyId } from "@/lib/apiKeys";
+import { cacheGetStale, cacheSet, getCacheScope } from "@/lib/cache";
 import type { ApiKey, CreatedApiKey } from "../requestsApi";
+import type { Project } from "@/types/request";
 
 type ProjectSettingsProps = {
   projectId: string;
@@ -27,48 +29,81 @@ function formatDate(date: string) {
 }
 
 export function ProjectSettings({ projectId, projectName, getToken }: ProjectSettingsProps) {
+  const cacheKey = `apikeys:${projectId}`;
+  const cachedKeys = cacheGetStale<ApiKey[]>(cacheKey);
+
   const [activeSection, setActiveSection] = useState<SettingsSection>("api-keys");
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>(cachedKeys ?? []);
   const [newApiKey, setNewApiKey] = useState<CreatedApiKey | null>(null);
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
   const [copyingKeyId, setCopyingKeyId] = useState<string | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
-  const [replayBaseUrl, setReplayBaseUrl] = useState("");
+  const [replayBaseUrl, setReplayBaseUrl] = useState(() => {
+    const projects = cacheGetStale<Project[]>("projects");
+    return projects?.find((project) => project.id === projectId)?.replayBaseUrl ?? "";
+  });
   const [replaySaving, setReplaySaving] = useState(false);
   const [replayMessage, setReplayMessage] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedKeys);
+  const [refreshing, setRefreshing] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [revokingKeyId, setRevokingKeyId] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const loadSeqRef = useRef(0);
+  const mountedRef = useRef(true);
 
-  const loadApiKeys = useCallback(async () => {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const loadApiKeys = useCallback(async (opts?: { background?: boolean }) => {
+    const seq = ++loadSeqRef.current;
+    const scope = getCacheScope();
+    const background = opts?.background ?? false;
+    if (background) setRefreshing(true);
+    else setLoading(true);
+    setRefreshError(null);
     try {
       const token = await getToken();
       if (!token) throw new Error("Unable to obtain Clerk session token.");
 
       const data = await getProjectApiKeys(projectId, token);
+      if (seq !== loadSeqRef.current || getCacheScope() !== scope) return;
+      cacheSet(cacheKey, data, scope);
+      if (!mountedRef.current) return;
       setApiKeys(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load API keys.");
+      if (seq !== loadSeqRef.current || getCacheScope() !== scope || !mountedRef.current) return;
+      if (!cacheGetStale<ApiKey[]>(cacheKey)) {
+        setError(err instanceof Error ? err.message : "Failed to load API keys.");
+      } else {
+        setRefreshError("Unable to refresh API keys. Showing cached data.");
+      }
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current && mountedRef.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  }, [getToken, projectId]);
+  }, [cacheKey, getToken, projectId]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void loadApiKeys();
+      void loadApiKeys({ background: Boolean(cacheGetStale<ApiKey[]>(cacheKey)) });
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [loadApiKeys]);
+  }, [cacheKey, loadApiKeys]);
 
   async function handleRefresh() {
-    setLoading(true);
-    await loadApiKeys();
+    await loadApiKeys({ background: apiKeys.length > 0 });
   }
 
   async function handleSaveReplayTarget() {
@@ -77,7 +112,16 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
     try {
       const token = await getToken();
       if (!token) throw new Error("Unable to obtain Clerk session token.");
-      await updateProjectReplayTarget(projectId, replayBaseUrl.trim() || null, token);
+      const nextTarget = replayBaseUrl.trim() || null;
+      await updateProjectReplayTarget(projectId, nextTarget, token);
+      const projects = cacheGetStale<Project[]>("projects");
+      if (projects) {
+        cacheSet(
+          "projects",
+          projects.map((project) => (project.id === projectId ? { ...project, replayBaseUrl: nextTarget } : project)),
+          getCacheScope(),
+        );
+      }
       setReplayMessage("Replay target saved.");
     } catch (err) {
       setReplayMessage(err instanceof Error ? err.message : "Failed to save replay target.");
@@ -154,7 +198,11 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
       if (!token) throw new Error("Unable to obtain Clerk session token.");
 
       await revokeProjectApiKey(projectId, keyId, token);
-      setApiKeys((current) => current.filter((apiKey) => apiKey.id !== keyId));
+      setApiKeys((current) => {
+        const next = current.filter((apiKey) => apiKey.id !== keyId);
+        cacheSet(cacheKey, next, getCacheScope());
+        return next;
+      });
       if (newApiKey?.id === keyId) setNewApiKey(null);
       setSuccess("API key revoked successfully.");
     } catch (err) {
@@ -235,11 +283,13 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
                 <button
                   type="button"
                   onClick={() => void handleRefresh()}
-                  disabled={loading}
+                  disabled={loading || refreshing}
                   className="rounded-md border border-[#27272a] px-3 py-2 text-xs text-[#d4d4d8] transition hover:bg-[#1f1f22] disabled:opacity-50"
                 >
-                  {loading ? "Refreshing..." : "Refresh"}
+                  Refresh
                 </button>
+                {refreshing && <span className="font-mono text-[10px] text-[#71717a]">Updating...</span>}
+                {!refreshing && refreshError && <span className="font-mono text-[10px] text-amber-400">{refreshError}</span>}
                 <button
                   type="button"
                   onClick={() => void handleGenerateKey()}
@@ -270,10 +320,13 @@ export function ProjectSettings({ projectId, projectName, getToken }: ProjectSet
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#27272a] text-xs">
-                    {loading ? (
+                    {loading && apiKeys.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="px-5 py-10 text-center text-sm text-[#71717a]">
-                          Loading API keys...
+                        <td colSpan={4} className="px-5 py-8 text-center">
+                          <div className="inline-flex items-center gap-2 text-xs text-[#71717a]">
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border border-[#3f3f46] border-t-[#a1a1aa]" />
+                            <span>Loading keys…</span>
+                          </div>
                         </td>
                       </tr>
                     ) : apiKeys.length === 0 ? (

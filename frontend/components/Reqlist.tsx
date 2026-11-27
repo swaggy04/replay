@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 import type { Project, RequestLog, RequestsResponse } from "@/types/request";
+import { cacheGetStale, cacheSet, getCacheScope } from "@/lib/cache";
 import { getRequests } from "./requestsApi";
 import { DashboardShell } from "./DashboardShell";
 import { RequestTable } from "./requests/RequestTable";
@@ -57,11 +58,13 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
   const { getToken } = useAuth();
   const router = useRouter();
 
-  const [requests, setRequests] = useState<RequestLog[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `requests:${project.id}:1`;
+  const cached = cacheGetStale<RequestsResponse>(cacheKey);
+  const [requests, setRequests] = useState<RequestLog[]>(cached?.data ?? []);
+  const [totalPages, setTotalPages] = useState(cached?.totalPages ?? 1);
+  const [total, setTotal] = useState(cached?.total ?? 0);
+  const [loading, setLoading] = useState(!cached);
 
   const handleSelectRequest = useCallback(
     (request: RequestLog) => {
@@ -80,16 +83,31 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const key = `requests:${project.id}:${page}`;
+    const cachedPage = cacheGetStale<RequestsResponse>(key);
+    const timer = window.setTimeout(() => {
+      if (cancelled) return;
+      if (cachedPage) {
+        setRequests(cachedPage.data);
+        setTotalPages(cachedPage.totalPages);
+        setTotal(cachedPage.total);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+    }, 0);
 
     async function fetchRequests() {
-      setLoading(true);
+      const scope = getCacheScope();
       try {
         const token = await getToken();
         if (!token) throw new Error("Unable to obtain Clerk session token.");
 
         const data: RequestsResponse = await getRequests(page, project.id, token);
-        if (cancelled) return;
+        if (getCacheScope() !== scope) return;
 
+        cacheSet(key, data, scope);
+        if (cancelled) return;
         setRequests(data.data);
         setTotalPages(data.totalPages);
         setTotal(data.total);
@@ -103,6 +121,7 @@ function RequestsView({ project, onSidebarChange }: RequestsViewProps) {
     void fetchRequests();
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [page, project.id, getToken]);
 
