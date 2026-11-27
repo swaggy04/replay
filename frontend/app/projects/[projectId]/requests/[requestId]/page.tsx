@@ -18,15 +18,22 @@ export default function RequestWorkbenchPage() {
   const [selectedSidebarRequest, setSelectedSidebarRequest] = useState<RequestLog | null>(null);
   const [onSelectSidebarRequest, setOnSelectSidebarRequest] = useState<(r: RequestLog) => void>(() => () => {});
 
+  const navigateToRequest = useCallback(
+    (id: string) => {
+      router.push(`/projects/${projectId}/requests/${id}`);
+    },
+    [router, projectId],
+  );
+
   const handleSidebarChange = useCallback(
     (next: {
       requests: RequestLog[];
       selectedRequest: RequestLog | null;
       onSelectRequest: (request: RequestLog) => void;
     }) => {
-      setSidebarRequests(next.requests);
-      setSelectedSidebarRequest(next.selectedRequest);
-      setOnSelectSidebarRequest(() => next.onSelectRequest);
+      setSidebarRequests((prev) => (prev === next.requests ? prev : next.requests));
+      setSelectedSidebarRequest((prev) => (prev?.id === next.selectedRequest?.id ? prev : next.selectedRequest));
+      setOnSelectSidebarRequest((prev: (request: RequestLog) => void) => (prev === next.onSelectRequest ? prev : next.onSelectRequest));
     },
     [],
   );
@@ -46,7 +53,7 @@ export default function RequestWorkbenchPage() {
           key={`${selectedProject.id}:${requestId}`}
           project={selectedProject}
           requestId={requestId}
-          onNavigateRequest={(id) => router.push(`/projects/${selectedProject.id}/requests/${id}`)}
+          onNavigateRequest={navigateToRequest}
           onSidebarChange={handleSidebarChange}
         />
       )}
@@ -98,13 +105,15 @@ function RequestWorkbench({
     [requestDetails, requestId, requests],
   );
 
+  const handleSidebarSelect = useCallback((r: RequestLog) => onNavigateRequest(r.id), [onNavigateRequest]);
+
   useEffect(() => {
     onSidebarChange({
       requests,
       selectedRequest,
-      onSelectRequest: (r) => onNavigateRequest(r.id),
+      onSelectRequest: handleSidebarSelect,
     });
-  }, [requests, selectedRequest, onNavigateRequest, onSidebarChange]);
+  }, [requests, selectedRequest, handleSidebarSelect, onSidebarChange]);
 
   const loadRequests = useCallback(
     async (pageNumber: number) => {
